@@ -1,0 +1,45 @@
+@import "./Patients.css";
+
+.availability-page {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0;
+  color: var(--color-text);
+}
+
+.availability-page__title {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 28px;
+  color: var(--color-text-strong);
+}
+
+.availability-page__description {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.availability-page__form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.availability-page__select {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 15px;
+}
+
+@media (min-width: 768px) {
+  .availability-page__form {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

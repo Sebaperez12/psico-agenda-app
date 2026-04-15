@@ -1,0 +1,40 @@
+/* Smooth animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Appointment slot card animations */
+.appointment-slot-card-expand {
+  animation: slideDown 0.2s ease forwards;
+}
+
+/* Hover effect for patient info */
+.patient-info-editable {
+  position: relative;
+}
+
+.patient-info-editable:hover {
+  background: rgba(75, 93, 255, 0.08);
+  border-radius: 6px;
+}
+
+/* Smooth transitions */
+.smooth-transition {
+  transition: all 0.2s ease;
+}

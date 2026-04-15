@@ -1,0 +1,29 @@
+.appointment-day-column {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 220px;
+  background: #fafafa;
+}
+
+.appointment-day-column__title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.appointment-day-column__date {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+
+.appointment-day-column__empty {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.appointment-day-column__list {
+  display: grid;
+  gap: 8px;
+}
