@@ -18,10 +18,10 @@ Proyecto full stack en desarrollo enfocado en experiencia de usuario, lógica de
 
 ## Tecnologías
 
-- React + Vite
-- Python + Flask
-- SQLAlchemy
-- JWT
+- Frontend: React + Vite (JavaScript)
+- Backend: Python + Flask
+- Base de datos: SQLite / SQLAlchemy
+- Autenticación: JWT
 
 ---
 
