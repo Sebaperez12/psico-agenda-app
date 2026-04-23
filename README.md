@@ -1,5 +1,31 @@
-# psico-agenda-app
+# Psico Agenda App
 
+Aplicación web para la gestión de turnos orientada a profesionales de la salud mental.
+
+Proyecto full stack en desarrollo enfocado en experiencia de usuario, lógica de negocio y arquitectura cliente-servidor.
+
+---
+
+## Funcionalidades
+
+- Gestión de pacientes
+- Agenda semanal
+- Control de solapamiento de turnos
+- Estados de sesión
+- Recordatorios automáticos
+
+---
+
+## Tecnologías
+
+- React + Vite
+- Python + Flask
+- SQLAlchemy
+- JWT
+
+---
+
+## Detalles técnicos
 ## Recordatorios automáticos
 
 La app ya permite configurar recordatorios automáticos desde `Mi Perfil`.
