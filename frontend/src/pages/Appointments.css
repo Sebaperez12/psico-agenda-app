@@ -1,0 +1,88 @@
+.appointments-page {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+.appointments-page__top {
+  width: 100%;
+}
+
+.appointments-page__header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.appointments-page__title {
+  margin: 0 0 8px 0;
+  font-size: 42px;
+  line-height: 1.05;
+  color: var(--color-text-strong);
+}
+
+.appointments-page__description {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.appointments-page__week-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  align-items: stretch;
+}
+
+/* mensaje */
+.appointments-page__message {
+  margin-top: 16px;
+  color: var(--color-text);
+}
+
+@media (max-width: 767px) {
+  .appointments-page {
+    padding-top: 150px;
+    background: var(--color-bg);
+  }
+
+  .appointments-page__top {
+    position: fixed;
+    top: 73px;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    padding: 6px 12px 8px;
+    margin-bottom: 0;
+    background: var(--color-bg);
+    backdrop-filter: blur(10px);
+  }
+
+  .appointments-page__title {
+    font-size: 23px;
+    margin-bottom: 2px;
+  }
+
+  .appointments-page__description {
+    font-size: 12px;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+  }
+
+  .appointments-page__header {
+    margin-bottom: 4px;
+  }
+
+}
+
+/* DESKTOP */
+@media (min-width: 900px) {
+  .appointments-page__week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "psico-agenda",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "postCreateCommand": "cd backend && pip install flask flask-sqlalchemy flask-jwt-extended flask-cors && cd ../frontend && npm install",
+  "forwardPorts": [3000, 5000]
+}
