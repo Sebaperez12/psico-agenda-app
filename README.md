@@ -24,6 +24,19 @@ Proyecto full stack en desarrollo enfocado en experiencia de usuario, lógica de
 - Autenticación: JWT
 
 ---
+<img width="1707" height="921" alt="3 turno" src="https://github.com/user-attachments/assets/817f3773-c237-418d-8bf9-eccdf02a1e0e" />
+
+---
+
+<img width="1707" height="921" alt="2 inicio" src="https://github.com/user-attachments/assets/3fd6f226-691a-4481-88b3-f71115ef5256" />
+
+---
+
+
+<img width="1707" height="921" alt="1 login" src="https://github.com/user-attachments/assets/77dbd487-12f7-42fe-9baf-42953e163f30" />
+
+
+
 
 ## Detalles técnicos
 ## Recordatorios automáticos
