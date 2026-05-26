@@ -5,6 +5,7 @@ import ProfileRequiredRoute from "./components/ProfileRequiredRoute";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
 import Patients from "./pages/Patients";
+import PatientHistory from "./pages/PatientHistory";
 import Availability from "./pages/Availability";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
@@ -23,6 +24,7 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/appointments" element={<Appointments />} />
               <Route path="/patients" element={<Patients />} />
+              <Route path="/patients/:patientId/history" element={<PatientHistory />} />
               <Route path="/availability" element={<Availability />} />
             </Route>
           </Route>

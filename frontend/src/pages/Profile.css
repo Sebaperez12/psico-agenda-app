@@ -171,7 +171,7 @@
 }
 
 .profile-page__btn--primary:hover {
-  background: var(--color-primary-strong);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-primary-deep));
   border-color: var(--color-primary-strong);
 }
 

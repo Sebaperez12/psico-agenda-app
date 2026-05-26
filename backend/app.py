@@ -13,34 +13,76 @@ from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from twilio.rest import Client
+from twilio.base.exceptions import TwilioRestException
 from sqlalchemy import inspect, text, or_
 
-load_dotenv()
+load_dotenv(override=True)
 
 db = SQLAlchemy()
 jwt = JWTManager()
 mail = Mail()
 
 
+def get_env(name, default=None):
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+    return value
+
+
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def parse_cors_origins(value):
+    origins = [origin.strip() for origin in (value or "").split(",") if origin.strip()]
+    return origins or ["http://127.0.0.1:5173", "http://localhost:5173"]
+
+
+def configure_security(app):
+    app_env = get_env("APP_ENV", "development").lower()
+    is_production = app_env == "production"
+    database_url = get_env("DATABASE_URL", "sqlite:///dev.db")
+    jwt_secret = get_env("JWT_SECRET_KEY")
+    cors_origins = parse_cors_origins(get_env("CORS_ORIGINS"))
+
+    if is_production:
+        if not jwt_secret or jwt_secret in {"change-me", "your-secret-key-here"}:
+            raise RuntimeError("JWT_SECRET_KEY is required and must be changed in production")
+        if database_url.startswith("sqlite") and not env_bool("ALLOW_SQLITE_IN_PRODUCTION", False):
+            raise RuntimeError("DATABASE_URL must point to a production database")
+        if "*" in cors_origins:
+            raise RuntimeError("CORS_ORIGINS cannot include * in production")
+
+    app.config["APP_ENV"] = app_env
+    app.config["IS_PRODUCTION"] = is_production
+    app.config["CORS_ORIGINS"] = cors_origins
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["JWT_SECRET_KEY"] = jwt_secret or "dev-only-change-me"
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
+
+
 def create_app():
     app = Flask(__name__)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///dev.db")
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "change-me")
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
+    configure_security(app)
 
     # Email configuration
-    app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp-relay.brevo.com")
-    app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
-    app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
-    app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME", "")
-    app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD", "")
-    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER", "noreply@psico-agenda.com")
+    app.config["MAIL_SERVER"] = get_env("MAIL_SERVER", "smtp-relay.brevo.com")
+    app.config["MAIL_PORT"] = int(get_env("MAIL_PORT", 587))
+    app.config["MAIL_USE_TLS"] = env_bool("MAIL_USE_TLS", True)
+    app.config["MAIL_TIMEOUT"] = int(get_env("MAIL_TIMEOUT", 10))
+    app.config["MAIL_USERNAME"] = get_env("MAIL_USERNAME", "")
+    app.config["MAIL_PASSWORD"] = get_env("MAIL_PASSWORD", "")
+    app.config["MAIL_DEFAULT_SENDER"] = get_env("MAIL_DEFAULT_SENDER", "noreply@psico-agenda.com")
 
     CORS(
         app,
-        resources={r"/*": {"origins": "*"}},
+        resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
         allow_headers=["Content-Type", "Authorization"],
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     )
@@ -51,9 +93,8 @@ def create_app():
 
     @app.after_request
     def add_cors_headers(response):
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
         return response
 
     # -------- HELPERS --------
@@ -68,6 +109,7 @@ def create_app():
         reply_to=None,
     ):
         """Enviar email usando Flask-Mail"""
+        mail_server = clean_text(app.config.get("MAIL_SERVER")).lower()
         username = clean_text(app.config.get("MAIL_USERNAME"))
         password = clean_text(app.config.get("MAIL_PASSWORD"))
         sender_default = clean_text(app.config.get("MAIL_DEFAULT_SENDER"))
@@ -82,12 +124,16 @@ def create_app():
             "your-brevo-smtp-key",
             "tu-login-brevo",
             "tu-clave-smtp-brevo",
-            "apikey",
         }
 
         if username in placeholder_values or password in placeholder_values:
             return False, (
                 "Configuración de email incompleta. Revisá MAIL_USERNAME y MAIL_PASSWORD "
+                "en backend/.env"
+            )
+        if username == "apikey" and "sendgrid" not in mail_server:
+            return False, (
+                "MAIL_USERNAME=apikey solo corresponde a SendGrid. Revisá MAIL_SERVER "
                 "en backend/.env"
             )
 
@@ -122,8 +168,8 @@ def create_app():
             print(f"[EMAIL ERROR] {error_message}")
             if "Username and Password not accepted" in error_message:
                 return False, (
-                    "Gmail rechazó las credenciales SMTP. Usá tu email real en MAIL_USERNAME "
-                    "y una App Password válida en MAIL_PASSWORD"
+                    "El proveedor SMTP rechazó las credenciales. Revisá MAIL_SERVER, "
+                    "MAIL_USERNAME y MAIL_PASSWORD en backend/.env"
                 )
             if "Unauthorized" in error_message or "authentication" in error_message.lower():
                 return False, (
@@ -144,6 +190,14 @@ def create_app():
 
     def clean_text(value):
         return (value or "").strip()
+
+    def normalize_time_string(value, fallback):
+        raw_value = clean_text(value) or fallback
+        try:
+            parsed = datetime.strptime(raw_value, "%H:%M")
+            return parsed.strftime("%H:%M")
+        except (TypeError, ValueError):
+            return None
 
     def get_app_timezone():
         timezone_name = clean_text(os.getenv("APP_TIMEZONE")) or "America/Montevideo"
@@ -173,7 +227,15 @@ def create_app():
             "office_addresses": office_addresses,
             "photo_data_url": clean_text(body.get("photo_data_url")),
             "notification_email": normalize_email(body.get("notification_email")) or None,
+            "visible_agenda_start_time": normalize_time_string(body.get("visible_agenda_start_time"), "06:00"),
+            "visible_agenda_end_time": normalize_time_string(body.get("visible_agenda_end_time"), "22:00"),
         }
+
+        if not profile_data["visible_agenda_start_time"] or not profile_data["visible_agenda_end_time"]:
+            return None, "El rango visible de agenda debe usar formato HH:MM"
+
+        if profile_data["visible_agenda_start_time"] >= profile_data["visible_agenda_end_time"]:
+            return None, "La hora final de agenda debe ser posterior a la hora inicial"
 
         if require_required_fields:
             if not profile_data["full_name"]:
@@ -194,11 +256,24 @@ def create_app():
         profile_data["description"] = profile_data["description"] or None
         return profile_data, None
 
+    def production_column_sql(column_sql):
+        if db.engine.dialect.name != "postgresql":
+            return column_sql
+
+        replacements = {
+            "DATETIME": "TIMESTAMP",
+            "BOOLEAN DEFAULT 0": "BOOLEAN DEFAULT FALSE",
+            "BOOLEAN DEFAULT 1": "BOOLEAN DEFAULT TRUE",
+        }
+        for sqlite_sql, postgres_sql in replacements.items():
+            column_sql = column_sql.replace(sqlite_sql, postgres_sql)
+        return column_sql
+
     def ensure_column(table_name, column_name, column_sql):
         inspector = inspect(db.engine)
         columns = {column["name"] for column in inspector.get_columns(table_name)}
         if column_name not in columns:
-            db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_sql}"))
+            db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {production_column_sql(column_sql)}"))
             db.session.commit()
 
     def get_default_appointment_location(user_id):
@@ -304,28 +379,56 @@ def create_app():
 
         return created_count
 
+    def normalize_whatsapp_phone(value):
+        """Normalize common local formatting into Twilio's E.164-like format."""
+        raw = clean_text(value)
+        if not raw:
+            return ""
+
+        if raw.startswith("+"):
+            normalized = "+" + "".join(ch for ch in raw[1:] if ch.isdigit())
+        elif raw.startswith("00"):
+            normalized = "+" + "".join(ch for ch in raw[2:] if ch.isdigit())
+        else:
+            digits = "".join(ch for ch in raw if ch.isdigit())
+            normalized = f"+598{digits[1:]}" if digits.startswith("0") else digits
+
+        if normalized.startswith("+5980"):
+            normalized = "+598" + normalized[5:]
+
+        return normalized
+
     def send_whatsapp(phone, message):
         """Enviar WhatsApp usando Twilio"""
         try:
             account_sid = os.getenv("TWILIO_ACCOUNT_SID")
             auth_token = os.getenv("TWILIO_AUTH_TOKEN")
             from_number = os.getenv("TWILIO_WHATSAPP_FROM")
+            to_number = normalize_whatsapp_phone(phone)
             
             if not all([account_sid, auth_token, from_number]):
                 print("[WHATSAPP SKIP] Credenciales de Twilio no configuradas")
-                return False
+                return False, "Credenciales de Twilio no configuradas"
+
+            if not to_number.startswith("+"):
+                return False, "El teléfono debe estar en formato internacional, por ejemplo +59895098123"
             
             client = Client(account_sid, auth_token)
             msg = client.messages.create(
                 from_=f"whatsapp:{from_number}",
                 body=message,
-                to=f"whatsapp:{phone}"
+                to=f"whatsapp:{to_number}"
             )
-            print(f"[WHATSAPP SENT] to {phone}: {msg.sid}")
-            return True
+            print(f"[WHATSAPP SENT] to {to_number}: {msg.sid}")
+            return True, None
+        except TwilioRestException as e:
+            error_message = f"Twilio {e.code}: {e.msg}"
+            print(f"[WHATSAPP ERROR] {error_message}")
+            return False, error_message
         except Exception as e:
-            print(f"[WHATSAPP ERROR] {str(e)}")
-            return False
+            error_message = str(e)
+            print(f"[WHATSAPP ERROR] {error_message}")
+            return False, error_message
 
     def is_hhmm(s: str) -> bool:
         if not isinstance(s, str) or len(s) != 5 or s[2] != ":":
@@ -568,6 +671,8 @@ def create_app():
         auto_reminders_enabled = db.Column(db.Boolean, nullable=False, default=False)
         auto_reminder_method = db.Column(db.String(20), nullable=True, default="email")
         auto_reminder_hours_before = db.Column(db.Integer, nullable=False, default=24)
+        visible_agenda_start_time = db.Column(db.String(5), nullable=False, default="06:00")
+        visible_agenda_end_time = db.Column(db.String(5), nullable=False, default="22:00")
         photo_data_url = db.Column(db.Text, nullable=True)
         created_at = db.Column(db.DateTime, server_default=db.func.now())
         updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
@@ -590,6 +695,8 @@ def create_app():
                 "auto_reminders_enabled": bool(self.auto_reminders_enabled),
                 "auto_reminder_method": self.auto_reminder_method or "email",
                 "auto_reminder_hours_before": self.auto_reminder_hours_before or 24,
+                "visible_agenda_start_time": self.visible_agenda_start_time or "06:00",
+                "visible_agenda_end_time": self.visible_agenda_end_time or "22:00",
                 "full_name": self.full_name,
                 "professional_title": self.professional_title,
                 "description": self.description,
@@ -676,6 +783,8 @@ def create_app():
         ensure_column("psychologist_profile", "auto_reminders_enabled", "BOOLEAN DEFAULT 0")
         ensure_column("psychologist_profile", "auto_reminder_method", "VARCHAR(20) DEFAULT 'email'")
         ensure_column("psychologist_profile", "auto_reminder_hours_before", "INTEGER DEFAULT 24")
+        ensure_column("psychologist_profile", "visible_agenda_start_time", "VARCHAR(5) DEFAULT '06:00'")
+        ensure_column("psychologist_profile", "visible_agenda_end_time", "VARCHAR(5) DEFAULT '22:00'")
         ensure_column("appointment", "location", "TEXT")
         ensure_column("appointment", "recurring_series_id", "INTEGER")
         ensure_column("appointment", "recurrence_origin_date", "DATE")
@@ -692,6 +801,20 @@ def create_app():
     @app.get("/")
     def health():
         return {"msg": "Backend OK"}
+
+    @app.get("/debug/mail-config")
+    def debug_mail_config():
+        if get_env("APP_ENV", "development") == "production":
+            return jsonify({"msg": "No disponible"}), 404
+
+        password = clean_text(app.config.get("MAIL_PASSWORD"))
+        return jsonify({
+            "mail_server": app.config.get("MAIL_SERVER"),
+            "mail_username": app.config.get("MAIL_USERNAME"),
+            "mail_password_length": len(password),
+            "mail_password_starts_with_sg": password.startswith("SG."),
+            "mail_default_sender": app.config.get("MAIL_DEFAULT_SENDER"),
+        }), 200
 
     # --- AUTH ---
     @app.post("/auth/register")
@@ -723,6 +846,8 @@ def create_app():
             description=profile_data["description"],
             office_address=profile_data["office_address"],
             office_addresses_json=json.dumps(profile_data["office_addresses"]),
+            visible_agenda_start_time=profile_data["visible_agenda_start_time"],
+            visible_agenda_end_time=profile_data["visible_agenda_end_time"],
             photo_data_url=profile_data["photo_data_url"],
         )
         db.session.add(profile)
@@ -834,12 +959,34 @@ def create_app():
             if appointment.patient_id not in next_appointments_by_patient:
                 next_appointments_by_patient[appointment.patient_id] = appointment
 
+        patient_ids = [patient.id for patient in patients]
+        history_by_patient = {patient_id: [] for patient_id in patient_ids}
+
+        if patient_ids:
+            history_items = (
+                Appointment.query
+                .filter(
+                    Appointment.owner_user_id == user_id,
+                    Appointment.patient_id.in_(patient_ids),
+                )
+                .order_by(Appointment.start_at.desc())
+                .all()
+            )
+
+            for appointment in history_items:
+                patient_history = history_by_patient.setdefault(appointment.patient_id, [])
+                if len(patient_history) < 8:
+                    patient_history.append(serialize_appointment_summary(appointment))
+
         return jsonify({
             "patients": [
-                serialize_patient_with_next_appointment(
-                    patient,
-                    next_appointments_by_patient.get(patient.id),
-                )
+                {
+                    **serialize_patient_with_next_appointment(
+                        patient,
+                        next_appointments_by_patient.get(patient.id),
+                    ),
+                    "appointment_history": history_by_patient.get(patient.id, []),
+                }
                 for patient in patients
             ]
         }), 200
@@ -1335,7 +1482,7 @@ def create_app():
             patient_id=patient_id,
             start_at=start_at,
             end_at=end_at,
-            status="scheduled",
+            status="scheduled" if patient_id else "free",
             location=location,
             notes=notes,
         )
@@ -1590,9 +1737,17 @@ def create_app():
         elif method == "whatsapp":
             if not patient.phone:
                 return jsonify({"msg": "El paciente no tiene teléfono registrado"}), 400
+            if not all([
+                os.getenv("TWILIO_ACCOUNT_SID"),
+                os.getenv("TWILIO_AUTH_TOKEN"),
+                os.getenv("TWILIO_WHATSAPP_FROM"),
+            ]):
+                return jsonify({
+                    "msg": "Faltan credenciales de Twilio en backend/.env",
+                    "detail": "Completá TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_WHATSAPP_FROM, luego reiniciá el backend.",
+                }), 400
             contact_info = patient.phone
-            sent = send_whatsapp(patient.phone, message)
-            error_message = None
+            sent, error_message = send_whatsapp(patient.phone, message)
         else:
             return jsonify({"msg": "Método inválido (usar email o whatsapp)"}), 400
 
@@ -1682,7 +1837,7 @@ def create_app():
                         )
                 elif method == "whatsapp":
                     if patient.phone:
-                        success = send_whatsapp(patient.phone, notification_data["message"])
+                        success, _ = send_whatsapp(patient.phone, notification_data["message"])
 
                 if success:
                     appointment.last_auto_reminder_sent_at = now
@@ -1736,6 +1891,8 @@ def create_app():
             auto_reminders_enabled=bool(body.get("auto_reminders_enabled", False)),
             auto_reminder_method=(body.get("auto_reminder_method") or "email").lower(),
             auto_reminder_hours_before=int(body.get("auto_reminder_hours_before") or 24),
+            visible_agenda_start_time=profile_data["visible_agenda_start_time"],
+            visible_agenda_end_time=profile_data["visible_agenda_end_time"],
             photo_data_url=profile_data["photo_data_url"],
         )
         db.session.add(profile)
@@ -1805,6 +1962,22 @@ def create_app():
                 return jsonify({"msg": "auto_reminder_hours_before inválido"}), 400
             profile.auto_reminder_hours_before = hours
 
+        if "visible_agenda_start_time" in body or "visible_agenda_end_time" in body:
+            start_time = normalize_time_string(
+                body.get("visible_agenda_start_time", profile.visible_agenda_start_time),
+                profile.visible_agenda_start_time or "06:00",
+            )
+            end_time = normalize_time_string(
+                body.get("visible_agenda_end_time", profile.visible_agenda_end_time),
+                profile.visible_agenda_end_time or "22:00",
+            )
+            if not start_time or not end_time:
+                return jsonify({"msg": "El rango visible de agenda debe usar formato HH:MM"}), 400
+            if start_time >= end_time:
+                return jsonify({"msg": "La hora final de agenda debe ser posterior a la hora inicial"}), 400
+            profile.visible_agenda_start_time = start_time
+            profile.visible_agenda_end_time = end_time
+
         if "photo_data_url" in body:
             photo_data_url = clean_text(body.get("photo_data_url"))
             if photo_data_url:
@@ -1825,4 +1998,8 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(
+        host=get_env("HOST", "0.0.0.0"),
+        port=int(get_env("PORT", 5000)),
+        debug=env_bool("FLASK_DEBUG", False),
+    )

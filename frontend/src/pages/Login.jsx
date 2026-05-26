@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo 3.png";
 import api from "../services/api";
 
 export default function Login() {
@@ -92,7 +93,7 @@ export default function Login() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
           <img
-            src="/logo%20terapi.png"
+            src={logo}
             alt="TherapyDesk"
             style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }}
           />

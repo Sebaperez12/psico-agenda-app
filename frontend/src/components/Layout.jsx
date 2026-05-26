@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import logo from "../assets/logo 3.png";
 import "./layout.css";
 
 export default function Layout() {
@@ -29,7 +30,7 @@ export default function Layout() {
         </button>
 
         <div className="layout__brand layout__brand--header">
-          <img src="/logo%20terapi.png" alt="TherapyDesk" className="layout__logo" />
+          <img src={logo} alt="TherapyDesk" className="layout__logo" />
           <div className="layout__title-group">
             <span className="layout__title">TherapyDesk</span>
             <span className="layout__subtitle">Terapia y agenda clínica</span>
@@ -39,7 +40,7 @@ export default function Layout() {
 
       <aside className="layout__sidebar">
         <div className="layout__brand">
-          <img src="/logo%20terapi.png" alt="TherapyDesk" className="layout__logo" />
+          <img src={logo} alt="TherapyDesk" className="layout__logo" />
           <div className="layout__title-group">
             <span className="layout__title">TherapyDesk</span>
             <span className="layout__subtitle">Terapia y agenda clínica</span>
@@ -48,7 +49,7 @@ export default function Layout() {
 
         <nav className="layout__nav">
           <NavLink to="/" className={getNavLinkClass}>
-            Dashboard
+            Inicio
           </NavLink>
 
           <NavLink to="/appointments" className={getNavLinkClass}>
@@ -86,7 +87,7 @@ export default function Layout() {
           <div className="layout__drawer-panel">
             <div className="layout__drawer-top">
               <div className="layout__brand">
-                <img src="/logo%20terapi.png" alt="TherapyDesk" className="layout__logo" />
+                <img src={logo} alt="TherapyDesk" className="layout__logo" />
                 <div className="layout__title-group">
                   <span className="layout__title">TherapyDesk</span>
                   <span className="layout__subtitle">Terapia y agenda clínica</span>
@@ -105,7 +106,7 @@ export default function Layout() {
 
             <nav className="layout__nav">
               <NavLink to="/" className={getNavLinkClass} onClick={closeMenu}>
-                Dashboard
+                Inicio
               </NavLink>
 
               <NavLink to="/appointments" className={getNavLinkClass} onClick={closeMenu}>

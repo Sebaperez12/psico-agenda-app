@@ -1,0 +1,28 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local databases and runtime files
+*.db
+*.sqlite
+*.sqlite3
+instance/
+*.log
+
+# Frontend
+node_modules/
+dist/
+dist-ssr/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

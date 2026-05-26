@@ -9,18 +9,23 @@
   --color-surface: #ffffff;
   --color-surface-soft: #eff1ff;
   --color-sidebar: #d8dcff;
-  --color-primary: #4b5bff;
-  --color-primary-strong: #3649d8;
-  --color-primary-deep: #2b38b7;
-  --color-primary-soft: #d8ddff;
+  --color-primary: #05916e;
+  --color-primary-strong: #54c081;
+  --color-primary-deep: #047457;
+  --color-primary-soft: #d9f4e9;
   --color-secondary: #7ac7ff;
   --color-secondary-strong: #4e94ff;
   --color-secondary-soft: #e5f1ff;
+  --color-accent: #f97316;
+  --color-accent-strong: #ea580c;
+  --color-accent-soft: rgba(249, 115, 22, 0.14);
+  --color-accent-line: rgba(249, 115, 22, 0.28);
+  --color-accent-surface: #fff4e8;
   --color-text: #1f2b54;
   --color-text-strong: #101d3f;
   --color-text-muted: #5f6c98;
-  --color-border: #d7dbff;
-  --color-shadow: rgba(75, 93, 255, 0.16);
+  --color-border: #cfe8dc;
+  --color-shadow: rgba(40, 169, 121, 0.16);
   --color-danger: #ef7e7f;
   --color-danger-soft: #ffeced;
   --color-warning: #a39cff;
@@ -53,8 +58,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(75, 93, 255, 0.12), transparent 28%),
-    radial-gradient(circle at top right, rgba(76, 125, 255, 0.14), transparent 30%),
+    radial-gradient(circle at top left, rgba(40, 169, 121, 0.10), transparent 28%),
+    radial-gradient(circle at top right, rgba(40, 169, 121, 0.08), transparent 30%),
     linear-gradient(180deg, var(--color-bg), var(--color-bg-secondary));
   overflow-x: hidden;
 }

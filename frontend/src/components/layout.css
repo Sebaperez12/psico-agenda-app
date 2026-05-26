@@ -21,8 +21,8 @@ body {
   min-height: 100vh;
   width: 100%;
   background:
-    radial-gradient(circle at top left, rgba(75, 93, 255, 0.14), transparent 28%),
-    radial-gradient(circle at top right, rgba(76, 125, 255, 0.12), transparent 30%),
+    radial-gradient(circle at top left, rgba(40, 169, 121, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(40, 169, 121, 0.10), transparent 30%),
     linear-gradient(180deg, var(--color-bg), var(--color-bg-secondary));
 }
 
@@ -63,7 +63,7 @@ body,
 }
 
 .layout__hamburger:hover {
-  background: rgba(75, 93, 255, 0.12);
+  background: rgba(40, 169, 121, 0.12);
 }
 
 .layout__brand {
@@ -81,7 +81,7 @@ body,
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 10px 24px rgba(93, 95, 255, 0.22);
+  box-shadow: 0 10px 24px rgba(40, 169, 121, 0.22);
   flex-shrink: 0;
 }
 
@@ -146,10 +146,10 @@ body,
 }
 
 .layout__nav-link--active {
-  background: linear-gradient(135deg, rgba(75, 93, 255, 0.24), rgba(122, 199, 255, 0.20));
+  background: linear-gradient(135deg, rgba(40, 169, 121, 0.28), rgba(91, 197, 183, 0.18));
   color: #ffffff;
   box-shadow: 0 10px 24px rgba(12, 20, 70, 0.25);
-  border: 1px solid rgba(147, 162, 255, 0.24);
+  border: 1px solid rgba(121, 217, 180, 0.24);
 }
 
 .layout__logout {

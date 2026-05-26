@@ -20,7 +20,7 @@ export function getTimeForInput(dateStr) {
   return `${hh}:${mm}`;
 }
 
-export function formatTime(dateStr, locale = "es-UY") {
+export function formatTime(dateStr) {
   const d = new Date(dateStr);
   const hours24 = d.getHours();
   const minutes = d.getMinutes();

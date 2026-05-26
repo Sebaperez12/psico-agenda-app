@@ -1,0 +1,149 @@
+.patient-history {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  color: var(--color-text);
+}
+
+.patient-history__top {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.patient-history__back {
+  width: auto;
+  min-height: 36px;
+  margin-bottom: 12px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.patient-history__top h1 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.patient-history__top p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+}
+
+.patient-history__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.patient-history__summary div {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.patient-history__summary strong {
+  display: block;
+  color: var(--color-text-strong);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.patient-history__summary span {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.patient-history__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.patient-history__item {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.patient-history__item:last-child {
+  border-bottom: none;
+}
+
+.patient-history__item strong {
+  display: block;
+  color: var(--color-text-strong);
+  font-size: 15px;
+}
+
+.patient-history__item span,
+.patient-history__item p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.patient-history__item p {
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+.patient-history__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-accent-line);
+  background: var(--color-accent-surface);
+  color: var(--color-accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.patient-history__status--attended {
+  border-color: rgba(16, 185, 129, 0.26);
+  background: rgba(209, 250, 229, 0.72);
+  color: #047857;
+}
+
+.patient-history__status--no_show {
+  border-color: rgba(239, 68, 68, 0.24);
+  background: rgba(254, 226, 226, 0.7);
+  color: #b91c1c;
+}
+
+.patient-history__status--cancelled {
+  border-color: rgba(100, 116, 139, 0.24);
+  background: rgba(226, 232, 240, 0.72);
+  color: #64748b;
+}
+
+.patient-history__message,
+.patient-history__empty {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--color-text-strong);
+}
+
+@media (max-width: 720px) {
+  .patient-history__summary,
+  .patient-history__item {
+    grid-template-columns: 1fr;
+  }
+}

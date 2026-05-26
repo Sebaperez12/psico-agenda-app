@@ -28,6 +28,45 @@
   margin-bottom: 16px;
 }
 
+.availability-page__card {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 24px var(--color-shadow);
+}
+
+.availability-page__section-title {
+  margin: 0 0 8px;
+  color: var(--color-text-strong);
+  font-size: 18px;
+}
+
+.availability-page__section-help {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.availability-page__range-grid {
+  display: grid;
+  gap: 10px;
+  align-items: end;
+}
+
+.availability-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-strong);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .availability-page__select {
   width: 100%;
   border: 1px solid var(--color-border);
@@ -40,6 +79,10 @@
 
 @media (min-width: 768px) {
   .availability-page__form {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .availability-page__range-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

@@ -5,10 +5,12 @@ Flask-Mail==0.9.1
 flask-cors==6.0.2
 Flask-JWT-Extended==4.7.1
 Flask-SQLAlchemy==3.1.1
+gunicorn==23.0.0
 greenlet==3.3.2
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.3
+psycopg2-binary==2.9.11
 PyJWT==2.11.0
 python-dotenv==1.2.1
 SQLAlchemy==2.0.47
