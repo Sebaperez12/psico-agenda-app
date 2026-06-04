@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import mailIcon from "../assets/mail.png";
 
 const TIME_HOURS = Array.from({ length: 12 }, (_, index) => index + 1);
 const TIME_MINUTES = Array.from({ length: 6 }, (_, index) => index * 10);
@@ -64,7 +65,7 @@ export default function AppointmentPanel({
   const canNotifyByEmail = Boolean(selectedPatient?.email);
   const canNotifyPatient = Boolean(selectedPatient && canNotifyByEmail);
   const canUseNotifyMethod = notifyMethod === "email" ? canNotifyByEmail : false;
-  const shouldNotifyOnSave = !form.appointmentId && canNotifyPatient && canUseNotifyMethod && form.notifyOnSave;
+  const shouldNotifyOnSave = canNotifyPatient && canUseNotifyMethod && form.notifyOnSave;
   const [isNotifying, setIsNotifying] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState("");
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
@@ -83,9 +84,12 @@ export default function AppointmentPanel({
   async function handleNotify() {
     setNotifyMessage("");
     setIsNotifying(true);
-    const result = await onNotify(notifyMethod);
-    setNotifyMessage(result?.message || "");
-    setIsNotifying(false);
+    try {
+      const result = await onNotify(notifyMethod);
+      setNotifyMessage(result?.message || "");
+    } finally {
+      setIsNotifying(false);
+    }
   }
 
   useEffect(() => {
@@ -261,17 +265,15 @@ export default function AppointmentPanel({
           <div className="appointment-panel__section-title">
             {form.appointmentId ? "Notificar turno" : "Notificar al guardar"}
           </div>
-          {!form.appointmentId && (
-            <label className="appointment-panel__check appointment-panel__check--compact">
-              <input
-                type="checkbox"
-                checked={form.notifyOnSave}
-                disabled={!canNotifyPatient}
-                onChange={(e) => setForm((prev) => ({ ...prev, notifyOnSave: e.target.checked }))}
-              />
-              Enviar notificacion
-            </label>
-          )}
+          <label className="appointment-panel__check appointment-panel__check--compact">
+            <input
+              type="checkbox"
+              checked={form.notifyOnSave}
+              disabled={!canNotifyPatient}
+              onChange={(e) => setForm((prev) => ({ ...prev, notifyOnSave: e.target.checked }))}
+            />
+            {form.appointmentId ? "Notificar al guardar cambios" : "Enviar notificacion"}
+          </label>
           <div className="appointment-panel__notify-options">
             <label className="appointment-panel__choice">
               <input
@@ -282,18 +284,8 @@ export default function AppointmentPanel({
                 disabled={!canNotifyByEmail}
                 onChange={() => setForm((prev) => ({ ...prev, notifyMethod: "email" }))}
               />
+              <img className="appointment-panel__choice-icon" src={mailIcon} alt="" aria-hidden="true" />
               Email
-            </label>
-            <label className="appointment-panel__choice">
-              <input
-                type="radio"
-                name="appointment-notify-method"
-                value="whatsapp"
-                checked={notifyMethod === "whatsapp"}
-                disabled
-                onChange={() => setForm((prev) => ({ ...prev, notifyMethod: "whatsapp" }))}
-              />
-              WhatsApp <span className="appointment-panel__soon">pendiente</span>
             </label>
           </div>
           {!selectedPatient && (
@@ -306,11 +298,6 @@ export default function AppointmentPanel({
               Este paciente no tiene email cargado.
             </p>
           )}
-          {selectedPatient?.phone && (
-            <p className="appointment-panel__notify-message">
-              WhatsApp esta desactivado hasta conectar un remitente oficial.
-            </p>
-          )}
           {form.appointmentId && (
             <button
               type="button"
@@ -318,7 +305,7 @@ export default function AppointmentPanel({
               disabled={isNotifying || !canNotifyPatient || !canUseNotifyMethod}
               onClick={handleNotify}
             >
-              {isNotifying ? "Enviando..." : "Notificar"}
+              {isNotifying ? "Enviando..." : "Notificar ahora"}
             </button>
           )}
           {notifyMessage && <p className="appointment-panel__notify-message">{notifyMessage}</p>}

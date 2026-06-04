@@ -215,7 +215,28 @@ export default function Appointments() {
 
       if (form.appointmentId) {
         await updateAppointmentRequest(form.appointmentId, payload);
-        setMsg("Turno actualizado");
+        const notifyPatient = getPatientById(form.patientId);
+        const notifyMethod = form.notifyMethod === "whatsapp" ? "email" : (form.notifyMethod || "email");
+        const hasNotifyContact = notifyMethod === "email"
+          ? Boolean(notifyPatient?.email)
+          : false;
+        const shouldNotify = form.notifyOnSave && form.patientId && hasNotifyContact;
+        let successMessage = "Turno actualizado";
+
+        if (shouldNotify) {
+          try {
+            await notifyAppointmentRequest(form.appointmentId, {
+              method: notifyMethod,
+              location: form.location || profileOfficeAddress,
+            });
+            successMessage = `${successMessage} y notificacion enviada`;
+          } catch (notifyError) {
+            console.error(notifyError);
+            successMessage = `${successMessage}, pero no se pudo notificar: ${notifyError.message}`;
+          }
+        }
+
+        setMsg(successMessage);
       } else {
         const result = await createAppointmentRequest(payload);
         const appointmentId = result?.appointment?.id;

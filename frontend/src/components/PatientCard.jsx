@@ -1,4 +1,5 @@
 import PatientEditor from "./PatientEditor";
+import mailIcon from "../assets/mail.png";
 import { formatAppointmentSummary } from "../utils/appointmentFormatters";
 
 export default function PatientCard({
@@ -29,7 +30,10 @@ export default function PatientCard({
         <div className="patients-page__item-info">
           <strong>{patient.full_name}</strong>
           <span>{patient.phone || "Sin telefono"}</span>
-          <span>{patient.email || "Sin email"}</span>
+          <span className="patients-page__contact-line">
+            <img src={mailIcon} alt="" aria-hidden="true" />
+            {patient.email || "Sin email"}
+          </span>
         </div>
 
         <div className="patients-page__card-actions">

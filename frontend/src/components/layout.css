@@ -21,7 +21,7 @@ body {
   min-height: 100vh;
   width: 100%;
   background:
-    radial-gradient(circle at top left, rgba(40, 169, 121, 0.12), transparent 28%),
+    radial-gradient(circle at top left, rgba(249, 115, 22, 0.09), transparent 24%),
     radial-gradient(circle at top right, rgba(40, 169, 121, 0.10), transparent 30%),
     linear-gradient(180deg, var(--color-bg), var(--color-bg-secondary));
 }
@@ -81,7 +81,9 @@ body,
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 10px 24px rgba(40, 169, 121, 0.22);
+  box-shadow:
+    0 0 0 3px var(--color-accent-soft),
+    0 10px 24px rgba(40, 169, 121, 0.22);
   flex-shrink: 0;
 }
 
@@ -132,6 +134,7 @@ body,
 }
 
 .layout__nav-link {
+  position: relative;
   display: block;
   padding: 12px 12px;
   border-radius: 12px;
@@ -142,14 +145,14 @@ body,
 }
 
 .layout__nav-link:hover {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(249, 115, 22, 0.12);
 }
 
 .layout__nav-link--active {
-  background: linear-gradient(135deg, rgba(40, 169, 121, 0.28), rgba(91, 197, 183, 0.18));
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.24), rgba(40, 169, 121, 0.18));
   color: #ffffff;
   box-shadow: 0 10px 24px rgba(12, 20, 70, 0.25);
-  border: 1px solid rgba(121, 217, 180, 0.24);
+  border: 1px solid rgba(249, 115, 22, 0.28);
 }
 
 .layout__logout {

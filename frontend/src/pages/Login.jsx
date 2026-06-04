@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo 3.png";
+import logo from "../assets/logo 6.png";
+import portada from "../assets/PORTADA.png";
 import api from "../services/api";
+import "./Login.css";
 
 export default function Login() {
   const [mode, setMode] = useState("login");
-  const [email, setEmail] = useState("test@mail.com");
-  const [password, setPassword] = useState("123456");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [professionalTitle, setProfessionalTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -23,7 +25,7 @@ export default function Login() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setMsg("La foto debe ser una imagen válida");
+      setMsg("La foto debe ser una imagen valida");
       return;
     }
 
@@ -65,6 +67,10 @@ export default function Login() {
     try {
       const data = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", data.access_token);
+      if (data?.user?.role === "admin") {
+        nav("/admin");
+        return;
+      }
       nav(data?.user?.has_profile ? "/appointments" : "/profile");
     } catch (e) {
       setMsg(e.message);
@@ -73,145 +79,137 @@ export default function Login() {
     }
   };
 
+  const requestPasswordRecovery = async () => {
+    setMsg("");
+    if (!email.trim()) {
+      setMsg("Ingresa tu email para solicitar recuperacion");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await api.post("/auth/forgot-password", { email });
+      setMsg(data.msg);
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div
-      style={{
-        maxWidth: 640,
-        margin: "40px auto",
-        padding: 24,
-        fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
-    >
-      <div
-        style={{
-          background: "rgba(255,255,255,0.88)",
-          border: "1px solid var(--color-border)",
-          borderRadius: 24,
-          padding: 28,
-          boxShadow: "0 18px 40px var(--color-shadow)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-          <img
-            src={logo}
-            alt="TherapyDesk"
-            style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }}
-          />
-          <div>
-            <h1 style={{ margin: 0, color: "var(--color-text-strong)" }}>TherapyDesk</h1>
-            <p style={{ margin: "4px 0 0", color: "var(--color-text-muted)" }}>
-              {isRegister ? "Registro del psicólogo" : "Ingreso a la agenda"}
-            </p>
+    <main className="login-page">
+      <section className="login-page__visual" aria-label="Consultorio terapeutico">
+        <img src={portada} alt="" className="login-page__image" />
+        <div className="login-page__visual-shade" />
+        <div className="login-page__visual-copy">
+          <span className="login-page__eyebrow">Agenda clinica</span>
+          <h2>Una forma mas clara de ordenar tu practica.</h2>
+          <p>Turnos, pacientes y recordatorios en un espacio pensado para el trabajo terapeutico.</p>
+        </div>
+      </section>
+
+      <section className="login-page__panel" aria-label="Acceso a TherapyDesk">
+        <div className="login-card">
+          <div className="login-card__brand">
+            <img src={logo} alt="TherapyDesk" className="login-card__logo" />
+            <div>
+              <h1>TherapyDesk</h1>
+              <p>{isRegister ? "Registro del psicologo" : "Ingreso a la agenda"}</p>
+            </div>
+          </div>
+
+          <div className="login-card__form">
+            {isRegister && (
+              <>
+                <input
+                  className="login-card__field"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Nombre y apellido"
+                />
+                <input
+                  className="login-card__field"
+                  value={professionalTitle}
+                  onChange={(e) => setProfessionalTitle(e.target.value)}
+                  placeholder="Titulo profesional"
+                />
+              </>
+            )}
+
+            <input
+              className="login-card__field"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+            />
+            <input
+              className="login-card__field"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              type="password"
+            />
+            {!isRegister && (
+              <button
+                type="button"
+                className="login-card__forgot"
+                onClick={requestPasswordRecovery}
+                disabled={loading}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            )}
+
+            {isRegister && (
+              <>
+                <textarea
+                  className="login-card__field login-card__textarea"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Descripcion profesional"
+                  rows="4"
+                />
+                <input
+                  className="login-card__field"
+                  value={officeAddress}
+                  onChange={(e) => setOfficeAddress(e.target.value)}
+                  placeholder="Direccion del consultorio"
+                />
+                <label className="login-card__file">
+                  Foto profesional
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} />
+                </label>
+
+                {photoDataUrl && (
+                  <img src={photoDataUrl} alt="Vista previa" className="login-card__preview" />
+                )}
+              </>
+            )}
+
+            <div className="login-card__actions">
+              <button
+                type="button"
+                className="login-card__action login-card__action--login"
+                onClick={isRegister ? () => setMode("login") : doLogin}
+                disabled={loading && !isRegister}
+              >
+                {loading && !isRegister ? "Procesando..." : "Ingresar"}
+              </button>
+              <button
+                type="button"
+                className="login-card__action login-card__action--register"
+                onClick={isRegister ? doRegister : () => setMode("register")}
+                disabled={loading && isRegister}
+              >
+                {loading && isRegister ? "Procesando..." : "Registrarme"}
+              </button>
+            </div>
+
+            {msg && <p className="login-card__msg">{msg}</p>}
           </div>
         </div>
-
-        <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-          <button
-            type="button"
-            onClick={() => setMode("login")}
-            style={{
-              flex: 1,
-              background: !isRegister
-                ? "linear-gradient(135deg, var(--color-primary), var(--color-primary-strong))"
-                : "#fff",
-              color: !isRegister ? "#fff" : "var(--color-text)",
-            }}
-          >
-            Ingresar
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("register")}
-            style={{
-              flex: 1,
-              background: isRegister
-                ? "linear-gradient(135deg, var(--color-primary), var(--color-primary-strong))"
-                : "#fff",
-              color: isRegister ? "#fff" : "var(--color-text)",
-            }}
-          >
-            Registrarme
-          </button>
-        </div>
-
-        <div style={{ display: "grid", gap: 12 }}>
-          {isRegister && (
-            <>
-              <input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Nombre y apellido"
-              />
-              <input
-                value={professionalTitle}
-                onChange={(e) => setProfessionalTitle(e.target.value)}
-                placeholder="Título profesional"
-              />
-            </>
-          )}
-
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Contraseña"
-            type="password"
-          />
-
-          {isRegister && (
-            <>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descripción profesional"
-                rows="4"
-              />
-              <input
-                value={officeAddress}
-                onChange={(e) => setOfficeAddress(e.target.value)}
-                placeholder="Dirección del consultorio"
-              />
-              <label
-                style={{
-                  display: "grid",
-                  gap: 8,
-                  color: "var(--color-text)",
-                  fontWeight: 600,
-                }}
-              >
-                Foto profesional
-                <input type="file" accept="image/*" onChange={handlePhotoChange} />
-              </label>
-
-              {photoDataUrl && (
-                <img
-                  src={photoDataUrl}
-                  alt="Vista previa"
-                  style={{ width: 96, height: 96, borderRadius: 18, objectFit: "cover" }}
-                />
-              )}
-            </>
-          )}
-
-          <button
-            type="button"
-            onClick={isRegister ? doRegister : doLogin}
-            disabled={loading}
-            style={{
-              background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-strong))",
-              color: "#fff",
-            }}
-          >
-            {loading ? "Procesando..." : isRegister ? "Crear cuenta y perfil" : "Ingresar"}
-          </button>
-
-          {msg && (
-            <p style={{ margin: 0, color: "#af4444", fontWeight: 700 }}>
-              {msg}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

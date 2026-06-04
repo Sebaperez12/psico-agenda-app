@@ -1,0 +1,380 @@
+.admin-psychologists {
+  color: var(--color-text);
+}
+
+.admin-psychologists__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 12px 28px var(--color-shadow);
+}
+
+.admin-psychologists__eyebrow {
+  display: inline-block;
+  margin-bottom: 7px;
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-psychologists__hero h1 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.admin-psychologists__hero p {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-psychologists__hero button,
+.admin-psychologists__status-btn {
+  min-height: 40px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.admin-psychologists__hero-actions,
+.admin-psychologists__create-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-psychologists__create {
+  margin-bottom: 14px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 10px 24px var(--color-shadow);
+}
+
+.admin-psychologists__create-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-psychologists__create-head h2 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 18px;
+}
+
+.admin-psychologists__create-head label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-strong);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.admin-psychologists__create-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-psychologists__create label {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-psychologists__create input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-psychologists__create input[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  padding: 0;
+}
+
+.admin-psychologists__create small {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.admin-psychologists__create-actions {
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.admin-psychologists__create-actions button {
+  min-height: 40px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.admin-psychologists__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-psychologists__stats div,
+.admin-psychologists__toolbar,
+.admin-psychologists__panel,
+.admin-psychologists__message {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 10px 24px var(--color-shadow);
+}
+
+.admin-psychologists__stats div {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+}
+
+.admin-psychologists__stats span {
+  color: var(--color-text-strong);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.admin-psychologists__stats strong {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.admin-psychologists__reset-alert {
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid rgba(249, 115, 22, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 250, 245, 0.86);
+  box-shadow: 0 10px 24px var(--color-shadow);
+}
+
+.admin-psychologists__reset-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-psychologists__reset-head h2 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 18px;
+}
+
+.admin-psychologists__reset-head span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.12);
+  color: var(--color-accent-strong);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.admin-psychologists__reset-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-psychologists__reset-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(95, 108, 152, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.admin-psychologists__reset-item strong,
+.admin-psychologists__reset-item span,
+.admin-psychologists__reset-item small {
+  display: block;
+}
+
+.admin-psychologists__reset-item strong {
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.admin-psychologists__reset-item span,
+.admin-psychologists__reset-item small {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-psychologists__reset-item button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.admin-psychologists__toolbar {
+  margin-bottom: 14px;
+  padding: 14px;
+}
+
+.admin-psychologists__toolbar input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-psychologists__message {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  color: var(--color-text-strong);
+  font-weight: 700;
+}
+
+.admin-psychologists__panel {
+  overflow: hidden;
+}
+
+.admin-psychologists__table-wrap {
+  overflow-x: auto;
+}
+
+.admin-psychologists__table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.admin-psychologists__table th,
+.admin-psychologists__table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-psychologists__table th {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-psychologists__table td strong,
+.admin-psychologists__table td span,
+.admin-psychologists__table td small {
+  display: block;
+}
+
+.admin-psychologists__table td strong {
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.admin-psychologists__table td span,
+.admin-psychologists__table td small {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.admin-psychologists__status {
+  display: inline-flex;
+  width: max-content;
+  padding: 5px 9px;
+  border: 1px solid rgba(100, 116, 139, 0.24);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-psychologists__status--active {
+  border-color: rgba(16, 185, 129, 0.26);
+  background: rgba(236, 253, 245, 0.9);
+  color: var(--color-primary-deep);
+}
+
+.admin-psychologists__status-btn {
+  margin-right: 8px;
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+}
+
+.admin-psychologists__status-btn--secondary {
+  color: var(--color-text-muted);
+}
+
+.admin-psychologists__empty {
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .admin-psychologists__hero,
+  .admin-psychologists__stats,
+  .admin-psychologists__create-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-psychologists__hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-psychologists__hero-actions,
+  .admin-psychologists__create-actions,
+  .admin-psychologists__reset-item {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-psychologists__hero-actions button,
+  .admin-psychologists__create-actions button,
+  .admin-psychologists__reset-item button {
+    width: 100%;
+  }
+}

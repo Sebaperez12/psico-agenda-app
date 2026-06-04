@@ -2,10 +2,9 @@ services:
   - type: web
     runtime: python
     name: psico-agenda-api
-    rootDir: backend
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     healthCheckPath: /
     envVars:
       - key: APP_ENV
@@ -25,6 +24,8 @@ services:
       - key: BACKEND_BASE_URL
         sync: false
       - key: CORS_ORIGINS
+        sync: false
+      - key: ADMIN_EMAILS
         sync: false
       - key: MAIL_SERVER
         value: smtp-relay.brevo.com

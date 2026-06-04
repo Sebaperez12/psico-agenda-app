@@ -14,10 +14,16 @@ function authHeaders(extra = {}) {
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: authHeaders(options.headers || {}),
-  });
+  let res;
+
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: authHeaders(options.headers || {}),
+    });
+  } catch {
+    throw new Error("No se pudo conectar con el servidor. Verifica que el backend este iniciado.");
+  }
 
   const data = await res.json().catch(() => ({}));
 

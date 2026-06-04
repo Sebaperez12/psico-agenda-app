@@ -1,9 +1,11 @@
 import os
 import json
 from datetime import timedelta, datetime
+from pathlib import Path
+from urllib.parse import quote, urlparse
 from zoneinfo import ZoneInfo
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import (
@@ -14,7 +16,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
-from sqlalchemy import inspect, text, or_
+from sqlalchemy import inspect, text, or_, func
 
 load_dotenv(override=True)
 
@@ -28,6 +30,19 @@ def get_env(name, default=None):
     if value is None or value == "":
         return default
     return value
+
+
+EMAIL_ASSET_FILENAMES = {
+    "calendario.png",
+    "hora.png",
+    "usuario.png",
+    "ubicacion.png",
+    "mail.png",
+    "ilustracion calendario.png",
+    "logo 6 baja max.png",
+    "logo 6 baja.png",
+    "logo 6.png",
+}
 
 
 def env_bool(name, default=False):
@@ -96,6 +111,16 @@ def create_app():
         response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
         response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
         return response
+
+    @app.get("/email-assets/<path:filename>")
+    def get_email_asset(filename):
+        if filename not in EMAIL_ASSET_FILENAMES:
+            return jsonify({"msg": "Asset no encontrado"}), 404
+        return send_from_directory(
+            Path(__file__).resolve().parent.parent / "frontend" / "src" / "assets",
+            filename,
+            max_age=60 * 60 * 24 * 30,
+        )
 
     # -------- HELPERS --------
     def send_email(
@@ -185,6 +210,32 @@ def create_app():
         except OSError:
             return None
 
+    def get_public_asset_path(filename):
+        return Path(__file__).resolve().parent.parent / "frontend" / "public" / filename
+
+    def get_frontend_asset_path(filename):
+        return Path(__file__).resolve().parent.parent / "frontend" / "src" / "assets" / filename
+
+    def get_backend_base_url():
+        return clean_text(get_env("BACKEND_BASE_URL")).rstrip("/")
+
+    def is_public_http_url(value):
+        parsed = urlparse(value or "")
+        hostname = (parsed.hostname or "").lower()
+        if parsed.scheme not in {"http", "https"} or not hostname:
+            return False
+        if hostname in {"localhost", "127.0.0.1", "0.0.0.0", "::1"}:
+            return False
+        if hostname.startswith(("10.", "192.168.", "172.16.", "172.17.", "172.18.", "172.19.", "172.2", "172.30.", "172.31.")):
+            return False
+        return True
+
+    def get_email_asset_url(filename):
+        base_url = get_backend_base_url()
+        if not is_public_http_url(base_url):
+            return None
+        return f"{base_url}/email-assets/{quote(filename)}"
+
     def normalize_email(value):
         return (value or "").strip().lower()
 
@@ -198,6 +249,17 @@ def create_app():
             return parsed.strftime("%H:%M")
         except (TypeError, ValueError):
             return None
+
+    def validate_password_strength(password):
+        if len(password) < 8:
+            return "La contraseña debe tener al menos 8 caracteres"
+        if not any(char.islower() for char in password):
+            return "La contraseña debe incluir una minuscula"
+        if not any(char.isupper() for char in password):
+            return "La contraseña debe incluir una mayuscula"
+        if not any(char.isdigit() for char in password):
+            return "La contraseña debe incluir un numero"
+        return None
 
     def get_app_timezone():
         timezone_name = clean_text(os.getenv("APP_TIMEZONE")) or "America/Montevideo"
@@ -444,7 +506,7 @@ def create_app():
         hh, mm = s.split(":")
         return int(hh) * 60 + int(mm)
 
-    def format_date_in_spanish(dt):
+    def format_date_in_spanish(dt, include_year=True):
         weekdays = [
             "lunes",
             "martes",
@@ -468,7 +530,8 @@ def create_app():
             "noviembre",
             "diciembre",
         ]
-        return f"{weekdays[dt.weekday()]} {dt.day} de {months[dt.month - 1]} de {dt.year}"
+        date_text = f"{weekdays[dt.weekday()]} {dt.day} de {months[dt.month - 1]}"
+        return f"{date_text} de {dt.year}" if include_year else date_text
 
     def format_time_12h(dt):
         hours24 = dt.hour
@@ -477,10 +540,15 @@ def create_app():
         hours12 = hours24 % 12 or 12
         return f"{hours12}:{minutes:02d} {meridiem}"
 
+    def format_time_24h(dt):
+        return f"{dt.hour:02d}:{dt.minute:02d} hs"
+
     def build_appointment_notification_payload(user, profile, patient, appointment, method_override=None, location_override=None):
         start_at = appointment.start_at
         date_str = format_date_in_spanish(start_at)
+        date_short_str = format_date_in_spanish(start_at, include_year=False)
         time_str = format_time_12h(start_at)
+        time_display_str = format_time_24h(start_at)
         psychologist_name = (
             profile.full_name if profile and profile.full_name else user.email
         )
@@ -489,7 +557,6 @@ def create_app():
             if profile and profile.professional_title
             else ""
         )
-        patient_phone = clean_text(patient.phone)
         profile_office_address = (
             clean_text(profile.office_address)
             if profile and profile.office_address
@@ -501,6 +568,7 @@ def create_app():
             if profile and profile.notification_email
             else (normalize_email(user.email) if user and user.email else None)
         )
+        patient_phone = clean_text(patient.phone) if patient and patient.phone else None
 
         message = (
             "Hola "
@@ -513,15 +581,15 @@ def create_app():
             f"- Hora: {time_str}\n"
             f"- Lugar: {appointment_location}\n"
             f"- Contacto: {notification_email or 'No informado'}\n"
-            f"- Teléfono del paciente: {patient_phone or 'No informado'}\n\n"
             "Si necesitas reprogramar o hacer una consulta, puedes responder este mensaje.\n\n"
-            "Te esperamos.\n"
-            "Psico Agenda"
+            "Te esperamos."
         )
 
         return {
             "date_str": date_str,
+            "date_short_str": date_short_str,
             "time_str": time_str,
+            "time_display_str": time_display_str,
             "psychologist_name": psychologist_name,
             "psychologist_title": psychologist_title,
             "patient_phone": patient_phone,
@@ -594,12 +662,56 @@ def create_app():
         password_hash = db.Column(db.String(255), nullable=False)
         created_at = db.Column(db.DateTime, server_default=db.func.now())
         default_session_minutes = db.Column(db.Integer, nullable=False, default=50)
+        role = db.Column(db.String(20), nullable=False, default="psychologist")
+        is_active = db.Column(db.Boolean, nullable=False, default=True)
 
         def serialize(self):
             return {
                 "id": self.id,
                 "email": self.email,
                 "default_session_minutes": self.default_session_minutes,
+                "role": self.role or "psychologist",
+                "is_active": bool(self.is_active),
+            }
+
+    class AdminAuditLog(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        admin_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+        target_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+        action = db.Column(db.String(80), nullable=False)
+        detail = db.Column(db.Text, nullable=True)
+        created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+        def serialize(self):
+            return {
+                "id": self.id,
+                "admin_user_id": self.admin_user_id,
+                "target_user_id": self.target_user_id,
+                "action": self.action,
+                "detail": self.detail,
+                "created_at": self.created_at.isoformat() if self.created_at else None,
+            }
+
+    class PasswordResetRequest(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+        email = db.Column(db.String(120), nullable=False)
+        status = db.Column(db.String(20), nullable=False, default="pending")
+        mail_sent = db.Column(db.Boolean, nullable=False, default=False)
+        mail_error = db.Column(db.Text, nullable=True)
+        created_at = db.Column(db.DateTime, server_default=db.func.now())
+        resolved_at = db.Column(db.DateTime, nullable=True)
+
+        def serialize(self):
+            return {
+                "id": self.id,
+                "user_id": self.user_id,
+                "email": self.email,
+                "status": self.status,
+                "mail_sent": bool(self.mail_sent),
+                "mail_error": self.mail_error,
+                "created_at": self.created_at.isoformat() if self.created_at else None,
+                "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             }
 
     class Patient(db.Model):
@@ -776,6 +888,8 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        ensure_column("user", "role", "VARCHAR(20) DEFAULT 'psychologist'")
+        ensure_column("user", "is_active", "BOOLEAN DEFAULT 1")
         ensure_column("psychologist_profile", "full_name", "VARCHAR(255)")
         ensure_column("psychologist_profile", "photo_data_url", "TEXT")
         ensure_column("psychologist_profile", "office_addresses_json", "TEXT")
@@ -796,6 +910,74 @@ def create_app():
         ensure_column("patient", "insurance", "VARCHAR(120)")
         ensure_column("patient", "emergency_contact_name", "VARCHAR(120)")
         ensure_column("patient", "emergency_contact_phone", "VARCHAR(40)")
+
+    def configured_admin_emails():
+        raw = get_env("ADMIN_EMAILS", "")
+        return {normalize_email(email) for email in raw.split(",") if normalize_email(email)}
+
+    def sync_configured_admin(user):
+        if user and user.email in configured_admin_emails() and user.role != "admin":
+            user.role = "admin"
+            db.session.commit()
+
+    def get_current_user():
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        if user:
+            sync_configured_admin(user)
+        return user
+
+    def require_admin_user():
+        user = get_current_user()
+        if not user:
+            return None, (jsonify({"msg": "Usuario no existe"}), 404)
+        if not user.is_active:
+            return None, (jsonify({"msg": "Usuario inactivo"}), 403)
+        if user.role != "admin":
+            return None, (jsonify({"msg": "No autorizado"}), 403)
+        return user, None
+
+    def serialize_admin_psychologist(user, profile=None, patient_count=None, appointment_count=None):
+        profile = profile or PsychologistProfile.query.filter_by(owner_user_id=user.id).first()
+        patient_count = patient_count if patient_count is not None else Patient.query.filter_by(owner_user_id=user.id).count()
+        appointment_count = (
+            appointment_count
+            if appointment_count is not None
+            else Appointment.query.filter_by(owner_user_id=user.id).count()
+        )
+        profile_data = profile.serialize(user.email) if profile else None
+        return {
+            **user.serialize(),
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "has_profile": bool(profile),
+            "profile": profile_data,
+            "patient_count": patient_count,
+            "appointment_count": appointment_count,
+        }
+
+    def add_admin_audit_log(admin_user, target_user, action, detail=None):
+        db.session.add(AdminAuditLog(
+            admin_user_id=admin_user.id,
+            target_user_id=target_user.id if target_user else None,
+            action=action,
+            detail=detail,
+        ))
+
+    def serialize_admin_audit_log(log):
+        data = log.serialize()
+        admin = User.query.get(log.admin_user_id)
+        target = User.query.get(log.target_user_id) if log.target_user_id else None
+        data["admin_email"] = admin.email if admin else None
+        data["target_email"] = target.email if target else None
+        return data
+
+    def serialize_password_reset_request(reset_request):
+        data = reset_request.serialize()
+        user = User.query.get(reset_request.user_id)
+        profile = PsychologistProfile.query.filter_by(owner_user_id=reset_request.user_id).first()
+        data["user_email"] = user.email if user else reset_request.email
+        data["user_name"] = profile.full_name if profile and profile.full_name else data["user_email"]
+        return data
 
     # -------- RUTAS --------
     @app.get("/")
@@ -826,8 +1008,9 @@ def create_app():
 
         if not email or not password:
             return jsonify({"msg": "email y password son obligatorios"}), 400
-        if len(password) < 6:
-            return jsonify({"msg": "password mínimo 6 caracteres"}), 400
+        password_error = validate_password_strength(password)
+        if password_error:
+            return jsonify({"msg": password_error}), 400
         if profile_error:
             return jsonify({"msg": profile_error}), 400
 
@@ -876,6 +1059,10 @@ def create_app():
         if not user or not check_password_hash(user.password_hash, password):
             return jsonify({"msg": "Credenciales inválidas"}), 401
 
+        sync_configured_admin(user)
+        if not user.is_active:
+            return jsonify({"msg": "Usuario inactivo"}), 403
+
         profile = PsychologistProfile.query.filter_by(owner_user_id=user.id).first()
         token = create_access_token(identity=str(user.id))
         return jsonify({
@@ -887,13 +1074,47 @@ def create_app():
             "profile": profile.serialize(user.email) if profile else None,
         }), 200
 
+    @app.post("/auth/forgot-password")
+    def forgot_password():
+        body = request.get_json(silent=True) or {}
+        email = normalize_email(body.get("email"))
+        generic_msg = "Si el email esta registrado, el administrador vera una solicitud de recuperacion."
+
+        if not email:
+            return jsonify({"msg": "Ingresa tu email para solicitar recuperacion"}), 400
+
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            reset_request = PasswordResetRequest.query.filter_by(
+                user_id=user.id,
+                status="pending",
+            ).first()
+            if not reset_request:
+                reset_request = PasswordResetRequest(user_id=user.id, email=user.email)
+                db.session.add(reset_request)
+            reset_request.mail_sent = False
+            reset_request.mail_error = None
+
+            add_admin_audit_log(
+                user,
+                user,
+                "password_reset_requested",
+                "El usuario solicito recuperar su password",
+            )
+            db.session.commit()
+
+        return jsonify({"msg": generic_msg}), 200
+
     @app.get("/me")
     @jwt_required()
     def me():
-        user_id = int(get_jwt_identity())
-        user = User.query.get(user_id)
+        user = get_current_user()
         if not user:
             return jsonify({"msg": "Usuario no existe"}), 404
+        if not user.is_active:
+            return jsonify({"msg": "Usuario inactivo"}), 403
+        user_id = user.id
         profile = PsychologistProfile.query.filter_by(owner_user_id=user_id).first()
         return jsonify({
             "user": {
@@ -902,6 +1123,308 @@ def create_app():
             },
             "profile": profile.serialize(user.email) if profile else None,
         }), 200
+
+    # --- ADMIN ---
+    @app.get("/admin/psychologists")
+    @jwt_required()
+    def admin_list_psychologists():
+        _, error = require_admin_user()
+        if error:
+            return error
+
+        patient_counts = dict(
+            db.session.query(Patient.owner_user_id, func.count(Patient.id))
+            .group_by(Patient.owner_user_id)
+            .all()
+        )
+        appointment_counts = dict(
+            db.session.query(Appointment.owner_user_id, func.count(Appointment.id))
+            .group_by(Appointment.owner_user_id)
+            .all()
+        )
+        profiles = {
+            profile.owner_user_id: profile
+            for profile in PsychologistProfile.query.all()
+        }
+        users = (
+            User.query
+            .filter(User.role == "psychologist")
+            .order_by(User.created_at.desc(), User.id.desc())
+            .all()
+        )
+        reset_requests = (
+            PasswordResetRequest.query
+            .filter_by(status="pending")
+            .order_by(PasswordResetRequest.created_at.desc(), PasswordResetRequest.id.desc())
+            .limit(10)
+            .all()
+        )
+
+        return jsonify({
+            "psychologists": [
+                serialize_admin_psychologist(
+                    user,
+                    profiles.get(user.id),
+                    patient_counts.get(user.id, 0),
+                    appointment_counts.get(user.id, 0),
+                )
+                for user in users
+            ],
+            "password_reset_requests": [
+                serialize_password_reset_request(reset_request)
+                for reset_request in reset_requests
+            ],
+        }), 200
+
+    @app.post("/admin/psychologists")
+    @jwt_required()
+    def admin_create_psychologist():
+        admin_user, error = require_admin_user()
+        if error:
+            return error
+
+        body = request.get_json(silent=True) or {}
+        email = normalize_email(body.get("email"))
+        password = body.get("password") or ""
+        profile_data, profile_error = validate_profile_payload(body, require_required_fields=True)
+
+        if not email or not password:
+            return jsonify({"msg": "email y password son obligatorios"}), 400
+        password_error = validate_password_strength(password)
+        if password_error:
+            return jsonify({"msg": password_error}), 400
+        if profile_error:
+            return jsonify({"msg": profile_error}), 400
+
+        exists = User.query.filter_by(email=email).first()
+        if exists:
+            return jsonify({"msg": "Ese email ya esta registrado"}), 409
+
+        user = User(
+            email=email,
+            password_hash=generate_password_hash(password),
+            role="psychologist",
+            is_active=bool(body.get("is_active", True)),
+        )
+        db.session.add(user)
+        db.session.flush()
+
+        profile = PsychologistProfile(
+            owner_user_id=user.id,
+            full_name=profile_data["full_name"],
+            professional_title=profile_data["professional_title"],
+            description=profile_data["description"],
+            office_address=profile_data["office_address"],
+            office_addresses_json=json.dumps(profile_data["office_addresses"]),
+            notification_email=profile_data["notification_email"],
+            visible_agenda_start_time=profile_data["visible_agenda_start_time"],
+            visible_agenda_end_time=profile_data["visible_agenda_end_time"],
+            photo_data_url=profile_data["photo_data_url"],
+        )
+        db.session.add(profile)
+        add_admin_audit_log(
+            admin_user,
+            user,
+            "psychologist_created",
+            "Cuenta de psicologo creada desde administracion",
+        )
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Psicologo creado",
+            "psychologist": serialize_admin_psychologist(user, profile),
+        }), 201
+
+    @app.get("/admin/psychologists/<int:psychologist_id>")
+    @jwt_required()
+    def admin_get_psychologist(psychologist_id):
+        _, error = require_admin_user()
+        if error:
+            return error
+
+        user = User.query.get(psychologist_id)
+        if not user or user.role != "psychologist":
+            return jsonify({"msg": "Psicologo no encontrado"}), 404
+
+        audit_logs = (
+            AdminAuditLog.query
+            .filter_by(target_user_id=user.id)
+            .order_by(AdminAuditLog.created_at.desc(), AdminAuditLog.id.desc())
+            .limit(20)
+            .all()
+        )
+
+        return jsonify({
+            "psychologist": serialize_admin_psychologist(user),
+            "audit_logs": [serialize_admin_audit_log(log) for log in audit_logs],
+        }), 200
+
+    @app.patch("/admin/psychologists/<int:psychologist_id>")
+    @jwt_required()
+    def admin_update_psychologist(psychologist_id):
+        admin_user, error = require_admin_user()
+        if error:
+            return error
+
+        user = User.query.get(psychologist_id)
+        if not user or user.role != "psychologist":
+            return jsonify({"msg": "Psicologo no encontrado"}), 404
+
+        profile = PsychologistProfile.query.filter_by(owner_user_id=user.id).first()
+        if not profile:
+            return jsonify({"msg": "El psicologo no tiene perfil para editar"}), 404
+
+        body = request.get_json(silent=True) or {}
+        changed_fields = []
+
+        if "email" in body:
+            email = normalize_email(body.get("email"))
+            if not email:
+                return jsonify({"msg": "El email es obligatorio"}), 400
+            existing = User.query.filter(User.email == email, User.id != user.id).first()
+            if existing:
+                return jsonify({"msg": "Ese email ya esta registrado"}), 409
+            if email != user.email:
+                user.email = email
+                changed_fields.append("email")
+
+        if "default_session_minutes" in body:
+            minutes = body.get("default_session_minutes")
+            if not isinstance(minutes, int) or minutes <= 0:
+                return jsonify({"msg": "default_session_minutes invalido"}), 400
+            if minutes != user.default_session_minutes:
+                user.default_session_minutes = minutes
+                changed_fields.append("duracion de sesion")
+
+        if "full_name" in body:
+            value = clean_text(body.get("full_name"))
+            if not value:
+                return jsonify({"msg": "El nombre completo es obligatorio"}), 400
+            if value != profile.full_name:
+                profile.full_name = value
+                changed_fields.append("nombre")
+
+        if "professional_title" in body:
+            value = clean_text(body.get("professional_title"))
+            if not value:
+                return jsonify({"msg": "El titulo profesional es obligatorio"}), 400
+            if value != profile.professional_title:
+                profile.professional_title = value
+                changed_fields.append("titulo")
+
+        if "office_address" in body:
+            value = clean_text(body.get("office_address"))
+            if not value:
+                return jsonify({"msg": "La direccion del consultorio es obligatoria"}), 400
+            if value != profile.office_address:
+                profile.office_address = value
+                profile.office_addresses_json = json.dumps([value])
+                changed_fields.append("consultorio")
+
+        if "notification_email" in body:
+            value = normalize_email(body.get("notification_email")) or None
+            if value != profile.notification_email:
+                profile.notification_email = value
+                changed_fields.append("email de notificaciones")
+
+        if "visible_agenda_start_time" in body or "visible_agenda_end_time" in body:
+            start_time = normalize_time_string(
+                body.get("visible_agenda_start_time", profile.visible_agenda_start_time),
+                profile.visible_agenda_start_time or "06:00",
+            )
+            end_time = normalize_time_string(
+                body.get("visible_agenda_end_time", profile.visible_agenda_end_time),
+                profile.visible_agenda_end_time or "22:00",
+            )
+            if not start_time or not end_time:
+                return jsonify({"msg": "El rango visible de agenda debe usar formato HH:MM"}), 400
+            if start_time >= end_time:
+                return jsonify({"msg": "La hora final de agenda debe ser posterior a la hora inicial"}), 400
+            if start_time != profile.visible_agenda_start_time or end_time != profile.visible_agenda_end_time:
+                profile.visible_agenda_start_time = start_time
+                profile.visible_agenda_end_time = end_time
+                changed_fields.append("agenda visible")
+
+        if changed_fields:
+            add_admin_audit_log(
+                admin_user,
+                user,
+                "psychologist_profile_updated",
+                f"Campos actualizados: {', '.join(changed_fields)}",
+            )
+            db.session.commit()
+
+        return jsonify({
+            "msg": "Datos actualizados" if changed_fields else "Sin cambios",
+            "psychologist": serialize_admin_psychologist(user),
+        }), 200
+
+    @app.patch("/admin/psychologists/<int:psychologist_id>/status")
+    @jwt_required()
+    def admin_update_psychologist_status(psychologist_id):
+        admin_user, error = require_admin_user()
+        if error:
+            return error
+
+        user = User.query.get(psychologist_id)
+        if not user or user.role != "psychologist":
+            return jsonify({"msg": "Psicologo no encontrado"}), 404
+
+        body = request.get_json(silent=True) or {}
+        is_active = body.get("is_active")
+        if not isinstance(is_active, bool):
+            return jsonify({"msg": "is_active debe ser booleano"}), 400
+
+        previous_status = bool(user.is_active)
+        user.is_active = is_active
+        if previous_status != is_active:
+            add_admin_audit_log(
+                admin_user,
+                user,
+                "psychologist_status_updated",
+                f"Estado cambiado de {'activo' if previous_status else 'inactivo'} a {'activo' if is_active else 'inactivo'}",
+            )
+        db.session.commit()
+
+        return jsonify({
+            "msg": "Estado actualizado",
+            "psychologist": serialize_admin_psychologist(user),
+        }), 200
+
+    @app.patch("/admin/psychologists/<int:psychologist_id>/password")
+    @jwt_required()
+    def admin_reset_psychologist_password(psychologist_id):
+        admin_user, error = require_admin_user()
+        if error:
+            return error
+
+        user = User.query.get(psychologist_id)
+        if not user or user.role != "psychologist":
+            return jsonify({"msg": "Psicologo no encontrado"}), 404
+
+        body = request.get_json(silent=True) or {}
+        password = body.get("password") or ""
+        password_error = validate_password_strength(password)
+        if password_error:
+            return jsonify({"msg": password_error}), 400
+
+        user.password_hash = generate_password_hash(password)
+        add_admin_audit_log(
+            admin_user,
+            user,
+            "psychologist_password_reset",
+            "Password temporal actualizado desde administracion",
+        )
+        pending_requests = PasswordResetRequest.query.filter_by(
+            user_id=user.id,
+            status="pending",
+        ).all()
+        for reset_request in pending_requests:
+            reset_request.status = "resolved"
+            reset_request.resolved_at = get_local_now()
+        db.session.commit()
+
+        return jsonify({"msg": "Password actualizado"}), 200
 
     @app.patch("/me/settings")
     @jwt_required()
@@ -1663,57 +2186,158 @@ def create_app():
         appointment_location = notification_data["appointment_location"]
         notification_email = notification_data["notification_email"]
         message = notification_data["message"]
-        logo_bytes = load_inline_image_bytes(
-            "/workspaces/psico-agenda-app/frontend/public/logo_terapia_baja.png"
+        logo_filename = "logo 6 baja max.png"
+        logo_url = (
+            get_email_asset_url("logo 6 baja max.png")
+            or get_email_asset_url("logo 6 baja.png")
+            or get_email_asset_url("logo 6.png")
         )
-        logo_cid = "psico-agenda-logo"
+        logo_bytes = None if logo_url else (
+            load_inline_image_bytes(get_frontend_asset_path("logo 6 baja max.png"))
+            or load_inline_image_bytes(get_frontend_asset_path("logo 6 baja.png"))
+            or load_inline_image_bytes(get_frontend_asset_path("logo 6.png"))
+            or load_inline_image_bytes(get_public_asset_path("logo_terapia_baja.png"))
+        )
+        icon_assets = {
+            "calendar": ("calendario.png", "therapydesk-calendar-icon"),
+            "clock": ("hora.png", "therapydesk-clock-icon"),
+            "profile": ("usuario.png", "therapydesk-profile-icon"),
+            "location": ("ubicacion.png", "therapydesk-location-icon"),
+            "mail": ("mail.png", "therapydesk-mail-icon"),
+        }
+        inline_icon_attachments = []
+        icon_sources = {}
+        for icon_name, (filename, content_id) in icon_assets.items():
+            icon_url = get_email_asset_url(filename)
+            if icon_url:
+                icon_sources[icon_name] = icon_url
+                continue
+
+            icon_bytes = load_inline_image_bytes(get_frontend_asset_path(filename))
+            if icon_bytes:
+                icon_sources[icon_name] = f"cid:{content_id}"
+                inline_icon_attachments.append({
+                    "filename": filename,
+                    "content_type": "image/png",
+                    "data": icon_bytes,
+                    "content_id": content_id,
+                })
+
+        def email_icon_markup(icon_name, alt_text, size=28):
+            source = icon_sources.get(icon_name)
+            if not source:
+                return ""
+            return (
+                f'<img src="{source}" alt="{alt_text}" '
+                f'style="width:{size}px;height:{size}px;display:inline-block;vertical-align:middle;object-fit:contain;border:0;" />'
+            )
+
+        calendar_icon = email_icon_markup("calendar", "Calendario", 30)
+        clock_icon = email_icon_markup("clock", "Hora", 30)
+        profile_icon = email_icon_markup("profile", "Profesional", 17)
+        location_icon = email_icon_markup("location", "Lugar", 17)
+        mail_icon = email_icon_markup("mail", "Email", 17)
+        calendar_illustration_url = get_email_asset_url("ilustracion calendario.png")
+        header_calendar_illustration = (
+            '<img src="{}" alt="Agenda" '
+            'style="width:118px;height:auto;display:inline-block;vertical-align:middle;object-fit:contain;border:0;" />'
+        ).format(calendar_illustration_url) if calendar_illustration_url else ""
+        logo_cid = "therapydesk-logo"
+        logo_source = logo_url or f"cid:{logo_cid}"
         logo_markup = (
-            '<div style="width:72px;height:72px;display:flex;align-items:center;justify-content:flex-end;'
-            'margin:0 0 12px auto;padding:0;box-sizing:border-box;">'
-            f'<img src="cid:{logo_cid}" alt="Psico Agenda" '
-            'style="width:100%;height:100%;display:block;object-fit:contain;" />'
+            '<div style="width:46px;height:46px;display:flex;align-items:center;justify-content:flex-end;'
+            'margin:0 0 0 auto;padding:0;box-sizing:border-box;border-radius:50%;overflow:hidden;'
+            'background:#ffffff;">'
+            f'<img src="{logo_source}" alt="TherapyDesk" '
+            'style="width:100%;height:100%;display:block;object-fit:cover;border-radius:50%;" />'
             "</div>"
-            if logo_bytes
-            else '<div style="font-size:22px;font-weight:700;letter-spacing:0.02em;margin-bottom:10px;">Psico Agenda</div>'
+            if logo_url or logo_bytes
+            else '<div style="font-size:22px;font-weight:700;letter-spacing:0.02em;margin-bottom:10px;">TherapyDesk</div>'
         )
-        inline_attachments = (
-            [{
-                "filename": "logo_terapia_baja.png",
+        inline_attachments = []
+        if logo_bytes and not logo_url:
+            inline_attachments.append({
+                "filename": logo_filename,
                 "content_type": "image/png",
                 "data": logo_bytes,
                 "content_id": logo_cid,
-            }]
-            if logo_bytes
-            else []
-        )
+            })
+        inline_attachments.extend(inline_icon_attachments)
 
         html_message = f"""
-        <div style="background:#f4fbf8;padding:32px 16px;font-family:Arial,sans-serif;color:#183b35;">
-          <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #d8efe6;box-shadow:0 12px 30px rgba(24,59,53,0.08);">
-            <div style="background:linear-gradient(135deg,#38cfa3,#6fe0c1);padding:24px 28px 0;color:#08332c;">
-              {logo_markup}
-              <h1 style="margin:0 0 10px;font-size:28px;">Confirmación de turno</h1>
-              <p style="margin:0 0 22px;font-size:15px;">Tu cita ya quedó registrada en Psico Agenda.</p>
-              <div style="height:12px;background:#124d47;border-radius:14px 14px 0 0;"></div>
+        <div style="background:#eef2ff;padding:24px 12px;font-family:Arial,sans-serif;color:#10183c;">
+          <div style="max-width:760px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #d9defa;box-shadow:0 12px 30px rgba(16,24,60,0.12);">
+            <div style="background:linear-gradient(135deg,#07143a,#17265f);padding:12px 28px 0;color:#ffffff;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 10px;">
+                <tr>
+                  <td style="vertical-align:middle;padding:0;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                      <tr>
+                        <td style="width:46px;vertical-align:middle;padding:0 10px 0 0;">{logo_markup}</td>
+                        <td style="vertical-align:middle;padding:0;">
+                          <p style="margin:0;font-size:20px;line-height:1;font-weight:800;color:#ffffff;">Therapy<span style="color:#12a77c;">Desk</span></p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td style="width:130px;vertical-align:middle;text-align:right;padding:0;">
+                    <div style="display:inline-block;width:118px;vertical-align:middle;">{header_calendar_illustration}</div>
+                  </td>
+                </tr>
+              </table>
+              <div style="height:5px;background:#12a77c;"></div>
             </div>
-            <div style="padding:28px;">
-              <p style="margin:0 0 18px;font-size:16px;">Hola <strong>{patient.full_name}</strong>,</p>
-              <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">
-                Te compartimos los datos de tu próximo turno con <strong>{notification_data["psychologist_name"]}{notification_data["psychologist_title"]}</strong>.
-              </p>
-              <div style="background:#f8fffc;border:1px solid #dff3ea;border-radius:16px;padding:20px;margin-bottom:22px;">
-                <p style="margin:0 0 10px;font-size:14px;"><strong>Paciente:</strong> {patient.full_name}</p>
-                <p style="margin:0 0 10px;font-size:14px;"><strong>Profesional:</strong> {notification_data["psychologist_name"]}{notification_data["psychologist_title"]}</p>
-                <p style="margin:0 0 10px;font-size:14px;"><strong>Fecha:</strong> {notification_data["date_str"]}</p>
-                <p style="margin:0 0 10px;font-size:14px;"><strong>Hora:</strong> {notification_data["time_str"]}</p>
-                <p style="margin:0 0 10px;font-size:14px;"><strong>Lugar:</strong> {appointment_location}</p>
-                <p style="margin:0 0 10px;font-size:14px;"><strong>Contacto del profesional:</strong> {notification_email or "No informado"}</p>
-                <p style="margin:0;font-size:14px;"><strong>Teléfono del paciente:</strong> {notification_data["patient_phone"] or "No informado"}</p>
+            <div style="padding:32px 34px 34px;">
+              <p style="margin:0 0 22px;font-size:18px;line-height:1.4;">Hola <strong>{patient.full_name}</strong>,</p>
+              <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">Te compartimos los detalles de tu turno.</p>
+              <div style="background:#fbfcff;border:1px solid #dfe5ff;border-radius:12px;padding:26px 28px;margin-bottom:30px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="width:48%;vertical-align:top;padding:0 28px 0 0;border-right:1px solid #e3e8f7;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 28px;">
+                        <tr>
+                          <td style="width:56px;vertical-align:middle;padding:0 16px 0 0;">
+                            <div style="width:50px;height:50px;border-radius:50%;background:#e9f7f2;text-align:center;line-height:50px;">{calendar_icon}</div>
+                          </td>
+                          <td style="vertical-align:middle;padding:0;">
+                            <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Fecha</p>
+                            <p style="margin:0;font-size:19px;line-height:1.25;font-weight:900;color:#10183c;">{notification_data["date_short_str"]}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                        <tr>
+                          <td style="width:56px;vertical-align:middle;padding:0 16px 0 0;">
+                            <div style="width:50px;height:50px;border-radius:50%;background:#e9f7f2;text-align:center;line-height:50px;">{clock_icon}</div>
+                          </td>
+                          <td style="vertical-align:middle;padding:0;">
+                            <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Hora</p>
+                            <p style="margin:0;font-size:19px;line-height:1.25;font-weight:900;color:#10183c;">{notification_data["time_display_str"]}</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td style="width:52%;vertical-align:top;padding:0 0 0 28px;">
+                      <p style="margin:0 0 5px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;"><span style="display:inline-block;vertical-align:-4px;margin-right:6px;">{profile_icon}</span>Profesional</p>
+                      <p style="margin:0 0 22px;font-size:15px;line-height:1.35;color:#10183c;"><strong>{notification_data["psychologist_name"]}</strong>{notification_data["psychologist_title"]}</p>
+                      <p style="margin:0 0 5px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;"><span style="display:inline-block;vertical-align:-4px;margin-right:6px;">{location_icon}</span>Lugar</p>
+                      <p style="margin:0 0 22px;font-size:15px;line-height:1.35;color:#10183c;">{appointment_location}</p>
+                      <p style="margin:0 0 5px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;"><span style="display:inline-block;vertical-align:-4px;margin-right:6px;">{mail_icon}</span>Contacto del profesional</p>
+                      <p style="margin:0;font-size:15px;line-height:1.35;color:#10183c;">{notification_email or "No informado"}</p>
+                    </td>
+                  </tr>
+                </table>
               </div>
-              <p style="margin:0 0 10px;font-size:14px;line-height:1.6;">
-                Si necesitas reprogramar o hacer una consulta, puedes responder este correo.
-              </p>
-              <p style="margin:0;font-size:14px;line-height:1.6;">Te esperamos.</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 18px;">
+                <tr>
+                  <td style="border-top:1px solid #dfe5ff;font-size:1px;line-height:1px;">&nbsp;</td>
+                  <td style="width:44px;text-align:center;">
+                    <div style="width:28px;height:28px;margin:0 auto;border-radius:50%;background:#e9f7f2;color:#12a77c;text-align:center;font-size:16px;line-height:28px;">&#9675;</div>
+                  </td>
+                  <td style="border-top:1px solid #dfe5ff;font-size:1px;line-height:1px;">&nbsp;</td>
+                </tr>
+              </table>
+              <p style="margin:0;text-align:center;font-size:14px;line-height:1.6;color:#10183c;">Si necesitas reprogramar o cancelar tu turno, contacta directamente con el profesional.</p>
             </div>
           </div>
         </div>
@@ -1726,7 +2350,7 @@ def create_app():
             contact_info = patient.email
             sent, error_message = send_email(
                 patient.email,
-                "Confirmación de turno - Psico Agenda",
+                "Confirmación de turno",
                 message,
                 html_body=html_message,
                 inline_attachments=inline_attachments,

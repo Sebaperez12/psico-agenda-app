@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import logo from "../assets/logo 3.png";
+import logo from "../assets/logo 6.png";
 import "./layout.css";
 
 export default function Layout() {

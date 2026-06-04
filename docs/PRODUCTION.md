@@ -105,12 +105,16 @@ El repo incluye `render.yaml` en la raiz para crear en Render:
 El blueprint usa plan `free` para facilitar la primera prueba. Para produccion real conviene pasar el
 backend y la base a un plan pago antes de usarlo con pacientes reales.
 
+El plan Free bloquea SMTP saliente por el puerto `587` y la base PostgreSQL Free expira a los
+30 dias sin backups. Para notificaciones SMTP y datos reales, usar planes pagos o un proveedor de
+email mediante API HTTPS.
+
 Backend en Render:
 
 ```text
-Root Directory: backend
-Build Command: pip install -r requirements.txt
-Start Command: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+Root Directory: raiz del repositorio
+Build Command: pip install -r backend/requirements.txt
+Start Command: gunicorn --chdir backend app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
 Health Check Path: /
 ```
 

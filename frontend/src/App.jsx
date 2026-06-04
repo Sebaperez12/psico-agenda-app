@@ -1,7 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import AdminLayout from "./components/AdminLayout";
+import AdminRoute from "./components/AdminRoute";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfileRequiredRoute from "./components/ProfileRequiredRoute";
+import AdminPsychologistDetail from "./pages/AdminPsychologistDetail";
+import AdminPsychologists from "./pages/AdminPsychologists";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
 import Patients from "./pages/Patients";
@@ -17,6 +21,13 @@ export default function App() {
         <Route path="/login" element={<Login />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminPsychologists />} />
+              <Route path="psychologists/:psychologistId" element={<AdminPsychologistDetail />} />
+            </Route>
+          </Route>
+
           <Route element={<Layout />}>
             <Route path="/profile" element={<Profile />} />
 

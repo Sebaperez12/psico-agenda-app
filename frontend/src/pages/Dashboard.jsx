@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import dashboardImage from "../assets/dashboard.png";
 import api from "../services/api";
 import "./Dashboard.css";
 
@@ -158,17 +159,13 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <section className="dashboard__hero">
-        <div>
+        <img className="dashboard__hero-cover" src={dashboardImage} alt="" aria-hidden="true" />
+        <div className="dashboard__hero-content">
           <span className="dashboard__eyebrow">Panel general</span>
           <h1 className="dashboard__hero-title">Inicio</h1>
           <p className="dashboard__hero-subtitle">
             Resumen de agenda, pacientes y actividad de la semana.
           </p>
-        </div>
-        <div className="dashboard__hero-mark" aria-hidden="true">
-          <span />
-          <span />
-          <span />
         </div>
       </section>
 
