@@ -1018,7 +1018,11 @@ def create_app():
         if exists:
             return jsonify({"msg": "Ese email ya está registrado"}), 409
 
-        user = User(email=email, password_hash=generate_password_hash(password))
+        user = User(
+            email=email,
+            password_hash=generate_password_hash(password),
+            role="admin" if email in configured_admin_emails() else "psychologist",
+        )
         db.session.add(user)
         db.session.flush()
 
