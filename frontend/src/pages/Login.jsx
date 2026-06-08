@@ -53,6 +53,10 @@ export default function Login() {
         photo_data_url: photoDataUrl || null,
       });
       localStorage.setItem("token", data.access_token);
+      if (data?.user?.role === "admin") {
+        nav("/admin");
+        return;
+      }
       nav("/appointments");
     } catch (e) {
       setMsg(e.message);
