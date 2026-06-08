@@ -108,6 +108,10 @@ def create_app():
 
     @app.after_request
     def add_cors_headers(response):
+        origin = request.headers.get("Origin")
+        if origin in app.config["CORS_ORIGINS"]:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers.setdefault("Vary", "Origin")
         response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
         response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
         return response
