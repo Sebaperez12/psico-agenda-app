@@ -13,31 +13,11 @@ export default function Login() {
   const [professionalTitle, setProfessionalTitle] = useState("");
   const [description, setDescription] = useState("");
   const [officeAddress, setOfficeAddress] = useState("");
-  const [photoDataUrl, setPhotoDataUrl] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
 
   const isRegister = mode === "register";
-
-  const handlePhotoChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setMsg("La foto debe ser una imagen valida");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoDataUrl(String(reader.result || ""));
-    };
-    reader.onerror = () => {
-      setMsg("No se pudo leer la foto");
-    };
-    reader.readAsDataURL(file);
-  };
 
   const doRegister = async () => {
     setMsg("");
@@ -50,7 +30,6 @@ export default function Login() {
         professional_title: professionalTitle,
         description,
         office_address: officeAddress,
-        photo_data_url: photoDataUrl || null,
       });
       localStorage.setItem("token", data.access_token);
       if (data?.user?.role === "admin") {
@@ -180,14 +159,6 @@ export default function Login() {
                   onChange={(e) => setOfficeAddress(e.target.value)}
                   placeholder="Direccion del consultorio"
                 />
-                <label className="login-card__file">
-                  Foto profesional
-                  <input type="file" accept="image/*" onChange={handlePhotoChange} />
-                </label>
-
-                {photoDataUrl && (
-                  <img src={photoDataUrl} alt="Vista previa" className="login-card__preview" />
-                )}
               </>
             )}
 
