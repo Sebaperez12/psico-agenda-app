@@ -1,5 +1,6 @@
 import os
 import json
+import threading
 from datetime import timedelta, datetime
 from pathlib import Path
 from urllib.parse import quote, urlparse
@@ -920,9 +921,9 @@ def create_app():
         raw = get_env("ADMIN_EMAILS", "")
         return {normalize_email(email) for email in raw.split(",") if normalize_email(email)}
 
-    def send_registration_welcome_email(user, profile):
+    def send_registration_welcome_email(user_email, full_name):
         subject = "Bienvenido/a a TherapyDesk"
-        display_name = profile.full_name or user.email
+        display_name = full_name or user_email
         login_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.onrender.com")
         body = (
             f"Hola {display_name},\n\n"
@@ -944,11 +945,11 @@ def create_app():
           <p style="color:#5f6f9f">Gracias por sumarte.</p>
         </div>
         """
-        sent, error_message = send_email(user.email, subject, body, html_body=html_body, sender_name="TherapyDesk")
+        sent, error_message = send_email(user_email, subject, body, html_body=html_body, sender_name="TherapyDesk")
         if not sent:
-            print(f"[REGISTRATION EMAIL ERROR] welcome to {user.email}: {error_message}")
+            print(f"[REGISTRATION EMAIL ERROR] welcome to {user_email}: {error_message}")
 
-    def notify_admins_about_registration(user, profile):
+    def notify_admins_about_registration(user_email, full_name, professional_title, office_address):
         admin_emails = configured_admin_emails()
         if not admin_emails:
             return
@@ -956,18 +957,18 @@ def create_app():
         subject = "Nuevo profesional registrado en TherapyDesk"
         body = (
             "Se registró un nuevo profesional.\n\n"
-            f"Nombre: {profile.full_name or '-'}\n"
-            f"Email: {user.email}\n"
-            f"Título: {profile.professional_title or '-'}\n"
-            f"Consultorio: {profile.office_address or '-'}\n"
+            f"Nombre: {full_name or '-'}\n"
+            f"Email: {user_email}\n"
+            f"Título: {professional_title or '-'}\n"
+            f"Consultorio: {office_address or '-'}\n"
         )
         html_body = f"""
         <div style="font-family:Arial,sans-serif;color:#10204a;line-height:1.5">
           <h2 style="margin:0 0 12px">Nuevo profesional registrado</h2>
-          <p><strong>Nombre:</strong> {escape(profile.full_name or "-")}</p>
-          <p><strong>Email:</strong> {escape(user.email)}</p>
-          <p><strong>Título:</strong> {escape(profile.professional_title or "-")}</p>
-          <p><strong>Consultorio:</strong> {escape(profile.office_address or "-")}</p>
+          <p><strong>Nombre:</strong> {escape(full_name or "-")}</p>
+          <p><strong>Email:</strong> {escape(user_email)}</p>
+          <p><strong>Título:</strong> {escape(professional_title or "-")}</p>
+          <p><strong>Consultorio:</strong> {escape(office_address or "-")}</p>
         </div>
         """
 
@@ -981,6 +982,24 @@ def create_app():
             )
             if not sent:
                 print(f"[REGISTRATION EMAIL ERROR] admin notice to {admin_email}: {error_message}")
+
+    def send_registration_emails_async(user, profile):
+        user_email = user.email
+        full_name = profile.full_name
+        professional_title = profile.professional_title
+        office_address = profile.office_address
+
+        def worker():
+            with app.app_context():
+                send_registration_welcome_email(user_email, full_name)
+                notify_admins_about_registration(
+                    user_email,
+                    full_name,
+                    professional_title,
+                    office_address,
+                )
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def sync_configured_admin(user):
         if user and user.email in configured_admin_emails() and user.role != "admin":
@@ -1107,8 +1126,7 @@ def create_app():
         db.session.add(profile)
         db.session.commit()
 
-        send_registration_welcome_email(user, profile)
-        notify_admins_about_registration(user, profile)
+        send_registration_emails_async(user, profile)
 
         token = create_access_token(identity=str(user.id))
         return jsonify({
