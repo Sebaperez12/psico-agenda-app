@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./Profile.css";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [notificationEmail, setNotificationEmail] = useState("");
   const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
@@ -16,6 +18,8 @@ export default function Profile() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [isCreate, setIsCreate] = useState(false);
 
   const handlePhotoChange = (event) => {
@@ -109,6 +113,30 @@ export default function Profile() {
       setMsg(e.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteAccount() {
+    setMsg("");
+    if (deleteConfirmEmail.trim().toLowerCase() !== email.trim().toLowerCase()) {
+      setMsg("Para eliminar la cuenta, escribe tu email de registro.");
+      return;
+    }
+    const confirmed = window.confirm(
+      "Esta accion elimina tu cuenta, pacientes, turnos y disponibilidad. No se puede deshacer.",
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await api.delete("/account", { confirm_email: deleteConfirmEmail });
+      localStorage.removeItem("token");
+      navigate("/login", { replace: true });
+    } catch (e) {
+      console.error(e);
+      setMsg(e.message);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -244,6 +272,29 @@ export default function Profile() {
           </button>
           <button className="profile-page__btn" onClick={loadProfile}>
             Cancelar
+          </button>
+        </div>
+
+        <div className="profile-page__danger-zone">
+          <div>
+            <p className="profile-page__section-label">Eliminar cuenta</p>
+            <p className="profile-page__danger-help">
+              Borra tu cuenta, pacientes, turnos, disponibilidad y perfil profesional.
+            </p>
+          </div>
+          <input
+            className="profile-page__input profile-page__danger-input"
+            value={deleteConfirmEmail}
+            onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+            placeholder="Escribe tu email para confirmar"
+          />
+          <button
+            type="button"
+            className="profile-page__btn profile-page__btn--danger"
+            onClick={deleteAccount}
+            disabled={deleting}
+          >
+            {deleting ? "Eliminando..." : "Eliminar mi cuenta"}
           </button>
         </div>
 

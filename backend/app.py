@@ -1198,6 +1198,35 @@ def create_app():
             "profile": profile.serialize(user.email) if profile else None,
         }), 200
 
+    @app.delete("/account")
+    @jwt_required()
+    def delete_own_account():
+        user = get_current_user()
+        if not user:
+            return jsonify({"msg": "Usuario no existe"}), 404
+        if user.role == "admin":
+            return jsonify({"msg": "Las cuentas administradoras no se eliminan desde la app"}), 403
+
+        body = request.get_json(silent=True) or {}
+        confirm_email = normalize_email(body.get("confirm_email"))
+        if confirm_email != user.email:
+            return jsonify({"msg": "Para eliminar la cuenta, confirma tu email"}), 400
+
+        user_id = user.id
+        AdminAuditLog.query.filter_by(target_user_id=user_id).update({"target_user_id": None})
+        AdminAuditLog.query.filter_by(admin_user_id=user_id).delete()
+        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
+        RecurringAppointmentException.query.filter_by(owner_user_id=user_id).delete()
+        Appointment.query.filter_by(owner_user_id=user_id).delete()
+        RecurringAppointmentSeries.query.filter_by(owner_user_id=user_id).delete()
+        AvailabilityRule.query.filter_by(owner_user_id=user_id).delete()
+        PsychologistProfile.query.filter_by(owner_user_id=user_id).delete()
+        Patient.query.filter_by(owner_user_id=user_id).delete()
+        db.session.delete(user)
+        db.session.commit()
+
+        return jsonify({"msg": "Cuenta eliminada"}), 200
+
     # --- ADMIN ---
     @app.get("/admin/psychologists")
     @jwt_required()

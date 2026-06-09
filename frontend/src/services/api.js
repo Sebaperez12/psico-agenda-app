@@ -54,9 +54,15 @@ const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
-  delete: (path) =>
+  delete: (path, body) =>
     request(path, {
       method: "DELETE",
+      ...(body
+        ? {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }
+        : {}),
     }),
 };
 
