@@ -12,6 +12,7 @@ from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required, get_jwt_identity
 )
 from flask_mail import Mail, Message
+from markupsafe import escape
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from twilio.rest import Client
@@ -919,6 +920,68 @@ def create_app():
         raw = get_env("ADMIN_EMAILS", "")
         return {normalize_email(email) for email in raw.split(",") if normalize_email(email)}
 
+    def send_registration_welcome_email(user, profile):
+        subject = "Bienvenido/a a TherapyDesk"
+        display_name = profile.full_name or user.email
+        login_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.onrender.com")
+        body = (
+            f"Hola {display_name},\n\n"
+            "Tu cuenta en TherapyDesk ya fue creada.\n"
+            f"Podés ingresar desde: {login_url}\n\n"
+            "Gracias por sumarte.\n"
+            "TherapyDesk"
+        )
+        html_body = f"""
+        <div style="font-family:Arial,sans-serif;color:#10204a;line-height:1.5">
+          <h2 style="margin:0 0 12px">Bienvenido/a a TherapyDesk</h2>
+          <p>Hola <strong>{escape(display_name)}</strong>,</p>
+          <p>Tu cuenta ya fue creada y podés ingresar a tu agenda clínica.</p>
+          <p>
+            <a href="{escape(login_url)}" style="display:inline-block;background:#0f8f68;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">
+              Ingresar a TherapyDesk
+            </a>
+          </p>
+          <p style="color:#5f6f9f">Gracias por sumarte.</p>
+        </div>
+        """
+        sent, error_message = send_email(user.email, subject, body, html_body=html_body, sender_name="TherapyDesk")
+        if not sent:
+            print(f"[REGISTRATION EMAIL ERROR] welcome to {user.email}: {error_message}")
+
+    def notify_admins_about_registration(user, profile):
+        admin_emails = configured_admin_emails()
+        if not admin_emails:
+            return
+
+        subject = "Nuevo profesional registrado en TherapyDesk"
+        body = (
+            "Se registró un nuevo profesional.\n\n"
+            f"Nombre: {profile.full_name or '-'}\n"
+            f"Email: {user.email}\n"
+            f"Título: {profile.professional_title or '-'}\n"
+            f"Consultorio: {profile.office_address or '-'}\n"
+        )
+        html_body = f"""
+        <div style="font-family:Arial,sans-serif;color:#10204a;line-height:1.5">
+          <h2 style="margin:0 0 12px">Nuevo profesional registrado</h2>
+          <p><strong>Nombre:</strong> {escape(profile.full_name or "-")}</p>
+          <p><strong>Email:</strong> {escape(user.email)}</p>
+          <p><strong>Título:</strong> {escape(profile.professional_title or "-")}</p>
+          <p><strong>Consultorio:</strong> {escape(profile.office_address or "-")}</p>
+        </div>
+        """
+
+        for admin_email in admin_emails:
+            sent, error_message = send_email(
+                admin_email,
+                subject,
+                body,
+                html_body=html_body,
+                sender_name="TherapyDesk",
+            )
+            if not sent:
+                print(f"[REGISTRATION EMAIL ERROR] admin notice to {admin_email}: {error_message}")
+
     def sync_configured_admin(user):
         if user and user.email in configured_admin_emails() and user.role != "admin":
             user.role = "admin"
@@ -1043,6 +1106,9 @@ def create_app():
         )
         db.session.add(profile)
         db.session.commit()
+
+        send_registration_welcome_email(user, profile)
+        notify_admins_about_registration(user, profile)
 
         token = create_access_token(identity=str(user.id))
         return jsonify({
