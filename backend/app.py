@@ -919,7 +919,17 @@ def create_app():
 
     def configured_admin_emails():
         raw = get_env("ADMIN_EMAILS", "")
-        return {normalize_email(email) for email in raw.split(",") if normalize_email(email)}
+        admin_emails = {normalize_email(email) for email in raw.split(",") if normalize_email(email)}
+        if admin_emails:
+            return admin_emails
+
+        fallback = normalize_email(app.config.get("MAIL_USERNAME"))
+        if fallback and fallback != "apikey":
+            print("[REGISTRATION EMAIL] ADMIN_EMAILS no configurado; usando MAIL_USERNAME para avisos admin")
+            return {fallback}
+
+        print("[REGISTRATION EMAIL] ADMIN_EMAILS no configurado; no se enviaran avisos admin")
+        return set()
 
     def send_registration_welcome_email(user_email, full_name):
         subject = "Bienvenido/a a TherapyDesk"
@@ -991,13 +1001,17 @@ def create_app():
 
         def worker():
             with app.app_context():
-                send_registration_welcome_email(user_email, full_name)
-                notify_admins_about_registration(
-                    user_email,
-                    full_name,
-                    professional_title,
-                    office_address,
-                )
+                try:
+                    send_registration_welcome_email(user_email, full_name)
+                    notify_admins_about_registration(
+                        user_email,
+                        full_name,
+                        professional_title,
+                        office_address,
+                    )
+                    print(f"[REGISTRATION EMAIL] flujo completado para {user_email}")
+                except Exception as exc:
+                    print(f"[REGISTRATION EMAIL ERROR] flujo para {user_email}: {exc}")
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -1082,6 +1096,7 @@ def create_app():
             "mail_password_length": len(password),
             "mail_password_starts_with_sg": password.startswith("SG."),
             "mail_default_sender": app.config.get("MAIL_DEFAULT_SENDER"),
+            "admin_emails_count": len(configured_admin_emails()),
         }), 200
 
     # --- AUTH ---
@@ -2469,16 +2484,32 @@ def create_app():
             if not patient.email:
                 return jsonify({"msg": "El paciente no tiene email registrado"}), 400
             contact_info = patient.email
-            sent, error_message = send_email(
-                patient.email,
-                "Confirmación de turno",
-                message,
-                html_body=html_message,
-                inline_attachments=inline_attachments,
-                sender_email=notification_email,
-                sender_name=notification_data["psychologist_name"],
-                reply_to=notification_email,
-            )
+            recipient_email = patient.email
+            patient_name = patient.full_name
+            sender_name = notification_data["psychologist_name"]
+
+            def email_worker():
+                with app.app_context():
+                    sent, error_message = send_email(
+                        recipient_email,
+                        "Confirmacion de turno",
+                        message,
+                        html_body=html_message,
+                        inline_attachments=inline_attachments,
+                        sender_email=notification_email,
+                        sender_name=sender_name,
+                        reply_to=notification_email,
+                    )
+                    if sent:
+                        print(f"[APPOINTMENT EMAIL] enviado a {recipient_email} para turno {appointment_id}")
+                    else:
+                        print(f"[APPOINTMENT EMAIL ERROR] turno {appointment_id} a {recipient_email}: {error_message}")
+
+            threading.Thread(target=email_worker, daemon=True).start()
+            return jsonify({
+                "msg": f"Notificacion en proceso para {patient_name} via {method} ({contact_info})",
+                "detail": message,
+            }), 202
         elif method == "whatsapp":
             if not patient.phone:
                 return jsonify({"msg": "El paciente no tiene teléfono registrado"}), 400

@@ -229,7 +229,7 @@ export default function Appointments() {
               method: notifyMethod,
               location: form.location || profileOfficeAddress,
             });
-            successMessage = `${successMessage} y notificacion enviada`;
+            successMessage = `${successMessage} y notificacion en proceso`;
           } catch (notifyError) {
             console.error(notifyError);
             successMessage = `${successMessage}, pero no se pudo notificar: ${notifyError.message}`;
@@ -254,7 +254,7 @@ export default function Appointments() {
               method: notifyMethod,
               location: form.location || profileOfficeAddress,
             });
-            successMessage = `${successMessage} y notificacion enviada`;
+            successMessage = `${successMessage} y notificacion en proceso`;
           } catch (notifyError) {
             console.error(notifyError);
             successMessage = `${successMessage}, pero no se pudo notificar: ${notifyError.message}`;
