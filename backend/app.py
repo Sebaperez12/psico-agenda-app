@@ -2476,12 +2476,11 @@ def create_app():
                 })
 
         def email_icon_markup(icon_name, alt_text, size=28):
-            source = icon_sources.get(icon_name)
-            if not source:
-                return ""
+            label = clean_text(alt_text)[:2].upper()
             return (
-                f'<img src="{source}" alt="{alt_text}" '
-                f'style="width:{size}px;height:{size}px;display:inline-block;vertical-align:middle;object-fit:contain;border:0;" />'
+                f'<span style="display:inline-block;width:{size}px;height:{size}px;'
+                f'border-radius:50%;background:#e9f7f2;color:#12a77c;text-align:center;'
+                f'font-size:10px;line-height:{size}px;font-weight:900;">{label}</span>'
             )
 
         calendar_icon = email_icon_markup("calendar", "Calendario", 30)
@@ -2489,32 +2488,12 @@ def create_app():
         profile_icon = email_icon_markup("profile", "Profesional", 17)
         location_icon = email_icon_markup("location", "Lugar", 17)
         mail_icon = email_icon_markup("mail", "Email", 17)
-        calendar_illustration_url = get_email_asset_url("ilustracion calendario.png")
-        header_calendar_illustration = (
-            '<img src="{}" alt="Agenda" '
-            'style="width:118px;height:auto;display:inline-block;vertical-align:middle;object-fit:contain;border:0;" />'
-        ).format(calendar_illustration_url) if calendar_illustration_url else ""
-        logo_cid = "therapydesk-logo"
-        logo_source = logo_url or f"cid:{logo_cid}"
+        header_calendar_illustration = ""
         logo_markup = (
-            '<div style="width:46px;height:46px;display:flex;align-items:center;justify-content:flex-end;'
-            'margin:0 0 0 auto;padding:0;box-sizing:border-box;border-radius:50%;overflow:hidden;'
-            'background:#ffffff;">'
-            f'<img src="{logo_source}" alt="TherapyDesk" '
-            'style="width:100%;height:100%;display:block;object-fit:cover;border-radius:50%;" />'
-            "</div>"
-            if logo_url or logo_bytes
-            else '<div style="font-size:22px;font-weight:700;letter-spacing:0.02em;margin-bottom:10px;">TherapyDesk</div>'
+            '<div style="width:46px;height:46px;border-radius:50%;background:#ffffff;'
+            'color:#17265f;text-align:center;font-size:18px;line-height:46px;font-weight:900;">TD</div>'
         )
         inline_attachments = []
-        if logo_bytes and not logo_url:
-            inline_attachments.append({
-                "filename": logo_filename,
-                "content_type": "image/png",
-                "data": logo_bytes,
-                "content_id": logo_cid,
-            })
-        inline_attachments.extend(inline_icon_attachments)
 
         html_message = f"""
         <div style="background:#eef2ff;padding:24px 12px;font-family:Arial,sans-serif;color:#10183c;">
@@ -2602,7 +2581,7 @@ def create_app():
             contact_info = patient.email
             recipient_email = patient.email
             patient_name = patient.full_name
-            sender_name = notification_data["psychologist_name"]
+            sender_name = "TherapyDesk"
 
             sent, error_message = send_email(
                 recipient_email,
