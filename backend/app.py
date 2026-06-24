@@ -305,7 +305,7 @@ def create_app():
 
     def get_backend_base_url():
         configured_url = clean_text(get_env("BACKEND_BASE_URL")).rstrip("/")
-        if configured_url:
+        if is_public_http_url(configured_url):
             return configured_url
         if not has_request_context():
             return ""
@@ -2530,16 +2530,7 @@ def create_app():
                   </tr>
                 </table>
               </div>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 18px;">
-                <tr>
-                  <td style="border-top:1px solid #dfe5ff;font-size:1px;line-height:1px;">&nbsp;</td>
-                  <td style="width:44px;text-align:center;">
-                    <div style="width:28px;height:28px;margin:0 auto;border-radius:50%;background:#e9f7f2;color:#12a77c;text-align:center;font-size:16px;line-height:28px;">&#9675;</div>
-                  </td>
-                  <td style="border-top:1px solid #dfe5ff;font-size:1px;line-height:1px;">&nbsp;</td>
-                </tr>
-              </table>
-              <p style="margin:0;text-align:center;font-size:14px;line-height:1.6;color:#10183c;">Si necesitas reprogramar o cancelar tu turno, contacta directamente con el profesional.</p>
+              <p style="margin:0;padding-top:18px;border-top:1px solid #dfe5ff;text-align:center;font-size:14px;line-height:1.6;color:#10183c;">Si necesitas reprogramar o cancelar tu turno, contacta directamente con el profesional.</p>
             </div>
           </div>
         </div>
