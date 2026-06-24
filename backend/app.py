@@ -2498,35 +2498,27 @@ def create_app():
             <div style="padding:32px 34px 34px;">
               <p style="margin:0 0 22px;font-size:18px;line-height:1.4;">Hola <strong>{patient.full_name}</strong>,</p>
               <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">Te compartimos los detalles de tu turno.</p>
-              <div style="background:#fbfcff;border:1px solid #dfe5ff;border-radius:12px;padding:26px 28px;margin-bottom:30px;">
+              <div style="background:#fbfcff;border:1px solid #dfe5ff;border-radius:12px;padding:20px 24px;margin-bottom:30px;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                   <tr>
-                    <td style="width:48%;vertical-align:top;padding:0 28px 0 0;border-right:1px solid #e3e8f7;">
-                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 28px;">
-                        <tr>
-                          <td style="vertical-align:middle;padding:0;">
-                            <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Fecha</p>
-                            <p style="margin:0;font-size:19px;line-height:1.25;font-weight:900;color:#10183c;">{notification_data["date_short_str"]}</p>
-                          </td>
-                        </tr>
-                      </table>
-                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
-                        <tr>
-                          <td style="vertical-align:middle;padding:0;">
-                            <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Hora</p>
-                            <p style="margin:0;font-size:19px;line-height:1.25;font-weight:900;color:#10183c;">{notification_data["time_display_str"]}</p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                    <td style="width:52%;vertical-align:top;padding:0 0 0 28px;">
-                      <p style="margin:0 0 5px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;"><span style="display:inline-block;vertical-align:-4px;margin-right:6px;">{profile_icon}</span>Profesional</p>
-                      <p style="margin:0 0 22px;font-size:15px;line-height:1.35;color:#10183c;"><strong>{notification_data["psychologist_name"]}</strong>{notification_data["psychologist_title"]}</p>
-                      <p style="margin:0 0 5px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;"><span style="display:inline-block;vertical-align:-4px;margin-right:6px;">{location_icon}</span>Lugar</p>
-                      <p style="margin:0 0 22px;font-size:15px;line-height:1.35;color:#10183c;">{appointment_location}</p>
-                      <p style="margin:0 0 5px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;"><span style="display:inline-block;vertical-align:-4px;margin-right:6px;">{mail_icon}</span>Contacto del profesional</p>
-                      <p style="margin:0;font-size:15px;line-height:1.35;color:#10183c;">{notification_email or "No informado"}</p>
-                    </td>
+                    <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Fecha</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:18px;line-height:1.35;font-weight:900;color:#10183c;">{notification_data["date_short_str"]}</td>
+                  </tr>
+                  <tr>
+                    <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Hora</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:18px;line-height:1.35;font-weight:900;color:#10183c;">{notification_data["time_display_str"]}</td>
+                  </tr>
+                  <tr>
+                    <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Profesional</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;"><strong>{notification_data["psychologist_name"]}</strong>{notification_data["psychologist_title"]}</td>
+                  </tr>
+                  <tr>
+                    <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Lugar</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{appointment_location}</td>
+                  </tr>
+                  <tr>
+                    <td style="width:35%;padding:12px 14px 12px 0;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Contacto</td>
+                    <td style="padding:12px 0;font-size:15px;line-height:1.35;color:#10183c;">{notification_email or "No informado"}</td>
                   </tr>
                 </table>
               </div>
