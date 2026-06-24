@@ -2438,58 +2438,23 @@ def create_app():
         appointment_location = notification_data["appointment_location"]
         notification_email = notification_data["notification_email"]
         message = notification_data["message"]
-        logo_filename = "logo 6 baja max.png"
         logo_url = (
             get_email_asset_url("logo 6 baja max.png")
             or get_email_asset_url("logo 6 baja.png")
             or get_email_asset_url("logo 6.png")
         )
-        logo_bytes = None if logo_url else (
-            load_inline_image_bytes(get_frontend_asset_path("logo 6 baja max.png"))
-            or load_inline_image_bytes(get_frontend_asset_path("logo 6 baja.png"))
-            or load_inline_image_bytes(get_frontend_asset_path("logo 6.png"))
-            or load_inline_image_bytes(get_public_asset_path("logo_terapia_baja.png"))
-        )
-        icon_assets = {
-            "calendar": ("calendario.png", "therapydesk-calendar-icon"),
-            "clock": ("hora.png", "therapydesk-clock-icon"),
-            "profile": ("usuario.png", "therapydesk-profile-icon"),
-            "location": ("ubicacion.png", "therapydesk-location-icon"),
-            "mail": ("mail.png", "therapydesk-mail-icon"),
-        }
-        inline_icon_attachments = []
-        icon_sources = {}
-        for icon_name, (filename, content_id) in icon_assets.items():
-            icon_url = get_email_asset_url(filename)
-            if icon_url:
-                icon_sources[icon_name] = icon_url
-                continue
-
-            icon_bytes = load_inline_image_bytes(get_frontend_asset_path(filename))
-            if icon_bytes:
-                icon_sources[icon_name] = f"cid:{content_id}"
-                inline_icon_attachments.append({
-                    "filename": filename,
-                    "content_type": "image/png",
-                    "data": icon_bytes,
-                    "content_id": content_id,
-                })
-
-        def email_icon_markup(icon_name, alt_text, size=28):
-            label = clean_text(alt_text)[:2].upper()
-            return (
-                f'<span style="display:inline-block;width:{size}px;height:{size}px;'
-                f'border-radius:50%;background:#e9f7f2;color:#12a77c;text-align:center;'
-                f'font-size:10px;line-height:{size}px;font-weight:900;">{label}</span>'
-            )
-
-        calendar_icon = email_icon_markup("calendar", "Calendario", 30)
-        clock_icon = email_icon_markup("clock", "Hora", 30)
-        profile_icon = email_icon_markup("profile", "Profesional", 17)
-        location_icon = email_icon_markup("location", "Lugar", 17)
-        mail_icon = email_icon_markup("mail", "Email", 17)
+        profile_icon = ""
+        location_icon = ""
+        mail_icon = ""
         header_calendar_illustration = ""
         logo_markup = (
+            '<div style="width:46px;height:46px;border-radius:50%;background:#ffffff;'
+            'overflow:hidden;text-align:center;">'
+            f'<img src="{logo_url}" alt="TherapyDesk" '
+            'style="width:46px;height:46px;display:block;object-fit:cover;border:0;" />'
+            '</div>'
+            if logo_url
+            else
             '<div style="width:46px;height:46px;border-radius:50%;background:#ffffff;'
             'color:#17265f;text-align:center;font-size:18px;line-height:46px;font-weight:900;">TD</div>'
         )
@@ -2527,9 +2492,6 @@ def create_app():
                     <td style="width:48%;vertical-align:top;padding:0 28px 0 0;border-right:1px solid #e3e8f7;">
                       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 28px;">
                         <tr>
-                          <td style="width:56px;vertical-align:middle;padding:0 16px 0 0;">
-                            <div style="width:50px;height:50px;border-radius:50%;background:#e9f7f2;text-align:center;line-height:50px;">{calendar_icon}</div>
-                          </td>
                           <td style="vertical-align:middle;padding:0;">
                             <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Fecha</p>
                             <p style="margin:0;font-size:19px;line-height:1.25;font-weight:900;color:#10183c;">{notification_data["date_short_str"]}</p>
@@ -2538,9 +2500,6 @@ def create_app():
                       </table>
                       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                         <tr>
-                          <td style="width:56px;vertical-align:middle;padding:0 16px 0 0;">
-                            <div style="width:50px;height:50px;border-radius:50%;background:#e9f7f2;text-align:center;line-height:50px;">{clock_icon}</div>
-                          </td>
                           <td style="vertical-align:middle;padding:0;">
                             <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Hora</p>
                             <p style="margin:0;font-size:19px;line-height:1.25;font-weight:900;color:#10183c;">{notification_data["time_display_str"]}</p>
