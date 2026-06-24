@@ -4,6 +4,8 @@ import threading
 from datetime import timedelta, datetime
 from pathlib import Path
 from urllib.parse import quote, urlparse
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -63,6 +65,10 @@ def configure_security(app):
     app_env = get_env("APP_ENV", "development").lower()
     is_production = app_env == "production"
     database_url = get_env("DATABASE_URL", "sqlite:///dev.db")
+    if database_url and database_url.startswith("postgres://"):
+        database_url = "postgresql://" + database_url[len("postgres://"):]
+    if database_url and database_url.startswith("postgresql://") and "sslmode=" not in database_url:
+        database_url = f"{database_url}{'&' if '?' in database_url else '?'}sslmode=require"
     jwt_secret = get_env("JWT_SECRET_KEY")
     cors_origins = parse_cors_origins(get_env("CORS_ORIGINS"))
 
@@ -78,7 +84,8 @@ def configure_security(app):
     app.config["IS_PRODUCTION"] = is_production
     app.config["CORS_ORIGINS"] = cors_origins
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_DATABASE_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
     app.config["JWT_SECRET_KEY"] = jwt_secret or "dev-only-change-me"
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 
@@ -89,6 +96,7 @@ def create_app():
     configure_security(app)
 
     # Email configuration
+    app.config["BREVO_API_KEY"] = get_env("BREVO_API_KEY", "")
     app.config["MAIL_SERVER"] = get_env("MAIL_SERVER", "smtp-relay.brevo.com")
     app.config["MAIL_PORT"] = int(get_env("MAIL_PORT", 587))
     app.config["MAIL_USE_TLS"] = env_bool("MAIL_USE_TLS", True)
@@ -139,11 +147,13 @@ def create_app():
         sender_name=None,
         reply_to=None,
     ):
-        """Enviar email usando Flask-Mail"""
+        """Enviar email usando Brevo API HTTPS si está configurada, con fallback SMTP."""
+        brevo_api_key = clean_text(app.config.get("BREVO_API_KEY"))
         mail_server = clean_text(app.config.get("MAIL_SERVER")).lower()
         username = clean_text(app.config.get("MAIL_USERNAME"))
         password = clean_text(app.config.get("MAIL_PASSWORD"))
         sender_default = clean_text(app.config.get("MAIL_DEFAULT_SENDER"))
+        api_sender_email = sender_default or username or clean_text(sender_email)
 
         placeholder_values = {
             "",
@@ -151,11 +161,82 @@ def create_app():
             "your-app-password",
             "tu-email@gmail.com",
             "xxxx-xxxx-xxxx-xxxx",
+            "tu-clave-brevo-api",
+            "your-brevo-api-key",
             "your-brevo-login",
             "your-brevo-smtp-key",
             "tu-login-brevo",
             "tu-clave-smtp-brevo",
         }
+
+        def explain_brevo_error(raw_message):
+            try:
+                error_data = json.loads(raw_message)
+            except (TypeError, ValueError):
+                return raw_message
+
+            message = clean_text(error_data.get("message")) if isinstance(error_data, dict) else ""
+            code = clean_text(error_data.get("code")) if isinstance(error_data, dict) else ""
+            if not message:
+                return raw_message
+            if code:
+                return f"{message} ({code})"
+            return message
+
+        if brevo_api_key:
+            if api_sender_email in placeholder_values:
+                return False, (
+                    "Configuración de email incompleta. Revisá MAIL_DEFAULT_SENDER en backend/.env"
+                )
+
+            payload = {
+                "sender": {
+                    "name": sender_name or "TherapyDesk",
+                    "email": api_sender_email,
+                },
+                "to": [{"email": recipient}],
+                "subject": subject,
+                "textContent": body,
+            }
+            if html_body:
+                payload["htmlContent"] = html_body
+
+            reply_to_email = clean_text(reply_to) or clean_text(sender_email) or api_sender_email
+            if reply_to_email:
+                payload["replyTo"] = {
+                    "email": reply_to_email,
+                    "name": sender_name or "TherapyDesk",
+                }
+
+            try:
+                request_data = json.dumps(payload).encode("utf-8")
+                request = Request(
+                    "https://api.brevo.com/v3/smtp/email",
+                    data=request_data,
+                    headers={
+                        "accept": "application/json",
+                        "content-type": "application/json",
+                        "api-key": brevo_api_key,
+                    },
+                    method="POST",
+                )
+                with urlopen(request, timeout=int(app.config.get("MAIL_TIMEOUT", 10))) as response:
+                    response_body = response.read().decode("utf-8", errors="ignore")
+                print(f"[EMAIL SENT VIA BREVO API] to {recipient}: {subject} {response_body}")
+                return True, None
+            except HTTPError as e:
+                error_body = ""
+                try:
+                    error_body = e.read().decode("utf-8", errors="ignore")
+                except Exception:
+                    error_body = ""
+                error_message = explain_brevo_error(error_body) or e.reason or str(e)
+                print(f"[EMAIL API ERROR] {e.code} {error_message}")
+                return False, f"No se pudo enviar el email por API: {error_message}"
+            except URLError as e:
+                error_message = getattr(e, "reason", None) or str(e)
+                print(f"[EMAIL API ERROR] {error_message}")
+                return False, f"No se pudo conectar con el proveedor de email: {error_message}"
 
         if username in placeholder_values or password in placeholder_values:
             return False, (
@@ -894,9 +975,17 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        ensure_column("user", "default_session_minutes", "INTEGER DEFAULT 50")
         ensure_column("user", "role", "VARCHAR(20) DEFAULT 'psychologist'")
         ensure_column("user", "is_active", "BOOLEAN DEFAULT 1")
+        ensure_column("admin_audit_log", "target_user_id", "INTEGER")
+        ensure_column("password_reset_request", "mail_sent", "BOOLEAN DEFAULT 0")
+        ensure_column("password_reset_request", "mail_error", "TEXT")
+        ensure_column("password_reset_request", "resolved_at", "DATETIME")
         ensure_column("psychologist_profile", "full_name", "VARCHAR(255)")
+        ensure_column("psychologist_profile", "professional_title", "VARCHAR(255)")
+        ensure_column("psychologist_profile", "description", "TEXT")
+        ensure_column("psychologist_profile", "office_address", "TEXT")
         ensure_column("psychologist_profile", "photo_data_url", "TEXT")
         ensure_column("psychologist_profile", "office_addresses_json", "TEXT")
         ensure_column("psychologist_profile", "notification_email", "VARCHAR(120)")
@@ -905,10 +994,12 @@ def create_app():
         ensure_column("psychologist_profile", "auto_reminder_hours_before", "INTEGER DEFAULT 24")
         ensure_column("psychologist_profile", "visible_agenda_start_time", "VARCHAR(5) DEFAULT '06:00'")
         ensure_column("psychologist_profile", "visible_agenda_end_time", "VARCHAR(5) DEFAULT '22:00'")
+        ensure_column("psychologist_profile", "updated_at", "DATETIME")
         ensure_column("appointment", "location", "TEXT")
         ensure_column("appointment", "recurring_series_id", "INTEGER")
         ensure_column("appointment", "recurrence_origin_date", "DATE")
         ensure_column("appointment", "last_auto_reminder_sent_at", "DATETIME")
+        ensure_column("appointment", "created_at", "DATETIME")
         ensure_column("patient", "dni", "VARCHAR(40)")
         ensure_column("patient", "date_of_birth", "DATE")
         ensure_column("patient", "address", "TEXT")
@@ -916,6 +1007,7 @@ def create_app():
         ensure_column("patient", "insurance", "VARCHAR(120)")
         ensure_column("patient", "emergency_contact_name", "VARCHAR(120)")
         ensure_column("patient", "emergency_contact_phone", "VARCHAR(40)")
+        ensure_column("patient", "created_at", "DATETIME")
 
     def configured_admin_emails():
         raw = get_env("ADMIN_EMAILS", "")
@@ -1089,8 +1181,11 @@ def create_app():
         if get_env("APP_ENV", "development") == "production":
             return jsonify({"msg": "No disponible"}), 404
 
+        brevo_api_key = clean_text(app.config.get("BREVO_API_KEY"))
         password = clean_text(app.config.get("MAIL_PASSWORD"))
         return jsonify({
+            "email_mode": "brevo_api" if brevo_api_key else "smtp",
+            "brevo_api_key_configured": bool(brevo_api_key),
             "mail_server": app.config.get("MAIL_SERVER"),
             "mail_username": app.config.get("MAIL_USERNAME"),
             "mail_password_length": len(password),
@@ -1098,6 +1193,27 @@ def create_app():
             "mail_default_sender": app.config.get("MAIL_DEFAULT_SENDER"),
             "admin_emails_count": len(configured_admin_emails()),
         }), 200
+
+    @app.post("/debug/send-test-email")
+    def debug_send_test_email():
+        if get_env("APP_ENV", "development") == "production":
+            return jsonify({"msg": "No disponible"}), 404
+
+        body = request.get_json(silent=True) or {}
+        recipient = normalize_email(body.get("recipient")) or normalize_email(app.config.get("MAIL_DEFAULT_SENDER"))
+        if not recipient:
+            return jsonify({"msg": "recipient es obligatorio"}), 400
+
+        sent, error_message = send_email(
+            recipient=recipient,
+            subject="Prueba de email TherapyDesk",
+            body="Si recibiste este email, la configuracion de envio esta funcionando.",
+            html_body="<p>Si recibiste este email, la configuracion de envio esta funcionando.</p>",
+            sender_name="TherapyDesk",
+        )
+        if not sent:
+            return jsonify({"sent": False, "msg": error_message}), 502
+        return jsonify({"sent": True, "msg": f"Email de prueba enviado a {recipient}"}), 200
 
     # --- AUTH ---
     @app.post("/auth/register")
@@ -2488,28 +2604,28 @@ def create_app():
             patient_name = patient.full_name
             sender_name = notification_data["psychologist_name"]
 
-            def email_worker():
-                with app.app_context():
-                    sent, error_message = send_email(
-                        recipient_email,
-                        "Confirmacion de turno",
-                        message,
-                        html_body=html_message,
-                        inline_attachments=inline_attachments,
-                        sender_email=notification_email,
-                        sender_name=sender_name,
-                        reply_to=notification_email,
-                    )
-                    if sent:
-                        print(f"[APPOINTMENT EMAIL] enviado a {recipient_email} para turno {appointment_id}")
-                    else:
-                        print(f"[APPOINTMENT EMAIL ERROR] turno {appointment_id} a {recipient_email}: {error_message}")
+            sent, error_message = send_email(
+                recipient_email,
+                "Confirmacion de turno",
+                message,
+                html_body=html_message,
+                inline_attachments=inline_attachments,
+                sender_email=notification_email,
+                sender_name=sender_name,
+                reply_to=notification_email,
+            )
+            if sent:
+                print(f"[APPOINTMENT EMAIL] enviado a {recipient_email} para turno {appointment_id}")
+                return jsonify({
+                    "msg": f"Notificacion enviada para {patient_name} via {method} ({contact_info})",
+                    "detail": message,
+                }), 200
 
-            threading.Thread(target=email_worker, daemon=True).start()
+            print(f"[APPOINTMENT EMAIL ERROR] turno {appointment_id} a {recipient_email}: {error_message}")
             return jsonify({
-                "msg": f"Notificacion en proceso para {patient_name} via {method} ({contact_info})",
+                "msg": error_message or "No se pudo enviar la notificacion",
                 "detail": message,
-            }), 202
+            }), 502
         elif method == "whatsapp":
             if not patient.phone:
                 return jsonify({"msg": "El paciente no tiene teléfono registrado"}), 400
