@@ -8,7 +8,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, has_request_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import (
@@ -304,7 +304,19 @@ def create_app():
         return Path(__file__).resolve().parent.parent / "frontend" / "src" / "assets" / filename
 
     def get_backend_base_url():
-        return clean_text(get_env("BACKEND_BASE_URL")).rstrip("/")
+        configured_url = clean_text(get_env("BACKEND_BASE_URL")).rstrip("/")
+        if configured_url:
+            return configured_url
+        if not has_request_context():
+            return ""
+
+        forwarded_proto = clean_text(request.headers.get("X-Forwarded-Proto")).split(",")[0].strip()
+        forwarded_host = clean_text(request.headers.get("X-Forwarded-Host")).split(",")[0].strip()
+        scheme = forwarded_proto or request.scheme
+        host = forwarded_host or request.host
+        if not scheme or not host:
+            return ""
+        return f"{scheme}://{host}".rstrip("/")
 
     def is_public_http_url(value):
         parsed = urlparse(value or "")
