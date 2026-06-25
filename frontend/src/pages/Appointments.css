@@ -42,7 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   flex-wrap: wrap;
 }
@@ -110,16 +110,47 @@
 }
 
 .appointments-page__week-label {
-  min-height: 40px;
+  position: relative;
+  min-height: 44px;
   display: flex;
   align-items: center;
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.72);
+  gap: 10px;
+  padding: 0 16px 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(40, 169, 121, 0.24);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 255, 249, 0.88));
   color: var(--color-text-strong);
   font-weight: 800;
+  line-height: 1;
   white-space: nowrap;
+  box-shadow: 0 10px 22px rgba(40, 169, 121, 0.11), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.appointments-page__week-label::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  background:
+    linear-gradient(var(--color-primary-deep), var(--color-primary-deep)) 50% 7px / 12px 2px no-repeat,
+    linear-gradient(var(--color-primary-deep), var(--color-primary-deep)) 7px 13px / 3px 3px no-repeat,
+    linear-gradient(var(--color-primary-deep), var(--color-primary-deep)) 13px 13px / 3px 3px no-repeat,
+    linear-gradient(var(--color-primary-deep), var(--color-primary-deep)) 7px 17px / 3px 3px no-repeat,
+    linear-gradient(var(--color-primary-deep), var(--color-primary-deep)) 13px 17px / 3px 3px no-repeat,
+    rgba(217, 244, 233, 0.92);
+  border: 1px solid rgba(40, 169, 121, 0.28);
+  box-shadow: inset 0 3px 0 rgba(18, 167, 124, 0.32);
+}
+
+.appointments-page__week-label::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.62);
 }
 
 .appointments-page__mobile-days {
@@ -295,9 +326,31 @@
 }
 
 .appointments-page__message {
-  margin: 12px 0 0;
+  position: sticky;
+  top: 74px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
   color: var(--color-text-strong);
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.35;
+  box-shadow: 0 12px 24px rgba(16, 24, 60, 0.12);
+}
+
+.appointments-page__message--error {
+  border: 1px solid rgba(239, 68, 68, 0.36);
+  background: rgba(254, 242, 242, 0.98);
+  color: #991b1b;
+}
+
+.appointments-page__message--success {
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(236, 253, 245, 0.98);
+  color: #065f46;
 }
 
 .appointment-panel {
@@ -660,12 +713,15 @@
   .appointments-page__actions {
     width: 100%;
     justify-content: flex-start;
+    gap: 8px;
   }
 
   .appointments-page__week-label {
     order: -1;
     width: 100%;
     justify-content: center;
+    min-height: 46px;
+    font-size: 15px;
   }
 
   .appointments-page__primary-button {
@@ -766,6 +822,18 @@
 }
 
 @media (max-width: 520px) {
+  .appointments-page__week-label {
+    justify-content: flex-start;
+    padding-right: 12px;
+    font-size: 13px;
+  }
+
+  .appointments-page__week-label::before {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+  }
+
   .appointment-panel__body {
     padding: 18px;
   }
