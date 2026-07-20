@@ -648,7 +648,8 @@ def create_app():
         date_short_str = format_date_in_spanish(start_at, include_year=False)
         time_str = format_time_12h(start_at)
         time_display_str = format_time_24h(start_at)
-        email_subject = f"{date_short_str} - {time_display_str} | Confirmación de turno"
+        subject_date_str = date_short_str[:1].upper() + date_short_str[1:]
+        email_subject = f"{subject_date_str} - {time_display_str} | Confirmación de turno"
         psychologist_name = (
             profile.full_name if profile and profile.full_name else user.email
         )
