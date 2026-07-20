@@ -649,10 +649,10 @@ def create_app():
         time_str = format_time_12h(start_at)
         time_display_str = format_time_24h(start_at)
         subject_date_str = date_short_str[:1].upper() + date_short_str[1:]
-        email_subject = f"{subject_date_str} - {time_display_str} | Confirmación de turno"
         psychologist_name = (
             profile.full_name if profile and profile.full_name else user.email
         )
+        email_subject = f"{subject_date_str} - {time_display_str} | {psychologist_name} | Confirmación de turno"
         psychologist_title = (
             f" ({profile.professional_title})"
             if profile and profile.professional_title
