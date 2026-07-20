@@ -648,6 +648,7 @@ def create_app():
         date_short_str = format_date_in_spanish(start_at, include_year=False)
         time_str = format_time_12h(start_at)
         time_display_str = format_time_24h(start_at)
+        email_subject = f"{date_short_str} - {time_display_str} | Confirmación de turno"
         psychologist_name = (
             profile.full_name if profile and profile.full_name else user.email
         )
@@ -689,6 +690,7 @@ def create_app():
             "date_short_str": date_short_str,
             "time_str": time_str,
             "time_display_str": time_display_str,
+            "email_subject": email_subject,
             "psychologist_name": psychologist_name,
             "psychologist_title": psychologist_title,
             "patient_phone": patient_phone,
@@ -2471,9 +2473,21 @@ def create_app():
             'color:#17265f;text-align:center;font-size:18px;line-height:46px;font-weight:900;">TD</div>'
         )
         inline_attachments = []
+        email_preheader = (
+            f"Te compartimos los detalles de tu turno del "
+            f"{notification_data['date_short_str']} a las {notification_data['time_display_str']}."
+        )
+        patient_name_html = escape(patient.full_name)
+        date_short_html = escape(notification_data["date_short_str"])
+        time_display_html = escape(notification_data["time_display_str"])
+        psychologist_name_html = escape(notification_data["psychologist_name"])
+        psychologist_title_html = escape(notification_data["psychologist_title"])
+        appointment_location_html = escape(appointment_location)
+        notification_email_html = escape(notification_email or "No informado")
 
         html_message = f"""
         <div style="background:#eef2ff;padding:24px 12px;font-family:Arial,sans-serif;color:#10183c;">
+          <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">{escape(email_preheader)}</div>
           <div style="max-width:760px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #d9defa;box-shadow:0 12px 30px rgba(16,24,60,0.12);">
             <div style="background:linear-gradient(135deg,#07143a,#17265f);padding:12px 28px 0;color:#ffffff;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 10px;">
@@ -2496,29 +2510,29 @@ def create_app():
               <div style="height:5px;background:#12a77c;"></div>
             </div>
             <div style="padding:32px 34px 34px;">
-              <p style="margin:0 0 22px;font-size:18px;line-height:1.4;">Hola <strong>{patient.full_name}</strong>,</p>
+              <p style="margin:0 0 22px;font-size:18px;line-height:1.4;">Hola <strong>{patient_name_html}</strong>,</p>
               <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">Te compartimos los detalles de tu turno.</p>
               <div style="background:#fbfcff;border:1px solid #dfe5ff;border-radius:12px;padding:20px 24px;margin-bottom:30px;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                   <tr>
                     <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Fecha</td>
-                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:18px;line-height:1.35;font-weight:900;color:#10183c;">{notification_data["date_short_str"]}</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:18px;line-height:1.35;font-weight:900;color:#10183c;">{date_short_html}</td>
                   </tr>
                   <tr>
                     <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Hora</td>
-                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:18px;line-height:1.35;font-weight:900;color:#10183c;">{notification_data["time_display_str"]}</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:18px;line-height:1.35;font-weight:900;color:#10183c;">{time_display_html}</td>
                   </tr>
                   <tr>
                     <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Profesional</td>
-                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;"><strong>{notification_data["psychologist_name"]}</strong>{notification_data["psychologist_title"]}</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;"><strong>{psychologist_name_html}</strong>{psychologist_title_html}</td>
                   </tr>
                   <tr>
                     <td style="width:35%;padding:12px 14px 12px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Lugar</td>
-                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{appointment_location}</td>
+                    <td style="padding:12px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{appointment_location_html}</td>
                   </tr>
                   <tr>
                     <td style="width:35%;padding:12px 14px 12px 0;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#6b759a;">Contacto</td>
-                    <td style="padding:12px 0;font-size:15px;line-height:1.35;color:#10183c;">{notification_email or "No informado"}</td>
+                    <td style="padding:12px 0;font-size:15px;line-height:1.35;color:#10183c;">{notification_email_html}</td>
                   </tr>
                 </table>
               </div>
@@ -2539,7 +2553,7 @@ def create_app():
 
             sent, error_message = send_email(
                 recipient_email,
-                "Confirmacion de turno",
+                notification_data["email_subject"],
                 message,
                 html_body=html_message,
                 inline_attachments=inline_attachments,
@@ -2654,7 +2668,7 @@ def create_app():
                     if patient.email:
                         success, _ = send_email(
                             recipient=patient.email,
-                            subject=f"Recordatorio de turno - {notification_data['date_str']}",
+                            subject=notification_data["email_subject"],
                             body=notification_data["message"],
                             sender_email=notification_data["notification_email"],
                             sender_name=notification_data["psychologist_name"],
