@@ -173,6 +173,24 @@
   align-items: start;
 }
 
+.booking-page__month {
+  min-width: 0;
+}
+
+.booking-page__weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.booking-page__weekday-row span {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: center;
+}
+
 .booking-page__days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -181,27 +199,20 @@
 
 .booking-page__day {
   min-width: 0;
-  min-height: 92px;
+  aspect-ratio: 1;
+  min-height: 48px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 999px;
   background: #fbfcff;
   color: var(--color-text-strong);
   display: grid;
   place-items: center;
-  gap: 2px;
-  padding: 10px 6px;
-}
-
-.booking-page__day span,
-.booking-page__day small {
-  color: var(--color-text-muted);
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-transform: uppercase;
+  position: relative;
+  padding: 0;
 }
 
 .booking-page__day strong {
-  font-size: 1.7rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
@@ -223,9 +234,18 @@
   box-shadow: 0 12px 24px rgba(18, 167, 124, 0.22);
 }
 
-.booking-page__day--selected span,
-.booking-page__day--selected small {
-  color: #e8fff6;
+.booking-page__day--outside {
+  color: #a6b0c4;
+  background: transparent;
+}
+
+.booking-page__day-dot {
+  position: absolute;
+  bottom: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .booking-page__time-panel {
@@ -435,11 +455,11 @@
   }
 
   .booking-page__days {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .booking-page__day {
-    min-height: 82px;
+    min-height: 44px;
   }
 
   .booking-page__slots {
@@ -462,24 +482,16 @@
     height: 40px;
   }
 
-  .booking-page__days,
   .booking-page__slots {
     grid-template-columns: 1fr;
   }
 
   .booking-page__day {
-    grid-template-columns: 48px 1fr auto;
-    justify-items: start;
-    min-height: 58px;
-    padding: 10px 14px;
+    min-height: 40px;
   }
 
   .booking-page__day strong {
-    font-size: 1.35rem;
-  }
-
-  .booking-page__day small {
-    justify-self: end;
+    font-size: 0.95rem;
   }
 
   .booking-page__notice-card {
