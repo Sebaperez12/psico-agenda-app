@@ -250,8 +250,10 @@
 
 .booking-page__time-panel {
   min-height: 100%;
+  max-height: 520px;
   padding-left: 24px;
   border-left: 1px solid #e4ebf2;
+  overflow: hidden;
 }
 
 .booking-page__time-panel h3 {
@@ -265,6 +267,25 @@
 .booking-page__slots {
   display: grid;
   gap: 10px;
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(18, 167, 124, 0.55) #eef7f5;
+}
+
+.booking-page__slots::-webkit-scrollbar {
+  width: 8px;
+}
+
+.booking-page__slots::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #eef7f5;
+}
+
+.booking-page__slots::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(18, 167, 124, 0.55);
 }
 
 .booking-page__slot {
@@ -418,6 +439,7 @@
   }
 
   .booking-page__time-panel {
+    max-height: none;
     padding: 22px 0 0;
     border-left: 0;
     border-top: 1px solid #e4ebf2;
@@ -425,6 +447,7 @@
 
   .booking-page__slots {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-height: 240px;
   }
 }
 
