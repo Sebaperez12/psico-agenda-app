@@ -379,6 +379,10 @@ export default function PublicBooking() {
         <span>i</span>
         <p>El turno queda pendiente hasta que el profesional lo confirme. Recibiras un email con la confirmacion.</p>
       </section>
+
+      <p className="booking-page__brand-credit">
+        Gestionado con <strong>Therapy<span>Desk</span></strong>
+      </p>
     </main>
   );
 }

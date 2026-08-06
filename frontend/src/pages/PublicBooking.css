@@ -438,6 +438,22 @@
   line-height: 1.55;
 }
 
+.booking-page__brand-credit {
+  width: min(1240px, 100%);
+  margin: 16px auto 0;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.booking-page__brand-credit strong {
+  color: var(--color-text-strong);
+}
+
+.booking-page__brand-credit span {
+  color: var(--color-primary);
+}
+
 @media (max-width: 1080px) {
   .booking-page__workspace,
   .booking-page__picker {
