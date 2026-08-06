@@ -1499,7 +1499,13 @@ def create_app():
         date_str = format_date_in_spanish(appointment.start_at)
         date_short_str = format_date_in_spanish(appointment.start_at, include_year=False)
         subject_date_str = date_short_str[:1].upper() + date_short_str[1:]
+        date_parts = date_short_str.split()
+        appointment_weekday = date_parts[0].upper() if date_parts else ""
+        appointment_day = str(appointment.start_at.day)
+        appointment_month = date_parts[-1].upper() if date_parts else ""
+        appointment_year = str(appointment.start_at.year)
         time_str = format_time_24h(appointment.start_at)
+        time_compact_str = time_str.replace(" hs", "")
         psychologist_name = profile.full_name or "tu profesional"
         contact_email = profile.notification_email or user.email
         professional_email = normalize_email(contact_email)
@@ -1553,47 +1559,51 @@ def create_app():
                     "El turno quedo pendiente. Revisalo y confirmalo desde tu agenda."
                 ),
                 html_body=f"""
-                <div style="background:#eef2ff;padding:24px 12px;font-family:Arial,sans-serif;color:#10183c;">
-                  <div style="max-width:680px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #d9defa;box-shadow:0 12px 30px rgba(16,24,60,0.12);">
-                    <div style="background:linear-gradient(135deg,#07143a,#17265f);padding:18px 28px;color:#ffffff;border-bottom:5px solid #12a77c;">
-                      <p style="margin:0;font-size:20px;line-height:1;font-weight:800;color:#ffffff;">Therapy<span style="color:#12a77c;">Desk</span></p>
-                      <p style="margin:12px 0 0;font-size:13px;line-height:1.4;color:#dfe5ff;font-weight:700;text-transform:uppercase;">Nueva solicitud de turno</p>
-                    </div>
-                    <div style="padding:30px 32px 32px;">
-                      <p style="margin:0 0 18px;font-size:18px;line-height:1.4;">Hola <strong>{escape(psychologist_name)}</strong>,</p>
-                      <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">Tenes una nueva solicitud de turno desde tu link de reservas.</p>
-                      <div style="background:#fbfcff;border:1px solid #dfe5ff;border-radius:8px;padding:18px 22px;margin-bottom:24px;">
+                <div style="background:#f4f7fb;padding:28px 12px;font-family:Arial,sans-serif;color:#10183c;">
+                  <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #dfe6f2;box-shadow:0 12px 30px rgba(16,24,60,0.08);border-top:4px solid #12a77c;">
+                    <div style="padding:22px 28px 12px;">
+                      <p style="margin:0 0 28px;font-size:13px;line-height:1;font-weight:700;color:#7a849f;">Therapy<span style="color:#12a77c;">Desk</span></p>
+                      <p style="margin:0 0 12px;font-size:18px;line-height:1.4;">Hola <strong>{escape(psychologist_name)}</strong>,</p>
+                      <p style="margin:0 0 22px;font-size:14px;line-height:1.6;color:#374267;">Tenes una nueva solicitud de turno desde tu link de reservas.</p>
+                      <div style="border:1px solid #dfe6f2;border-radius:8px;background:#fbfcff;padding:20px;margin-bottom:22px;">
                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                           <tr>
-                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Paciente</td>
-                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:16px;line-height:1.35;font-weight:900;color:#10183c;">{escape(full_name)}</td>
-                          </tr>
-                          <tr>
-                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Contacto</td>
-                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(patient_contact)}</td>
-                          </tr>
-                          <tr>
-                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Fecha</td>
-                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(date_str)}</td>
-                          </tr>
-                          <tr>
-                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Hora</td>
-                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(time_str)}</td>
-                          </tr>
-                          <tr>
-                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Lugar</td>
-                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(appointment.location or 'A confirmar')}</td>
-                          </tr>
-                          <tr>
-                            <td style="width:34%;padding:10px 14px 10px 0;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Notas</td>
-                            <td style="padding:10px 0;font-size:15px;line-height:1.35;color:#10183c;">{escape(notes or 'Sin notas')}</td>
+                            <td style="width:48%;text-align:center;padding:4px 18px 4px 4px;border-right:1px solid #dfe6f2;">
+                              <p style="margin:0 0 8px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">{escape(appointment_weekday)}</p>
+                              <p style="margin:0;font-size:54px;line-height:0.95;font-weight:900;color:#12a77c;">{escape(appointment_day)}</p>
+                              <p style="margin:8px 0 2px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">{escape(appointment_month)}</p>
+                              <p style="margin:0;font-size:14px;font-weight:700;color:#7a849f;">{escape(appointment_year)}</p>
+                            </td>
+                            <td style="width:52%;text-align:center;padding:4px 4px 4px 22px;">
+                              <p style="margin:0 0 8px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">Hora</p>
+                              <p style="margin:0;font-size:54px;line-height:1;font-weight:400;color:#1f2937;">{escape(time_compact_str)}<span style="font-size:18px;color:#374267;"> hs</span></p>
+                            </td>
                           </tr>
                         </table>
                       </div>
-                      <p style="margin:0 0 24px;text-align:center;">
-                        <a href="{escape(appointments_url)}" style="display:inline-block;background:#12a77c;color:#ffffff;text-decoration:none;padding:13px 22px;border-radius:8px;font-weight:900;">Abrir agenda</a>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:24px;">
+                        <tr>
+                          <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Paciente</td>
+                          <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;font-weight:900;color:#10183c;">{escape(full_name)}</td>
+                        </tr>
+                        <tr>
+                          <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Contacto</td>
+                          <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(patient_contact)}</td>
+                        </tr>
+                        <tr>
+                          <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Modalidad</td>
+                          <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(appointment.location or 'A confirmar')}</td>
+                        </tr>
+                        <tr>
+                          <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Notas</td>
+                          <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(notes or 'Sin notas')}</td>
+                        </tr>
+                      </table>
+                      <p style="margin:0 0 28px;text-align:center;">
+                        <a href="{escape(appointments_url)}" style="display:inline-block;background:#12a77c;color:#ffffff;text-decoration:none;padding:13px 24px;border-radius:8px;font-weight:900;">Abrir agenda&nbsp;&rarr;</a>
                       </p>
-                      <p style="margin:0;padding-top:18px;border-top:1px solid #dfe5ff;text-align:center;font-size:14px;line-height:1.6;color:#10183c;">El turno quedo pendiente. Revisalo y confirmalo desde tu agenda.</p>
+                      <p style="margin:0;padding-top:18px;border-top:1px solid #e7edf6;text-align:center;font-size:12px;line-height:1.6;color:#7a849f;">El turno quedo pendiente. Revisalo y confirmalo desde tu agenda.</p>
+                      <p style="margin:8px 0 0;text-align:center;font-size:12px;line-height:1.4;color:#7a849f;">Gestionado mediante <strong>Therapy<span style="color:#12a77c;">Desk</span></strong></p>
                     </div>
                   </div>
                 </div>
