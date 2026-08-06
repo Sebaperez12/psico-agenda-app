@@ -45,18 +45,23 @@ export default function PublicBooking() {
 
   const days = useMemo(() => {
     if (!availability?.days) return [];
-    return Object.entries(availability.days).map(([date, slots]) => {
-      const dateValue = new Date(`${date}T12:00:00`);
-      return {
-        date,
-        dateValue,
-        slots,
-        weekday: weekdayFormatter.format(dateValue).replace(".", ""),
-        dayNumber: dayNumberFormatter.format(dateValue),
-        month: monthFormatter.format(dateValue).replace(".", ""),
-      };
-    });
-  }, [availability]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return Object.entries(availability.days)
+      .map(([date, slots]) => {
+        const dateValue = new Date(`${date}T12:00:00`);
+        return {
+          date,
+          dateValue,
+          slots,
+          weekday: weekdayFormatter.format(dateValue).replace(".", ""),
+          dayNumber: dayNumberFormatter.format(dateValue),
+          month: monthFormatter.format(dateValue).replace(".", ""),
+        };
+      })
+      .filter((day) => weekOffset > 0 || day.dateValue >= today);
+  }, [availability, weekOffset]);
 
   const weekLabel = useMemo(() => {
     if (!days.length) return "Horarios disponibles";
