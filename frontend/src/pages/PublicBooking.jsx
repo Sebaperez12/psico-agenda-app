@@ -9,9 +9,27 @@ const dayFormatter = new Intl.DateTimeFormat("es-UY", {
   month: "long",
 });
 
+const weekdayFormatter = new Intl.DateTimeFormat("es-UY", {
+  weekday: "short",
+});
+
+const dayNumberFormatter = new Intl.DateTimeFormat("es-UY", {
+  day: "numeric",
+});
+
+const monthFormatter = new Intl.DateTimeFormat("es-UY", {
+  month: "short",
+});
+
+const weekRangeFormatter = new Intl.DateTimeFormat("es-UY", {
+  day: "numeric",
+  month: "short",
+});
+
 const timeFormatter = new Intl.DateTimeFormat("es-UY", {
   hour: "2-digit",
   minute: "2-digit",
+  hour12: false,
 });
 
 export default function PublicBooking() {
@@ -27,8 +45,25 @@ export default function PublicBooking() {
 
   const days = useMemo(() => {
     if (!availability?.days) return [];
-    return Object.entries(availability.days).map(([date, slots]) => ({ date, slots }));
+    return Object.entries(availability.days).map(([date, slots]) => {
+      const dateValue = new Date(`${date}T12:00:00`);
+      return {
+        date,
+        dateValue,
+        slots,
+        weekday: weekdayFormatter.format(dateValue).replace(".", ""),
+        dayNumber: dayNumberFormatter.format(dateValue),
+        month: monthFormatter.format(dateValue).replace(".", ""),
+      };
+    });
   }, [availability]);
+
+  const weekLabel = useMemo(() => {
+    if (!days.length) return "Horarios disponibles";
+    const firstDay = days[0].dateValue;
+    const lastDay = days[days.length - 1].dateValue;
+    return `${weekRangeFormatter.format(firstDay)} - ${weekRangeFormatter.format(lastDay)}`;
+  }, [days]);
 
   async function loadAvailability(nextWeekOffset = weekOffset) {
     setMsg("");
@@ -107,9 +142,10 @@ export default function PublicBooking() {
             >
               &lt;
             </button>
-            <strong>
-              {availability ? `${availability.week_start} al ${availability.week_end}` : "Horarios"}
-            </strong>
+            <div className="booking-page__week">
+              <span>Semana</span>
+              <strong>{availability ? weekLabel : "Horarios disponibles"}</strong>
+            </div>
             <button
               type="button"
               onClick={() => setWeekOffset((value) => Math.min(12, value + 1))}
@@ -128,7 +164,11 @@ export default function PublicBooking() {
             <div className="booking-page__days">
               {days.map((day) => (
                 <div className="booking-page__day" key={day.date}>
-                  <h2>{dayFormatter.format(new Date(`${day.date}T12:00:00`))}</h2>
+                  <div className="booking-page__day-header">
+                    <span>{day.weekday}</span>
+                    <strong>{day.dayNumber}</strong>
+                    <small>{day.month}</small>
+                  </div>
                   <div className="booking-page__slots">
                     {day.slots.length ? (
                       day.slots.map((slot) => {
