@@ -1,0 +1,196 @@
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import api from "../services/api";
+import "./PublicBooking.css";
+
+const dayFormatter = new Intl.DateTimeFormat("es-UY", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+const timeFormatter = new Intl.DateTimeFormat("es-UY", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+export default function PublicBooking() {
+  const { slug } = useParams();
+  const [profile, setProfile] = useState(null);
+  const [availability, setAvailability] = useState(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "", notes: "" });
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const days = useMemo(() => {
+    if (!availability?.days) return [];
+    return Object.entries(availability.days).map(([date, slots]) => ({ date, slots }));
+  }, [availability]);
+
+  async function loadAvailability(nextWeekOffset = weekOffset) {
+    setMsg("");
+    setLoading(true);
+    try {
+      const data = await api.get(`/public/booking/${slug}?week_offset=${nextWeekOffset}`);
+      setProfile(data.profile || null);
+      setAvailability(data.availability || null);
+      setSelectedSlot(null);
+    } catch (e) {
+      console.error(e);
+      setMsg(e.message);
+      setProfile(null);
+      setAvailability(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitBooking(event) {
+    event.preventDefault();
+    if (!selectedSlot) {
+      setMsg("Selecciona un horario disponible");
+      return;
+    }
+
+    setMsg("");
+    setSaving(true);
+    try {
+      const data = await api.post(`/public/booking/${slug}/appointments`, {
+        ...form,
+        start_at: selectedSlot.start_at,
+      });
+      setMsg(data.msg || "Solicitud enviada");
+      setSelectedSlot(null);
+      setForm({ full_name: "", email: "", phone: "", notes: "" });
+      await loadAvailability(weekOffset);
+    } catch (e) {
+      console.error(e);
+      setMsg(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  useEffect(() => {
+    loadAvailability(weekOffset);
+  }, [slug, weekOffset]);
+
+  return (
+    <main className="booking-page">
+      <section className="booking-page__profile">
+        <div className="booking-page__avatar">
+          {profile?.photo_data_url ? (
+            <img src={profile.photo_data_url} alt={profile.full_name || "Profesional"} />
+          ) : (
+            <span>{profile?.full_name ? profile.full_name.slice(0, 1).toUpperCase() : "P"}</span>
+          )}
+        </div>
+        <div>
+          <p className="booking-page__eyebrow">Reserva de consulta</p>
+          <h1>{profile?.full_name || "Agenda profesional"}</h1>
+          {profile?.professional_title && <p className="booking-page__title">{profile.professional_title}</p>}
+          {profile?.description && <p className="booking-page__description">{profile.description}</p>}
+        </div>
+      </section>
+
+      <section className="booking-page__workspace">
+        <div className="booking-page__calendar">
+          <div className="booking-page__toolbar">
+            <button
+              type="button"
+              onClick={() => setWeekOffset((value) => Math.max(0, value - 1))}
+              disabled={weekOffset === 0 || loading}
+              aria-label="Semana anterior"
+            >
+              &lt;
+            </button>
+            <strong>
+              {availability ? `${availability.week_start} al ${availability.week_end}` : "Horarios"}
+            </strong>
+            <button
+              type="button"
+              onClick={() => setWeekOffset((value) => Math.min(12, value + 1))}
+              disabled={weekOffset >= 12 || loading}
+              aria-label="Semana siguiente"
+            >
+              &gt;
+            </button>
+          </div>
+
+          {loading ? (
+            <p className="booking-page__empty">Cargando horarios...</p>
+          ) : days.every((day) => day.slots.length === 0) ? (
+            <p className="booking-page__empty">No hay horarios disponibles esta semana.</p>
+          ) : (
+            <div className="booking-page__days">
+              {days.map((day) => (
+                <div className="booking-page__day" key={day.date}>
+                  <h2>{dayFormatter.format(new Date(`${day.date}T12:00:00`))}</h2>
+                  <div className="booking-page__slots">
+                    {day.slots.length ? (
+                      day.slots.map((slot) => {
+                        const isSelected = selectedSlot?.start_at === slot.start_at;
+                        return (
+                          <button
+                            type="button"
+                            className={isSelected ? "booking-page__slot booking-page__slot--selected" : "booking-page__slot"}
+                            key={slot.start_at}
+                            onClick={() => setSelectedSlot(slot)}
+                          >
+                            {timeFormatter.format(new Date(slot.start_at))}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <span className="booking-page__no-slots">Sin horarios</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <form className="booking-page__form" onSubmit={submitBooking}>
+          <h2>Datos para solicitar turno</h2>
+          <p className="booking-page__selected">
+            {selectedSlot
+              ? `${dayFormatter.format(new Date(selectedSlot.start_at))} - ${timeFormatter.format(new Date(selectedSlot.start_at))}`
+              : "Selecciona un horario"}
+          </p>
+          <p className="booking-page__notice">El turno queda pendiente hasta que el profesional lo confirme.</p>
+          <input
+            value={form.full_name}
+            onChange={(e) => setForm((prev) => ({ ...prev, full_name: e.target.value }))}
+            placeholder="Nombre y apellido"
+            required
+          />
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+            placeholder="Email"
+          />
+          <input
+            value={form.phone}
+            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+            placeholder="Telefono"
+          />
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+            placeholder="Motivo de consulta (opcional)"
+            rows="4"
+          />
+          <button type="submit" disabled={saving || !selectedSlot}>
+            {saving ? "Enviando..." : "Solicitar consulta"}
+          </button>
+          {msg && <p className="booking-page__msg">{msg}</p>}
+        </form>
+      </section>
+    </main>
+  );
+}

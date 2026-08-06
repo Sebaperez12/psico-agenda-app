@@ -10,6 +10,9 @@ export default function Profile() {
   const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
   const [autoReminderMethod, setAutoReminderMethod] = useState("email");
   const [autoReminderHoursBefore, setAutoReminderHoursBefore] = useState(24);
+  const [publicBookingEnabled, setPublicBookingEnabled] = useState(false);
+  const [publicBookingMinNoticeHours, setPublicBookingMinNoticeHours] = useState(24);
+  const [bookingSlug, setBookingSlug] = useState("");
   const [officeAddresses, setOfficeAddresses] = useState(["", "", "", "", ""]);
   const [fullName, setFullName] = useState("");
   const [title, setTitle] = useState("");
@@ -47,6 +50,9 @@ export default function Profile() {
       setAutoRemindersEnabled(!!data.auto_reminders_enabled);
       setAutoReminderMethod(data.auto_reminder_method || "email");
       setAutoReminderHoursBefore(data.auto_reminder_hours_before || 24);
+      setPublicBookingEnabled(!!data.public_booking_enabled);
+      setPublicBookingMinNoticeHours(data.public_booking_min_notice_hours ?? 24);
+      setBookingSlug(data.booking_slug || "");
       setFullName(data.full_name || "");
       setTitle(data.professional_title || "");
       setDescription(data.description || "");
@@ -61,6 +67,9 @@ export default function Profile() {
         setAutoRemindersEnabled(false);
         setAutoReminderMethod("email");
         setAutoReminderHoursBefore(24);
+        setPublicBookingEnabled(false);
+        setPublicBookingMinNoticeHours(24);
+        setBookingSlug("");
         setFullName("");
         setTitle("");
         setDescription("");
@@ -95,6 +104,9 @@ export default function Profile() {
         auto_reminders_enabled: autoRemindersEnabled,
         auto_reminder_method: autoReminderMethod,
         auto_reminder_hours_before: Number(autoReminderHoursBefore) || 24,
+        public_booking_enabled: publicBookingEnabled,
+        public_booking_min_notice_hours: Number(publicBookingMinNoticeHours) || 0,
+        booking_slug: bookingSlug.trim(),
         photo_data_url: photoDataUrl || null,
       };
 
@@ -137,6 +149,16 @@ export default function Profile() {
       setMsg(e.message);
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function copyBookingLink() {
+    const link = `${window.location.origin}/reservar/${bookingSlug}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setMsg("Link de reservas copiado");
+    } catch {
+      setMsg(link);
     }
   }
 
@@ -227,6 +249,53 @@ export default function Profile() {
                   <option value={2}>2 horas antes</option>
                 </select>
               </div>
+            </div>
+          )}
+        </div>
+        <div className="profile-page__section profile-page__booking-section">
+          <p className="profile-page__section-label">Reservas online</p>
+          <label className="profile-page__toggle">
+            <input
+              type="checkbox"
+              checked={publicBookingEnabled}
+              onChange={(e) => setPublicBookingEnabled(e.target.checked)}
+            />
+            Permitir que pacientes reserven desde un link publico
+          </label>
+
+          <div className="profile-page__booking-grid">
+            <label>
+              Link publico
+              <input
+                className="profile-page__input"
+                value={bookingSlug}
+                onChange={(e) => setBookingSlug(e.target.value)}
+                placeholder="mi-agenda"
+              />
+            </label>
+            <label>
+              Anticipacion minima
+              <select
+                className="profile-page__input"
+                value={publicBookingMinNoticeHours}
+                onChange={(e) => setPublicBookingMinNoticeHours(Number(e.target.value))}
+              >
+                <option value={0}>Sin anticipacion</option>
+                <option value={2}>2 horas</option>
+                <option value={12}>12 horas</option>
+                <option value={24}>24 horas</option>
+                <option value={48}>48 horas</option>
+                <option value={72}>72 horas</option>
+              </select>
+            </label>
+          </div>
+
+          {bookingSlug && (
+            <div className="profile-page__booking-link">
+              <span>{`${window.location.origin}/reservar/${bookingSlug}`}</span>
+              <button type="button" className="profile-page__btn" onClick={copyBookingLink}>
+                Copiar
+              </button>
             </div>
           )}
         </div>

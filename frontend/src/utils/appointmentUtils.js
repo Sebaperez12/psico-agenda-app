@@ -22,6 +22,8 @@ export function getStatusLabel(status) {
   switch (status) {
     case "scheduled":
       return "reservado";
+    case "pending":
+      return "Pendiente";
     case "attended":
       return "Atendido";
     case "no_show":

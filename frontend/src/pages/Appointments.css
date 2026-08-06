@@ -263,6 +263,12 @@
   transform: translateY(-1px);
 }
 
+.appointment-block--pending {
+  border-color: rgba(217, 119, 6, 0.38);
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.98), rgba(254, 243, 199, 0.94));
+  color: #92400e;
+}
+
 .appointment-block--attended {
   border-color: rgba(16, 185, 129, 0.32);
   background: linear-gradient(180deg, rgba(236, 253, 245, 0.98), rgba(209, 250, 229, 0.94));

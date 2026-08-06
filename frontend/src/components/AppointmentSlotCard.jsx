@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import mailIcon from "../assets/mail.png";
 
 const STATUS_STYLES = {
+  pending: {
+    background: "linear-gradient(180deg, rgba(255, 250, 230, 0.98), rgba(255, 241, 196, 0.94))",
+    border: "1px solid rgba(217, 119, 6, 0.34)",
+    badgeBg: "#d97706",
+    badgeColor: "#fff",
+  },
   attended: {
     background: "linear-gradient(180deg, rgba(223, 240, 255, 0.96), rgba(210, 227, 255, 0.92))",
     border: "1px solid rgba(59, 130, 246, 0.32)",
@@ -29,6 +35,11 @@ const STATUS_STYLES = {
 };
 
 const STATUS_BUTTON_STYLES = {
+  scheduled: {
+    background: "#047857",
+    border: "1px solid #047857",
+    color: "#fff",
+  },
   attended: {
     background: "#10b981",
     border: "1px solid #10b981",
@@ -123,7 +134,7 @@ export default function AppointmentSlotCard({
   );
 
   const shouldShowBadge = useMemo(
-    () => isAvailable || ["attended", "no_show", "cancelled"].includes(slot.status),
+    () => isAvailable || ["pending", "attended", "no_show", "cancelled"].includes(slot.status),
     [isAvailable, slot.status]
   );
 
@@ -416,6 +427,15 @@ export default function AppointmentSlotCard({
         <div style={styles.secondaryActions}>
           <div style={styles.actionsHeader}>Acciones del turno</div>
           <div style={styles.statusActions}>
+            {slot.status === "pending" && (
+              <button
+                type="button"
+                style={getStatusButtonStyle("scheduled", styles.statusButton)}
+                onClick={() => changeAppointmentStatus(slot.appointment_id, "scheduled")}
+              >
+                Confirmar
+              </button>
+            )}
             <button
               type="button"
               style={getStatusButtonStyle("attended", styles.statusButton)}

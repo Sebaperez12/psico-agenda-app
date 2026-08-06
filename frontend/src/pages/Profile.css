@@ -152,6 +152,47 @@
   line-height: 1.35;
 }
 
+.profile-page__booking-section {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.profile-page__booking-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 0.75rem;
+}
+
+.profile-page__booking-grid label {
+  color: var(--color-text-strong);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.profile-page__booking-grid .profile-page__input {
+  margin-top: 0.35rem;
+}
+
+.profile-page__booking-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.25rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: var(--color-primary-soft);
+}
+
+.profile-page__booking-link span {
+  overflow-wrap: anywhere;
+  color: var(--color-primary-deep);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 .profile-page__actions {
   display: flex;
   gap: 1rem;
@@ -243,6 +284,11 @@
   }
 
   .profile-page__reminder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-page__booking-grid,
+  .profile-page__booking-link {
     grid-template-columns: 1fr;
   }
 

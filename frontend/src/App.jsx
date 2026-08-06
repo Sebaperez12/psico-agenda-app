@@ -13,12 +13,14 @@ import PatientHistory from "./pages/PatientHistory";
 import Availability from "./pages/Availability";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import PublicBooking from "./pages/PublicBooking";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/reservar/:slug" element={<PublicBooking />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminRoute />}>

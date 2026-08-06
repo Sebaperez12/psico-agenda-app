@@ -30,9 +30,10 @@ const EMPTY_FORM = {
   duration: "",
   location: "",
   repeatWeekly: false,
-  notifyOnSave: false,
+  notifyOnSave: true,
   notifyMethod: "email",
   notes: "",
+  status: "",
 };
 
 export default function Appointments() {
@@ -48,6 +49,17 @@ export default function Appointments() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [msg, setMsg] = useState("");
+  const messageType = useMemo(() => {
+    if (!msg) return "";
+    const normalized = msg.toLowerCase();
+    return normalized.includes("error")
+      || normalized.includes("superpone")
+      || normalized.includes("no se pudo")
+      || normalized.includes("obligatorio")
+      || normalized.includes("completa")
+      ? "error"
+      : "success";
+  }, [msg]);
 
   const weekDays = useMemo(() => getWeekDays(new Date(), weekOffset), [weekOffset]);
   const weekLabel = useMemo(() => getWeekLabel(weekDays), [weekDays]);
@@ -151,7 +163,7 @@ export default function Appointments() {
       time: `${String(hour).padStart(2, "0")}:00`,
       duration: "",
       location: profileOfficeAddress,
-      notifyOnSave: false,
+      notifyOnSave: true,
       notifyMethod: "email",
     });
     setSelectedDateKey(getLocalDateKey(day));
@@ -172,9 +184,10 @@ export default function Appointments() {
       duration: String(getDurationMinutes(slot.start_at, slot.end_at) || defaultSessionMinutes),
       location: slot.location || profileOfficeAddress,
       repeatWeekly: !!slot.recurring_series_id,
-      notifyOnSave: false,
+      notifyOnSave: true,
       notifyMethod,
       notes: slot.notes || "",
+      status: slot.status || "",
     });
     setSelectedDateKey(formatDateForInput(slot.start_at));
     setIsPanelOpen(true);
@@ -388,6 +401,15 @@ export default function Appointments() {
         })}
       </section>
 
+      {msg && (
+        <div
+          className={`appointments-page__message appointments-page__message--${messageType}`}
+          role={messageType === "error" ? "alert" : "status"}
+        >
+          {msg}
+        </div>
+      )}
+
       <section
         className="appointments-calendar"
         style={{
@@ -477,8 +499,6 @@ export default function Appointments() {
           );
         })}
       </section>
-
-      {msg && <p className="appointments-page__message">{msg}</p>}
 
       {isPanelOpen && (
         <AppointmentPanel

@@ -1,5 +1,6 @@
 export const APPOINTMENT_STATUS_LABELS = {
   scheduled: "Agendado",
+  pending: "Pendiente",
   attended: "Atendido",
   no_show: "Ausencia",
   cancelled: "Cancelado",

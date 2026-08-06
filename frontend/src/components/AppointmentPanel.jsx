@@ -323,6 +323,9 @@ export default function AppointmentPanel({
         {form.appointmentId && (
           <>
             <div className="appointment-panel__secondary">
+              {form.status === "pending" && (
+                <button type="button" onClick={() => onStatus("scheduled")}>Confirmar turno</button>
+              )}
               <button type="button" onClick={() => onStatus("attended")}>Atendido</button>
               <button type="button" onClick={() => onStatus("no_show")}>Ausencia</button>
               <button type="button" onClick={() => onStatus("cancelled")}>Cancelar turno</button>

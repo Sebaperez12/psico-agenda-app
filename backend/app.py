@@ -1,5 +1,7 @@
 import os
 import json
+import re
+import secrets
 import threading
 from datetime import timedelta, datetime
 from pathlib import Path
@@ -341,6 +343,25 @@ def create_app():
     def clean_text(value):
         return (value or "").strip()
 
+    def slugify(value):
+        normalized = clean_text(value).lower()
+        normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
+        normalized = re.sub(r"-+", "-", normalized).strip("-")
+        return normalized or "profesional"
+
+    def generate_unique_booking_slug(profile_name=None):
+        base = slugify(profile_name)
+        for index in range(20):
+            suffix = secrets.token_urlsafe(4).lower().replace("_", "-")
+            candidate = f"{base}-{suffix}" if index else f"{base}-{suffix}"
+            exists = PsychologistProfile.query.filter_by(booking_slug=candidate).first()
+            if not exists:
+                return candidate
+        return secrets.token_urlsafe(12).lower().replace("_", "-")
+
+    def normalize_booking_slug(value):
+        return slugify(value)[:80]
+
     def normalize_time_string(value, fallback):
         raw_value = clean_text(value) or fallback
         try:
@@ -459,6 +480,123 @@ def create_app():
         )
         end_at = start_at + timedelta(minutes=series.duration_minutes)
         return start_at, end_at
+
+    def serialize_public_profile(profile, user):
+        office_addresses = []
+        if profile.office_addresses_json:
+            try:
+                office_addresses = json.loads(profile.office_addresses_json)
+            except (TypeError, json.JSONDecodeError):
+                office_addresses = []
+        if not office_addresses and profile.office_address:
+            office_addresses = [profile.office_address]
+
+        return {
+            "slug": profile.booking_slug,
+            "full_name": profile.full_name,
+            "professional_title": profile.professional_title,
+            "description": profile.description,
+            "office_addresses": office_addresses[:5],
+            "photo_data_url": profile.photo_data_url,
+            "contact_email": profile.notification_email or (user.email if user else None),
+            "session_minutes": user.default_session_minutes if user else 50,
+            "min_notice_hours": (
+                profile.public_booking_min_notice_hours
+                if profile.public_booking_min_notice_hours is not None
+                else 24
+            ),
+        }
+
+    def get_public_booking_profile(slug):
+        normalized_slug = normalize_booking_slug(slug)
+        profile = PsychologistProfile.query.filter_by(booking_slug=normalized_slug).first()
+        if not profile or not profile.public_booking_enabled:
+            return None, None
+        user = User.query.get(profile.owner_user_id)
+        if not user or user.role != "psychologist" or not user.is_active:
+            return None, None
+        return profile, user
+
+    def is_slot_inside_availability(owner_user_id, start_at, end_at):
+        start_minutes = start_at.hour * 60 + start_at.minute
+        end_minutes = end_at.hour * 60 + end_at.minute
+        return db.session.query(
+            AvailabilityRule.query.filter(
+                AvailabilityRule.owner_user_id == owner_user_id,
+                AvailabilityRule.weekday == start_at.weekday(),
+                AvailabilityRule.active.is_(True),
+                AvailabilityRule.start_time <= f"{start_minutes // 60:02d}:{start_minutes % 60:02d}",
+                AvailabilityRule.end_time >= f"{end_minutes // 60:02d}:{end_minutes % 60:02d}",
+            ).exists()
+        ).scalar()
+
+    def build_public_booking_slots(profile, user, week_offset=0):
+        slot_minutes = user.default_session_minutes or 50
+        gap_minutes = 10
+        step_minutes = slot_minutes + gap_minutes
+        week_start = get_week_start(get_local_now(), week_offset)
+        week_end = week_start + timedelta(days=7)
+        min_notice_hours = (
+            profile.public_booking_min_notice_hours
+            if profile.public_booking_min_notice_hours is not None
+            else 24
+        )
+        min_start_at = get_local_now() + timedelta(hours=min_notice_hours)
+
+        materialize_recurring_appointments(user.id, week_start, week_end)
+
+        rules = (
+            AvailabilityRule.query
+            .filter_by(owner_user_id=user.id, active=True)
+            .order_by(AvailabilityRule.weekday.asc(), AvailabilityRule.start_time.asc())
+            .all()
+        )
+        appointments = (
+            Appointment.query
+            .filter(
+                Appointment.owner_user_id == user.id,
+                Appointment.start_at >= week_start,
+                Appointment.start_at < week_end,
+                Appointment.status != "cancelled",
+            )
+            .order_by(Appointment.start_at.asc())
+            .all()
+        )
+
+        days = {}
+        for i in range(7):
+            day_date = week_start + timedelta(days=i)
+            day_key = day_date.strftime("%Y-%m-%d")
+            days[day_key] = []
+
+            for rule in [r for r in rules if r.weekday == day_date.weekday()]:
+                cursor = hhmm_to_minutes(rule.start_time)
+                end_minutes = hhmm_to_minutes(rule.end_time)
+
+                while cursor + slot_minutes <= end_minutes:
+                    slot_start = day_date.replace(
+                        hour=cursor // 60,
+                        minute=cursor % 60,
+                        second=0,
+                        microsecond=0,
+                    )
+                    slot_end = slot_start + timedelta(minutes=slot_minutes)
+                    blocked = any(a.start_at < slot_end and a.end_at > slot_start for a in appointments)
+
+                    if slot_start >= min_start_at and not blocked:
+                        days[day_key].append({
+                            "start_at": slot_start.isoformat(),
+                            "end_at": slot_end.isoformat(),
+                        })
+
+                    cursor += step_minutes
+
+        return {
+            "week_start": week_start.strftime("%Y-%m-%d"),
+            "week_end": (week_end - timedelta(days=1)).strftime("%Y-%m-%d"),
+            "slot_minutes": slot_minutes,
+            "days": days,
+        }
 
     def materialize_recurring_appointments(owner_user_id, range_start, range_end):
         if range_end <= range_start:
@@ -887,6 +1025,9 @@ def create_app():
         auto_reminder_hours_before = db.Column(db.Integer, nullable=False, default=24)
         visible_agenda_start_time = db.Column(db.String(5), nullable=False, default="06:00")
         visible_agenda_end_time = db.Column(db.String(5), nullable=False, default="22:00")
+        public_booking_enabled = db.Column(db.Boolean, nullable=False, default=False)
+        public_booking_min_notice_hours = db.Column(db.Integer, nullable=False, default=24)
+        booking_slug = db.Column(db.String(100), nullable=True, unique=True)
         photo_data_url = db.Column(db.Text, nullable=True)
         created_at = db.Column(db.DateTime, server_default=db.func.now())
         updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
@@ -911,6 +1052,13 @@ def create_app():
                 "auto_reminder_hours_before": self.auto_reminder_hours_before or 24,
                 "visible_agenda_start_time": self.visible_agenda_start_time or "06:00",
                 "visible_agenda_end_time": self.visible_agenda_end_time or "22:00",
+                "public_booking_enabled": bool(self.public_booking_enabled),
+                "public_booking_min_notice_hours": (
+                    self.public_booking_min_notice_hours
+                    if self.public_booking_min_notice_hours is not None
+                    else 24
+                ),
+                "booking_slug": self.booking_slug,
                 "full_name": self.full_name,
                 "professional_title": self.professional_title,
                 "description": self.description,
@@ -1009,6 +1157,9 @@ def create_app():
         ensure_column("psychologist_profile", "auto_reminder_hours_before", "INTEGER DEFAULT 24")
         ensure_column("psychologist_profile", "visible_agenda_start_time", "VARCHAR(5) DEFAULT '06:00'")
         ensure_column("psychologist_profile", "visible_agenda_end_time", "VARCHAR(5) DEFAULT '22:00'")
+        ensure_column("psychologist_profile", "public_booking_enabled", "BOOLEAN DEFAULT 0")
+        ensure_column("psychologist_profile", "public_booking_min_notice_hours", "INTEGER DEFAULT 24")
+        ensure_column("psychologist_profile", "booking_slug", "VARCHAR(100)")
         ensure_column("psychologist_profile", "updated_at", "DATETIME")
         ensure_column("appointment", "location", "TEXT")
         ensure_column("appointment", "recurring_series_id", "INTEGER")
@@ -1230,6 +1381,206 @@ def create_app():
             return jsonify({"sent": False, "msg": error_message}), 502
         return jsonify({"sent": True, "msg": f"Email de prueba enviado a {recipient}"}), 200
 
+    # --- PUBLIC BOOKING ---
+    @app.get("/public/booking/<slug>")
+    def public_booking_profile(slug):
+        profile, user = get_public_booking_profile(slug)
+        if not profile:
+            return jsonify({"msg": "Agenda no disponible"}), 404
+
+        week_offset = request.args.get("week_offset", default=0, type=int)
+        if week_offset < 0 or week_offset > 12:
+            return jsonify({"msg": "Solo se pueden consultar las proximas 12 semanas"}), 400
+
+        return jsonify({
+            "profile": serialize_public_profile(profile, user),
+            "availability": build_public_booking_slots(profile, user, week_offset),
+        }), 200
+
+    @app.post("/public/booking/<slug>/appointments")
+    def public_create_booking(slug):
+        profile, user = get_public_booking_profile(slug)
+        if not profile:
+            return jsonify({"msg": "Agenda no disponible"}), 404
+
+        body = request.get_json(silent=True) or {}
+        full_name = clean_text(body.get("full_name"))
+        email = normalize_email(body.get("email"))
+        phone = clean_text(body.get("phone"))
+        start_at_str = clean_text(body.get("start_at"))
+        location = clean_text(body.get("location")) or get_default_appointment_location(user.id)
+        notes = clean_text(body.get("notes")) or None
+
+        if not full_name:
+            return jsonify({"msg": "Ingresa tu nombre completo"}), 400
+        if not email and not phone:
+            return jsonify({"msg": "Ingresa email o telefono para confirmar el turno"}), 400
+        if email and "@" not in email:
+            return jsonify({"msg": "Email invalido"}), 400
+        if not start_at_str:
+            return jsonify({"msg": "Selecciona un horario"}), 400
+
+        try:
+            start_at = datetime.fromisoformat(start_at_str)
+        except Exception:
+            return jsonify({"msg": "Horario invalido"}), 400
+
+        minutes = user.default_session_minutes or 50
+        end_at = start_at + timedelta(minutes=minutes)
+        min_notice_hours = (
+            profile.public_booking_min_notice_hours
+            if profile.public_booking_min_notice_hours is not None
+            else 24
+        )
+        min_start_at = get_local_now() + timedelta(hours=min_notice_hours)
+        if start_at < min_start_at:
+            return jsonify({"msg": "Ese horario ya no esta disponible"}), 409
+        if not is_slot_inside_availability(user.id, start_at, end_at):
+            return jsonify({"msg": "Ese horario no esta dentro de la disponibilidad"}), 409
+
+        existing_appointment = Appointment.query.filter(
+            Appointment.owner_user_id == user.id,
+            Appointment.start_at == start_at,
+            Appointment.end_at == end_at,
+            Appointment.status == "free",
+            Appointment.patient_id.is_(None),
+        ).first()
+
+        has_conflict = overlaps_existing_appointment(
+            user.id,
+            start_at,
+            end_at,
+            exclude_id=existing_appointment.id if existing_appointment else None,
+        )
+        if has_conflict:
+            return jsonify({"msg": "Ese horario acaba de ocuparse"}), 409
+
+        patient_query = Patient.query.filter(Patient.owner_user_id == user.id)
+        patient = None
+        if email:
+            patient = patient_query.filter(Patient.email == email).first()
+        if not patient and phone:
+            patient = Patient.query.filter_by(owner_user_id=user.id, phone=phone).first()
+
+        if not patient:
+            patient = Patient(
+                owner_user_id=user.id,
+                full_name=full_name,
+                email=email or None,
+                phone=phone or None,
+            )
+            db.session.add(patient)
+            db.session.flush()
+        else:
+            patient.full_name = patient.full_name or full_name
+            patient.email = patient.email or (email or None)
+            patient.phone = patient.phone or (phone or None)
+
+        if existing_appointment:
+            appointment = existing_appointment
+            appointment.patient_id = patient.id
+            appointment.status = "pending"
+            appointment.location = location
+            appointment.notes = notes
+        else:
+            appointment = Appointment(
+                owner_user_id=user.id,
+                patient_id=patient.id,
+                start_at=start_at,
+                end_at=end_at,
+                status="pending",
+                location=location,
+                notes=notes,
+            )
+            db.session.add(appointment)
+
+        db.session.commit()
+
+        date_str = format_date_in_spanish(appointment.start_at)
+        date_short_str = format_date_in_spanish(appointment.start_at, include_year=False)
+        subject_date_str = date_short_str[:1].upper() + date_short_str[1:]
+        time_str = format_time_24h(appointment.start_at)
+        psychologist_name = profile.full_name or "tu profesional"
+        contact_email = profile.notification_email or user.email
+        professional_email = normalize_email(contact_email)
+        patient_contact = email or phone or "No informado"
+        appointments_url = f"{get_env('FRONTEND_BASE_URL', 'https://therapydesk.onrender.com').rstrip('/')}/appointments"
+
+        if email:
+            send_email(
+                recipient=email,
+                subject=f"{subject_date_str} - {time_str} | {psychologist_name} | Solicitud de turno recibida",
+                body=(
+                    f"Hola {full_name},\n\n"
+                    "Recibimos una solicitud de turno con este email.\n\n"
+                    f"Profesional: {psychologist_name}\n"
+                    f"Fecha: {date_str}\n"
+                    f"Hora: {time_str}\n"
+                    f"Lugar: {appointment.location or 'A confirmar'}\n\n"
+                    "El turno todavia no esta confirmado. El profesional revisara la solicitud y te contactara.\n\n"
+                    "Si no solicitaste este turno, podes ignorar este mensaje o contactar al profesional."
+                ),
+                html_body=(
+                    f"<p>Hola <strong>{escape(full_name)}</strong>,</p>"
+                    "<p>Recibimos una solicitud de turno con este email.</p>"
+                    "<ul>"
+                    f"<li><strong>Profesional:</strong> {escape(psychologist_name)}</li>"
+                    f"<li><strong>Fecha:</strong> {escape(date_str)}</li>"
+                    f"<li><strong>Hora:</strong> {escape(time_str)}</li>"
+                    f"<li><strong>Lugar:</strong> {escape(appointment.location or 'A confirmar')}</li>"
+                    "</ul>"
+                    "<p>El turno todavia no esta confirmado. El profesional revisara la solicitud y te contactara.</p>"
+                    "<p>Si no solicitaste este turno, podes ignorar este mensaje o contactar al profesional.</p>"
+                ),
+                sender_name="TherapyDesk",
+                reply_to=contact_email,
+            )
+
+        if professional_email:
+            send_email(
+                recipient=professional_email,
+                subject=f"{subject_date_str} - {time_str} | Nueva solicitud de turno",
+                body=(
+                    f"Hola {psychologist_name},\n\n"
+                    "Recibiste una nueva solicitud de turno desde tu link publico.\n\n"
+                    f"Paciente: {full_name}\n"
+                    f"Contacto: {patient_contact}\n"
+                    f"Fecha: {date_str}\n"
+                    f"Hora: {time_str}\n"
+                    f"Lugar: {appointment.location or 'A confirmar'}\n"
+                    f"Notas: {notes or 'Sin notas'}\n\n"
+                    f"Revisala en tu agenda: {appointments_url}\n\n"
+                    "El turno quedo pendiente hasta que lo confirmes."
+                ),
+                html_body=(
+                    f"<p>Hola <strong>{escape(psychologist_name)}</strong>,</p>"
+                    "<p>Recibiste una nueva solicitud de turno desde tu link publico.</p>"
+                    "<ul>"
+                    f"<li><strong>Paciente:</strong> {escape(full_name)}</li>"
+                    f"<li><strong>Contacto:</strong> {escape(patient_contact)}</li>"
+                    f"<li><strong>Fecha:</strong> {escape(date_str)}</li>"
+                    f"<li><strong>Hora:</strong> {escape(time_str)}</li>"
+                    f"<li><strong>Lugar:</strong> {escape(appointment.location or 'A confirmar')}</li>"
+                    f"<li><strong>Notas:</strong> {escape(notes or 'Sin notas')}</li>"
+                    "</ul>"
+                    f'<p><a href="{escape(appointments_url)}">Abrir agenda</a></p>'
+                    "<p>El turno quedo pendiente hasta que lo confirmes.</p>"
+                ),
+                sender_name="TherapyDesk",
+                reply_to=email or None,
+            )
+
+        return jsonify({
+            "msg": "Solicitud enviada. El turno quedo pendiente de confirmacion.",
+            "appointment": {
+                "start_at": appointment.start_at.isoformat(),
+                "end_at": appointment.end_at.isoformat(),
+                "location": appointment.location,
+                "status": appointment.status,
+            },
+            "profile": serialize_public_profile(profile, user),
+        }), 201
+
     # --- AUTH ---
     @app.post("/auth/register")
     def register():
@@ -1267,6 +1618,7 @@ def create_app():
             office_addresses_json=json.dumps(profile_data["office_addresses"]),
             visible_agenda_start_time=profile_data["visible_agenda_start_time"],
             visible_agenda_end_time=profile_data["visible_agenda_end_time"],
+            booking_slug=generate_unique_booking_slug(profile_data["full_name"]),
             photo_data_url=profile_data["photo_data_url"],
         )
         db.session.add(profile)
@@ -1486,6 +1838,7 @@ def create_app():
             notification_email=profile_data["notification_email"],
             visible_agenda_start_time=profile_data["visible_agenda_start_time"],
             visible_agenda_end_time=profile_data["visible_agenda_end_time"],
+            booking_slug=generate_unique_booking_slug(profile_data["full_name"]),
             photo_data_url=profile_data["photo_data_url"],
         )
         db.session.add(profile)
@@ -2342,7 +2695,10 @@ def create_app():
         appointment.location = location
 
         if "status" in body:
-            appointment.status = body["status"]
+            status = body["status"]
+            if status not in {"pending", "scheduled", "attended", "no_show", "cancelled", "free"}:
+                return jsonify({"msg": "Estado invalido"}), 400
+            appointment.status = status
 
         if "notes" in body:
             appointment.notes = (body.get("notes") or "").strip() or None
@@ -2703,6 +3059,10 @@ def create_app():
         if not profile:
             return jsonify({"msg": "Perfil no encontrado"}), 404
 
+        if not profile.booking_slug:
+            profile.booking_slug = generate_unique_booking_slug(profile.full_name)
+            db.session.commit()
+
         return jsonify(profile.serialize(user.email if user else None)), 200
 
     @app.post("/profile")
@@ -2733,6 +3093,7 @@ def create_app():
             auto_reminder_hours_before=int(body.get("auto_reminder_hours_before") or 24),
             visible_agenda_start_time=profile_data["visible_agenda_start_time"],
             visible_agenda_end_time=profile_data["visible_agenda_end_time"],
+            booking_slug=generate_unique_booking_slug(profile_data["full_name"]),
             photo_data_url=profile_data["photo_data_url"],
         )
         db.session.add(profile)
@@ -2817,6 +3178,29 @@ def create_app():
                 return jsonify({"msg": "La hora final de agenda debe ser posterior a la hora inicial"}), 400
             profile.visible_agenda_start_time = start_time
             profile.visible_agenda_end_time = end_time
+
+        if "public_booking_enabled" in body:
+            profile.public_booking_enabled = bool(body.get("public_booking_enabled"))
+            if profile.public_booking_enabled and not profile.booking_slug:
+                profile.booking_slug = generate_unique_booking_slug(profile.full_name)
+
+        if "public_booking_min_notice_hours" in body:
+            hours = body.get("public_booking_min_notice_hours")
+            if not isinstance(hours, int) or hours < 0 or hours > 720:
+                return jsonify({"msg": "public_booking_min_notice_hours debe estar entre 0 y 720"}), 400
+            profile.public_booking_min_notice_hours = hours
+
+        if "booking_slug" in body:
+            slug = normalize_booking_slug(body.get("booking_slug"))
+            if len(slug) < 4:
+                return jsonify({"msg": "El link de reservas debe tener al menos 4 caracteres"}), 400
+            existing = PsychologistProfile.query.filter(
+                PsychologistProfile.booking_slug == slug,
+                PsychologistProfile.id != profile.id,
+            ).first()
+            if existing:
+                return jsonify({"msg": "Ese link de reservas ya esta en uso"}), 409
+            profile.booking_slug = slug
 
         if "photo_data_url" in body:
             photo_data_url = clean_text(body.get("photo_data_url"))
