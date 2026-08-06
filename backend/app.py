@@ -1515,11 +1515,13 @@ def create_app():
         professional_email = normalize_email(contact_email)
         patient_contact = email or phone or "No informado"
         frontend_base_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.onrender.com").rstrip("/")
-        backend_base_url = get_env("BACKEND_BASE_URL", "").rstrip("/")
-        request_base_url = request.host_url.rstrip("/") if has_request_context() else ""
-        public_base_url = backend_base_url or request_base_url
+        public_base_url = get_backend_base_url()
         appointments_url = f"{frontend_base_url}/appointments"
-        confirm_url = f"{public_base_url}/public/booking/confirm/{appointment.booking_confirm_token}"
+        confirm_url = (
+            f"{public_base_url}/public/booking/confirm/{appointment.booking_confirm_token}"
+            if public_base_url
+            else appointments_url
+        )
 
         if email:
             send_email(
