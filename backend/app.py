@@ -1081,6 +1081,7 @@ def create_app():
         status = db.Column(db.String(20), nullable=False, default="scheduled")
         location = db.Column(db.Text, nullable=True)
         notes = db.Column(db.Text, nullable=True)
+        booking_confirm_token = db.Column(db.String(120), nullable=True, unique=True)
         last_auto_reminder_sent_at = db.Column(db.DateTime, nullable=True)
 
         created_at = db.Column(db.DateTime, server_default=db.func.now())
@@ -1164,6 +1165,7 @@ def create_app():
         ensure_column("appointment", "location", "TEXT")
         ensure_column("appointment", "recurring_series_id", "INTEGER")
         ensure_column("appointment", "recurrence_origin_date", "DATE")
+        ensure_column("appointment", "booking_confirm_token", "VARCHAR(120)")
         ensure_column("appointment", "last_auto_reminder_sent_at", "DATETIME")
         ensure_column("appointment", "created_at", "DATETIME")
         ensure_column("patient", "dni", "VARCHAR(40)")
@@ -1482,6 +1484,7 @@ def create_app():
             appointment.status = "pending"
             appointment.location = location
             appointment.notes = notes
+            appointment.booking_confirm_token = secrets.token_urlsafe(32)
         else:
             appointment = Appointment(
                 owner_user_id=user.id,
@@ -1491,6 +1494,7 @@ def create_app():
                 status="pending",
                 location=location,
                 notes=notes,
+                booking_confirm_token=secrets.token_urlsafe(32),
             )
             db.session.add(appointment)
 
@@ -1510,7 +1514,12 @@ def create_app():
         contact_email = profile.notification_email or user.email
         professional_email = normalize_email(contact_email)
         patient_contact = email or phone or "No informado"
-        appointments_url = f"{get_env('FRONTEND_BASE_URL', 'https://therapydesk.onrender.com').rstrip('/')}/appointments"
+        frontend_base_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.onrender.com").rstrip("/")
+        backend_base_url = get_env("BACKEND_BASE_URL", "").rstrip("/")
+        request_base_url = request.host_url.rstrip("/") if has_request_context() else ""
+        public_base_url = backend_base_url or request_base_url
+        appointments_url = f"{frontend_base_url}/appointments"
+        confirm_url = f"{public_base_url}/public/booking/confirm/{appointment.booking_confirm_token}"
 
         if email:
             send_email(
@@ -1527,16 +1536,52 @@ def create_app():
                     "Si no solicitaste este turno, podes ignorar este mensaje o contactar al profesional."
                 ),
                 html_body=(
-                    f"<p>Hola <strong>{escape(full_name)}</strong>,</p>"
-                    "<p>Recibimos una solicitud de turno con este email.</p>"
-                    "<ul>"
-                    f"<li><strong>Profesional:</strong> {escape(psychologist_name)}</li>"
-                    f"<li><strong>Fecha:</strong> {escape(date_str)}</li>"
-                    f"<li><strong>Hora:</strong> {escape(time_str)}</li>"
-                    f"<li><strong>Lugar:</strong> {escape(appointment.location or 'A confirmar')}</li>"
-                    "</ul>"
-                    "<p>El turno todavia no esta confirmado. El profesional revisara la solicitud y te contactara.</p>"
-                    "<p>Si no solicitaste este turno, podes ignorar este mensaje o contactar al profesional.</p>"
+                    f"""
+                    <div style="background:#f4f7fb;padding:28px 12px;font-family:Arial,sans-serif;color:#10183c;">
+                      <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #dfe6f2;box-shadow:0 12px 30px rgba(16,24,60,0.08);border-top:4px solid #d97706;">
+                        <div style="padding:22px 28px 28px;">
+                          <p style="margin:0 0 28px;font-size:13px;line-height:1;font-weight:700;color:#7a849f;">Therapy<span style="color:#12a77c;">Desk</span></p>
+                          <p style="margin:0 0 12px;font-size:18px;line-height:1.4;">Hola <strong>{escape(full_name)}</strong>,</p>
+                          <p style="margin:0 0 22px;font-size:14px;line-height:1.6;color:#374267;">Recibimos tu solicitud de turno. El profesional la revisara y te avisaremos cuando quede confirmada.</p>
+                          <div style="border:1px solid #dfe6f2;border-radius:8px;background:#fbfcff;padding:20px;margin-bottom:22px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                              <tr>
+                                <td style="width:48%;text-align:center;padding:4px 18px 4px 4px;border-right:1px solid #dfe6f2;">
+                                  <p style="margin:0 0 8px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">{escape(appointment_weekday)}</p>
+                                  <p style="margin:0;font-size:54px;line-height:0.95;font-weight:900;color:#12a77c;">{escape(appointment_day)}</p>
+                                  <p style="margin:8px 0 2px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">{escape(appointment_month)}</p>
+                                  <p style="margin:0;font-size:14px;font-weight:700;color:#7a849f;">{escape(appointment_year)}</p>
+                                </td>
+                                <td style="width:52%;text-align:center;padding:4px 4px 4px 22px;">
+                                  <p style="margin:0 0 8px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">Hora</p>
+                                  <p style="margin:0;font-size:54px;line-height:1;font-weight:400;color:#1f2937;">{escape(time_compact_str)}<span style="font-size:18px;color:#374267;"> hs</span></p>
+                                </td>
+                              </tr>
+                            </table>
+                          </div>
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:24px;">
+                            <tr>
+                              <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Estado</td>
+                              <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;font-weight:900;color:#d97706;">Pendiente de confirmacion</td>
+                            </tr>
+                            <tr>
+                              <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Profesional</td>
+                              <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;font-weight:900;color:#10183c;">{escape(psychologist_name)}</td>
+                            </tr>
+                            <tr>
+                              <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Modalidad</td>
+                              <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(appointment.location or 'A confirmar')}</td>
+                            </tr>
+                            <tr>
+                              <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Contacto</td>
+                              <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(contact_email or 'No informado')}</td>
+                            </tr>
+                          </table>
+                          <p style="margin:0;padding-top:18px;border-top:1px solid #e7edf6;text-align:center;font-size:12px;line-height:1.6;color:#7a849f;">Si no solicitaste este turno, podes ignorar este mensaje o contactar al profesional.</p>
+                        </div>
+                      </div>
+                    </div>
+                    """
                 ),
                 sender_name="TherapyDesk",
                 reply_to=contact_email,
@@ -1599,8 +1644,11 @@ def create_app():
                           <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(notes or 'Sin notas')}</td>
                         </tr>
                       </table>
+                      <p style="margin:0 0 14px;text-align:center;">
+                        <a href="{escape(confirm_url)}" style="display:inline-block;background:#12a77c;color:#ffffff;text-decoration:none;padding:13px 24px;border-radius:8px;font-weight:900;">Confirmar turno&nbsp;&rarr;</a>
+                      </p>
                       <p style="margin:0 0 28px;text-align:center;">
-                        <a href="{escape(appointments_url)}" style="display:inline-block;background:#12a77c;color:#ffffff;text-decoration:none;padding:13px 24px;border-radius:8px;font-weight:900;">Abrir agenda&nbsp;&rarr;</a>
+                        <a href="{escape(appointments_url)}" style="display:inline-block;color:#12a77c;text-decoration:none;font-size:13px;font-weight:900;">Abrir agenda</a>
                       </p>
                       <p style="margin:0;padding-top:18px;border-top:1px solid #e7edf6;text-align:center;font-size:12px;line-height:1.6;color:#7a849f;">El turno quedo pendiente. Revisalo y confirmalo desde tu agenda.</p>
                       <p style="margin:8px 0 0;text-align:center;font-size:12px;line-height:1.4;color:#7a849f;">Gestionado mediante <strong>Therapy<span style="color:#12a77c;">Desk</span></strong></p>
@@ -1622,6 +1670,146 @@ def create_app():
             },
             "profile": serialize_public_profile(profile, user),
         }), 201
+
+    @app.get("/public/booking/confirm/<token>")
+    def public_confirm_booking(token):
+        clean_token = clean_text(token)
+        appointment = Appointment.query.filter_by(booking_confirm_token=clean_token).first()
+
+        def confirmation_page(title, message, accent="#12a77c"):
+            return f"""
+            <!doctype html>
+            <html lang="es">
+              <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <title>{escape(title)}</title>
+              </head>
+              <body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#10183c;">
+                <main style="min-height:100vh;display:grid;place-items:center;padding:24px;">
+                  <section style="max-width:520px;width:100%;background:#ffffff;border:1px solid #dfe6f2;border-top:4px solid {accent};border-radius:8px;padding:30px;box-shadow:0 12px 30px rgba(16,24,60,0.08);">
+                    <p style="margin:0 0 18px;font-size:13px;font-weight:700;color:#7a849f;">Therapy<span style="color:#12a77c;">Desk</span></p>
+                    <h1 style="margin:0 0 12px;font-size:26px;line-height:1.15;color:#10183c;">{escape(title)}</h1>
+                    <p style="margin:0;font-size:16px;line-height:1.55;color:#374267;">{escape(message)}</p>
+                  </section>
+                </main>
+              </body>
+            </html>
+            """, 200, {"Content-Type": "text/html; charset=utf-8"}
+
+        if not appointment:
+            return confirmation_page(
+                "Link no disponible",
+                "Esta solicitud ya fue procesada o el link no es valido.",
+                "#d97706",
+            )
+
+        patient = Patient.query.filter_by(id=appointment.patient_id, owner_user_id=appointment.owner_user_id).first()
+        user = User.query.get(appointment.owner_user_id)
+        profile = PsychologistProfile.query.filter_by(owner_user_id=appointment.owner_user_id).first()
+
+        if not patient or not user or not profile:
+            return confirmation_page(
+                "No se pudo confirmar",
+                "No encontramos todos los datos del turno. Revisalo desde tu agenda.",
+                "#d97706",
+            )
+
+        if appointment.status == "pending":
+            appointment.status = "scheduled"
+            appointment.booking_confirm_token = None
+            db.session.commit()
+
+            if patient.email:
+                date_str = format_date_in_spanish(appointment.start_at)
+                date_short_str = format_date_in_spanish(appointment.start_at, include_year=False)
+                date_parts = date_short_str.split()
+                appointment_weekday = date_parts[0].upper() if date_parts else ""
+                appointment_day = str(appointment.start_at.day)
+                appointment_month = date_parts[-1].upper() if date_parts else ""
+                appointment_year = str(appointment.start_at.year)
+                time_str = format_time_24h(appointment.start_at)
+                time_compact_str = time_str.replace(" hs", "")
+                psychologist_name = profile.full_name or user.email
+                contact_email = profile.notification_email or user.email
+                patient_subject_date = date_short_str[:1].upper() + date_short_str[1:]
+
+                send_email(
+                    recipient=patient.email,
+                    subject=f"{patient_subject_date} - {time_str} | {psychologist_name} | Turno confirmado",
+                    body=(
+                        f"Hola {patient.full_name},\n\n"
+                        "Tu turno fue confirmado.\n\n"
+                        f"Profesional: {psychologist_name}\n"
+                        f"Fecha: {date_str}\n"
+                        f"Hora: {time_str}\n"
+                        f"Lugar: {appointment.location or 'A confirmar'}\n"
+                        f"Contacto: {contact_email or 'No informado'}\n\n"
+                        "Si necesitas reprogramar o cancelar, contacta directamente con el profesional."
+                    ),
+                    html_body=f"""
+                    <div style="background:#f4f7fb;padding:28px 12px;font-family:Arial,sans-serif;color:#10183c;">
+                      <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #dfe6f2;box-shadow:0 12px 30px rgba(16,24,60,0.08);border-top:4px solid #12a77c;">
+                        <div style="padding:22px 28px 28px;">
+                          <p style="margin:0 0 28px;font-size:13px;line-height:1;font-weight:700;color:#7a849f;">Therapy<span style="color:#12a77c;">Desk</span></p>
+                          <p style="margin:0 0 12px;font-size:18px;line-height:1.4;">Hola <strong>{escape(patient.full_name)}</strong>,</p>
+                          <p style="margin:0 0 22px;font-size:14px;line-height:1.6;color:#374267;">Tu turno fue confirmado.</p>
+                          <div style="border:1px solid #dfe6f2;border-radius:8px;background:#fbfcff;padding:20px;margin-bottom:22px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                              <tr>
+                                <td style="width:48%;text-align:center;padding:4px 18px 4px 4px;border-right:1px solid #dfe6f2;">
+                                  <p style="margin:0 0 8px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">{escape(appointment_weekday)}</p>
+                                  <p style="margin:0;font-size:54px;line-height:0.95;font-weight:900;color:#12a77c;">{escape(appointment_day)}</p>
+                                  <p style="margin:8px 0 2px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">{escape(appointment_month)}</p>
+                                  <p style="margin:0;font-size:14px;font-weight:700;color:#7a849f;">{escape(appointment_year)}</p>
+                                </td>
+                                <td style="width:52%;text-align:center;padding:4px 4px 4px 22px;">
+                                  <p style="margin:0 0 8px;font-size:12px;font-weight:900;color:#12a77c;text-transform:uppercase;">Hora</p>
+                                  <p style="margin:0;font-size:54px;line-height:1;font-weight:400;color:#1f2937;">{escape(time_compact_str)}<span style="font-size:18px;color:#374267;"> hs</span></p>
+                                </td>
+                              </tr>
+                            </table>
+                          </div>
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:24px;">
+                            <tr>
+                              <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Profesional</td>
+                              <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;font-weight:900;color:#10183c;">{escape(psychologist_name)}</td>
+                            </tr>
+                            <tr>
+                              <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Modalidad</td>
+                              <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(appointment.location or 'A confirmar')}</td>
+                            </tr>
+                            <tr>
+                              <td style="width:32%;padding:12px 12px 12px 0;border-bottom:1px solid #e7edf6;font-size:11px;font-weight:900;text-transform:uppercase;color:#7a849f;">Contacto</td>
+                              <td style="padding:12px 0;border-bottom:1px solid #e7edf6;font-size:15px;line-height:1.35;color:#10183c;">{escape(contact_email or 'No informado')}</td>
+                            </tr>
+                          </table>
+                          <p style="margin:0;padding-top:18px;border-top:1px solid #e7edf6;text-align:center;font-size:12px;line-height:1.6;color:#7a849f;">Si necesitas reprogramar o cancelar, contacta directamente con el profesional.</p>
+                        </div>
+                      </div>
+                    </div>
+                    """,
+                    sender_name="TherapyDesk",
+                    sender_email=contact_email,
+                    reply_to=contact_email,
+                )
+
+            return confirmation_page(
+                "Turno confirmado",
+                f"El turno de {patient.full_name} quedo confirmado. Tambien se envio la confirmacion al paciente si tenia email registrado.",
+            )
+
+        if appointment.status == "scheduled":
+            return confirmation_page(
+                "Turno ya confirmado",
+                f"El turno de {patient.full_name} ya estaba confirmado.",
+            )
+
+        return confirmation_page(
+            "No se puede confirmar",
+            f"Este turno esta en estado {appointment.status}. Revisalo desde tu agenda.",
+            "#d97706",
+        )
 
     # --- AUTH ---
     @app.post("/auth/register")
@@ -2741,6 +2929,8 @@ def create_app():
             if status not in {"pending", "scheduled", "attended", "no_show", "cancelled", "free"}:
                 return jsonify({"msg": "Estado invalido"}), 400
             appointment.status = status
+            if status != "pending":
+                appointment.booking_confirm_token = None
 
         if "notes" in body:
             appointment.notes = (body.get("notes") or "").strip() or None
