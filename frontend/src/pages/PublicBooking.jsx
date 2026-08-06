@@ -37,6 +37,7 @@ export default function PublicBooking() {
   const [profile, setProfile] = useState(null);
   const [availability, setAvailability] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", notes: "" });
   const [msg, setMsg] = useState("");
@@ -70,6 +71,12 @@ export default function PublicBooking() {
     return `${weekRangeFormatter.format(firstDay)} - ${weekRangeFormatter.format(lastDay)}`;
   }, [days]);
 
+  const selectedDay = useMemo(() => {
+    return days.find((day) => day.date === selectedDate) || days.find((day) => day.slots.length > 0) || days[0] || null;
+  }, [days, selectedDate]);
+
+  const hasVisibleSlots = useMemo(() => days.some((day) => day.slots.length > 0), [days]);
+
   async function loadAvailability(nextWeekOffset = weekOffset) {
     setMsg("");
     setLoading(true);
@@ -78,6 +85,7 @@ export default function PublicBooking() {
       setProfile(data.profile || null);
       setAvailability(data.availability || null);
       setSelectedSlot(null);
+      setSelectedDate("");
     } catch (e) {
       console.error(e);
       setMsg(e.message);
@@ -118,6 +126,13 @@ export default function PublicBooking() {
     loadAvailability(weekOffset);
   }, [slug, weekOffset]);
 
+  useEffect(() => {
+    if (!days.length) return;
+    if (selectedDate && days.some((day) => day.date === selectedDate)) return;
+    const nextSelectedDay = days.find((day) => day.slots.length > 0) || days[0];
+    setSelectedDate(nextSelectedDay.date);
+  }, [days, selectedDate]);
+
   return (
     <main className="booking-page">
       <section className="booking-page__profile">
@@ -138,6 +153,14 @@ export default function PublicBooking() {
 
       <section className="booking-page__workspace">
         <div className="booking-page__calendar">
+          <div className="booking-page__section-heading">
+            <span className="booking-page__step">1</span>
+            <div>
+              <h2>Elige fecha y horario</h2>
+              <p>Horario del consultorio</p>
+            </div>
+          </div>
+
           <div className="booking-page__toolbar">
             <button
               type="button"
@@ -148,7 +171,7 @@ export default function PublicBooking() {
               &lt;
             </button>
             <div className="booking-page__week">
-              <span>Semana</span>
+              <span>Próximos horarios</span>
               <strong>{availability ? weekLabel : "Horarios disponibles"}</strong>
             </div>
             <button
@@ -163,20 +186,43 @@ export default function PublicBooking() {
 
           {loading ? (
             <p className="booking-page__empty">Cargando horarios...</p>
-          ) : days.every((day) => day.slots.length === 0) ? (
+          ) : !hasVisibleSlots ? (
             <p className="booking-page__empty">No hay horarios disponibles esta semana.</p>
           ) : (
-            <div className="booking-page__days">
-              {days.map((day) => (
-                <div className="booking-page__day" key={day.date}>
-                  <div className="booking-page__day-header">
-                    <span>{day.weekday}</span>
-                    <strong>{day.dayNumber}</strong>
-                    <small>{day.month}</small>
-                  </div>
+            <>
+              <div className="booking-page__picker">
+                <div className="booking-page__days">
+                  {days.map((day) => {
+                    const isSelectedDay = selectedDay?.date === day.date;
+                    const hasSlots = day.slots.length > 0;
+                    return (
+                      <button
+                        type="button"
+                        className={[
+                          "booking-page__day",
+                          isSelectedDay ? "booking-page__day--selected" : "",
+                          hasSlots ? "booking-page__day--available" : "booking-page__day--empty",
+                        ].filter(Boolean).join(" ")}
+                        key={day.date}
+                        onClick={() => {
+                          setSelectedDate(day.date);
+                          setSelectedSlot(null);
+                        }}
+                        disabled={!hasSlots}
+                      >
+                        <span>{day.weekday}</span>
+                        <strong>{day.dayNumber}</strong>
+                        <small>{day.month}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="booking-page__time-panel">
+                  <h3>{selectedDay ? dayFormatter.format(selectedDay.dateValue) : "Selecciona un día"}</h3>
                   <div className="booking-page__slots">
-                    {day.slots.length ? (
-                      day.slots.map((slot) => {
+                    {selectedDay?.slots.length ? (
+                      selectedDay.slots.map((slot) => {
                         const isSelected = selectedSlot?.start_at === slot.start_at;
                         return (
                           <button
@@ -194,19 +240,25 @@ export default function PublicBooking() {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+
+              <p className="booking-page__timezone">Horario mostrado en tu zona horaria</p>
+            </>
           )}
         </div>
 
         <form className="booking-page__form" onSubmit={submitBooking}>
-          <h2>Datos para solicitar turno</h2>
+          <div className="booking-page__section-heading booking-page__section-heading--compact">
+            <span className="booking-page__step">2</span>
+            <div>
+              <h2>Tus datos</h2>
+            </div>
+          </div>
           <p className="booking-page__selected">
             {selectedSlot
               ? `${dayFormatter.format(new Date(selectedSlot.start_at))} - ${timeFormatter.format(new Date(selectedSlot.start_at))}`
               : "Selecciona un horario"}
           </p>
-          <p className="booking-page__notice">El turno queda pendiente hasta que el profesional lo confirme.</p>
           <input
             value={form.full_name}
             onChange={(e) => setForm((prev) => ({ ...prev, full_name: e.target.value }))}
@@ -233,8 +285,14 @@ export default function PublicBooking() {
           <button type="submit" disabled={saving || !selectedSlot}>
             {saving ? "Enviando..." : "Solicitar consulta"}
           </button>
+          <p className="booking-page__privacy">Tus datos están protegidos y solo serán usados para esta reserva.</p>
           {msg && <p className="booking-page__msg">{msg}</p>}
         </form>
+      </section>
+
+      <section className="booking-page__notice-card">
+        <span>i</span>
+        <p>El turno queda pendiente hasta que el profesional lo confirme. Recibirás un email con la confirmación.</p>
       </section>
     </main>
   );
