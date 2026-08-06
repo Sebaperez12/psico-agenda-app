@@ -1542,30 +1542,62 @@ def create_app():
                 subject=f"{subject_date_str} - {time_str} | Nueva solicitud de turno",
                 body=(
                     f"Hola {psychologist_name},\n\n"
-                    "Recibiste una nueva solicitud de turno desde tu link publico.\n\n"
+                    "Tenes una nueva solicitud de turno desde tu link de reservas.\n\n"
                     f"Paciente: {full_name}\n"
                     f"Contacto: {patient_contact}\n"
                     f"Fecha: {date_str}\n"
                     f"Hora: {time_str}\n"
                     f"Lugar: {appointment.location or 'A confirmar'}\n"
                     f"Notas: {notes or 'Sin notas'}\n\n"
-                    f"Revisala en tu agenda: {appointments_url}\n\n"
-                    "El turno quedo pendiente hasta que lo confirmes."
+                    f"Abrir agenda: {appointments_url}\n\n"
+                    "El turno quedo pendiente. Revisalo y confirmalo desde tu agenda."
                 ),
-                html_body=(
-                    f"<p>Hola <strong>{escape(psychologist_name)}</strong>,</p>"
-                    "<p>Recibiste una nueva solicitud de turno desde tu link publico.</p>"
-                    "<ul>"
-                    f"<li><strong>Paciente:</strong> {escape(full_name)}</li>"
-                    f"<li><strong>Contacto:</strong> {escape(patient_contact)}</li>"
-                    f"<li><strong>Fecha:</strong> {escape(date_str)}</li>"
-                    f"<li><strong>Hora:</strong> {escape(time_str)}</li>"
-                    f"<li><strong>Lugar:</strong> {escape(appointment.location or 'A confirmar')}</li>"
-                    f"<li><strong>Notas:</strong> {escape(notes or 'Sin notas')}</li>"
-                    "</ul>"
-                    f'<p><a href="{escape(appointments_url)}">Abrir agenda</a></p>'
-                    "<p>El turno quedo pendiente hasta que lo confirmes.</p>"
-                ),
+                html_body=f"""
+                <div style="background:#eef2ff;padding:24px 12px;font-family:Arial,sans-serif;color:#10183c;">
+                  <div style="max-width:680px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #d9defa;box-shadow:0 12px 30px rgba(16,24,60,0.12);">
+                    <div style="background:linear-gradient(135deg,#07143a,#17265f);padding:18px 28px;color:#ffffff;border-bottom:5px solid #12a77c;">
+                      <p style="margin:0;font-size:20px;line-height:1;font-weight:800;color:#ffffff;">Therapy<span style="color:#12a77c;">Desk</span></p>
+                      <p style="margin:12px 0 0;font-size:13px;line-height:1.4;color:#dfe5ff;font-weight:700;text-transform:uppercase;">Nueva solicitud de turno</p>
+                    </div>
+                    <div style="padding:30px 32px 32px;">
+                      <p style="margin:0 0 18px;font-size:18px;line-height:1.4;">Hola <strong>{escape(psychologist_name)}</strong>,</p>
+                      <p style="margin:0 0 22px;font-size:15px;line-height:1.6;">Tenes una nueva solicitud de turno desde tu link de reservas.</p>
+                      <div style="background:#fbfcff;border:1px solid #dfe5ff;border-radius:8px;padding:18px 22px;margin-bottom:24px;">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                          <tr>
+                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Paciente</td>
+                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:16px;line-height:1.35;font-weight:900;color:#10183c;">{escape(full_name)}</td>
+                          </tr>
+                          <tr>
+                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Contacto</td>
+                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(patient_contact)}</td>
+                          </tr>
+                          <tr>
+                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Fecha</td>
+                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(date_str)}</td>
+                          </tr>
+                          <tr>
+                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Hora</td>
+                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(time_str)}</td>
+                          </tr>
+                          <tr>
+                            <td style="width:34%;padding:10px 14px 10px 0;border-bottom:1px solid #e3e8f7;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Lugar</td>
+                            <td style="padding:10px 0;border-bottom:1px solid #e3e8f7;font-size:15px;line-height:1.35;color:#10183c;">{escape(appointment.location or 'A confirmar')}</td>
+                          </tr>
+                          <tr>
+                            <td style="width:34%;padding:10px 14px 10px 0;font-size:11px;font-weight:800;text-transform:uppercase;color:#6b759a;">Notas</td>
+                            <td style="padding:10px 0;font-size:15px;line-height:1.35;color:#10183c;">{escape(notes or 'Sin notas')}</td>
+                          </tr>
+                        </table>
+                      </div>
+                      <p style="margin:0 0 24px;text-align:center;">
+                        <a href="{escape(appointments_url)}" style="display:inline-block;background:#12a77c;color:#ffffff;text-decoration:none;padding:13px 22px;border-radius:8px;font-weight:900;">Abrir agenda</a>
+                      </p>
+                      <p style="margin:0;padding-top:18px;border-top:1px solid #dfe5ff;text-align:center;font-size:14px;line-height:1.6;color:#10183c;">El turno quedo pendiente. Revisalo y confirmalo desde tu agenda.</p>
+                    </div>
+                  </div>
+                </div>
+                """,
                 sender_name="TherapyDesk",
                 reply_to=email or None,
             )
