@@ -90,6 +90,9 @@
 .dashboard__metric-card,
 .dashboard__next-card,
 .dashboard__actions,
+.dashboard__pending-card,
+.dashboard__week-card,
+.dashboard__booking-card,
 .dashboard__status-card {
   border: 1px solid var(--dashboard-card-border);
   border-radius: 8px;
@@ -201,6 +204,9 @@
 
 .dashboard__next-card,
 .dashboard__actions,
+.dashboard__pending-card,
+.dashboard__week-card,
+.dashboard__booking-card,
 .dashboard__status-card {
   padding: 22px;
 }
@@ -287,6 +293,158 @@
   margin-top: 16px;
 }
 
+.dashboard__request-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard__request-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 56px;
+  padding: 10px 12px;
+  border: 1px solid var(--dashboard-card-border);
+  border-radius: 8px;
+  background: linear-gradient(90deg, #ffffff, rgba(122, 199, 255, 0.08));
+  color: var(--color-text-strong);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard__request-row:hover {
+  border-color: rgba(18, 167, 124, 0.28);
+  background: linear-gradient(90deg, #ffffff, rgba(18, 167, 124, 0.08));
+}
+
+.dashboard__request-row span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dashboard__request-row strong {
+  overflow: hidden;
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard__request-row small {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard__request-row em {
+  color: var(--color-primary-deep);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.dashboard__empty-text,
+.dashboard__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.dashboard__insights {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.dashboard__week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dashboard__week-day {
+  display: grid;
+  gap: 6px;
+  place-items: center;
+  min-height: 74px;
+  padding: 10px 6px;
+  border: 1px solid rgba(219, 229, 238, 0.96);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard__week-day span {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dashboard__week-day strong {
+  color: var(--color-text-strong);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.dashboard__week-day--busy {
+  box-shadow: inset 0 -3px 0 rgba(18, 167, 124, 0.16);
+}
+
+.dashboard__hint {
+  margin-top: 14px;
+}
+
+.dashboard__booking-link {
+  overflow: hidden;
+  padding: 13px 14px;
+  border: 1px solid rgba(95, 108, 152, 0.16);
+  border-radius: 8px;
+  background: rgba(246, 248, 255, 0.86);
+  color: var(--color-secondary-strong);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard__button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dashboard__secondary-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(18, 167, 124, 0.26);
+  border-radius: 8px;
+  background: rgba(18, 167, 124, 0.1);
+  color: var(--color-primary-deep);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.dashboard__secondary-btn:hover {
+  border-color: rgba(18, 167, 124, 0.4);
+  background: rgba(18, 167, 124, 0.15);
+}
+
 .dashboard__status-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -345,6 +503,7 @@
 @media (max-width: 860px) {
   .dashboard__metrics,
   .dashboard__grid,
+  .dashboard__insights,
   .dashboard__status-grid {
     grid-template-columns: 1fr;
   }
@@ -359,6 +518,9 @@
   .dashboard__metric-card,
   .dashboard__next-card,
   .dashboard__actions,
+  .dashboard__pending-card,
+  .dashboard__week-card,
+  .dashboard__booking-card,
   .dashboard__status-card {
     padding: 16px;
   }
@@ -369,5 +531,9 @@
 
   .dashboard__hero {
     min-height: 170px;
+  }
+
+  .dashboard__week-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

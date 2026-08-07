@@ -60,7 +60,43 @@ const icons = {
       <path d="M5 21a7 7 0 0 1 14 0" />
     </svg>
   ),
+  link: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1" />
+      <path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1" />
+    </svg>
+  ),
+  alert: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+      <path d="M10.3 4.3 2.8 17.5A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.5L13.7 4.3a2 2 0 0 0-3.4 0Z" />
+    </svg>
+  ),
 };
+
+function getLocalDateKey(date) {
+  const value = new Date(date);
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatShortDate(date) {
+  return new Intl.DateTimeFormat("es-UY", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(date));
+}
+
+function formatTime(date) {
+  return new Intl.DateTimeFormat("es-UY", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(date));
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -68,7 +104,17 @@ export default function Dashboard() {
     totalPatients: 0,
     todayAppointments: 0,
     weekAppointments: 0,
+    pendingRequestsTotal: 0,
+    pendingRequests: [],
+    availableSlots: 0,
+    weekDays: [],
     nextAppointment: null,
+    nextAvailableSlot: null,
+    publicBooking: {
+      enabled: false,
+      slug: "",
+      link: "",
+    },
     statusCounts: {
       attended: 0,
       no_show: 0,
@@ -83,49 +129,98 @@ export default function Dashboard() {
 
   async function loadDashboardData() {
     try {
-      const [patientsRes, weeklyRes] = await Promise.all([
+      const [patientsResult, weeklyResult, availabilityResult, appointmentsResult, profileResult] = await Promise.allSettled([
         api.get("/patients"),
         api.get("/appointments/weekly-preview"),
+        api.get("/availability/weekly-preview"),
+        api.get("/appointments"),
+        api.get("/profile"),
       ]);
 
-      const patients = patientsRes.patients || [];
-      const weeklyData = weeklyRes.weekly_preview || {};
-      const today = new Date().toISOString().split("T")[0];
+      const patients = patientsResult.status === "fulfilled" ? patientsResult.value.patients || [] : [];
+      const weeklyData = weeklyResult.status === "fulfilled" ? weeklyResult.value.weekly_preview || {} : {};
+      const availabilityData = availabilityResult.status === "fulfilled" ? availabilityResult.value.weekly_preview || {} : {};
+      const appointments = appointmentsResult.status === "fulfilled" ? appointmentsResult.value.appointments || [] : [];
+      const profile = profileResult.status === "fulfilled" ? profileResult.value : null;
+      const patientsById = patients.reduce((map, patient) => {
+        map[patient.id] = patient;
+        return map;
+      }, {});
+      const now = new Date();
+      const today = getLocalDateKey(now);
       let todayAppointments = 0;
       let weekAppointments = 0;
       let nextAppointment = null;
+      let nextAvailableSlot = null;
       const statusCounts = {
         attended: 0,
         no_show: 0,
         cancelled: 0,
       };
+      const weekDays = [];
 
-      Object.values(weeklyData).forEach((daySlots) => {
+      Object.entries(weeklyData).forEach(([dayKey, daySlots]) => {
+        let dayCount = 0;
         daySlots.forEach((slot) => {
-          if (!slot.patient_id) return;
+          if (!slot.patient_id || slot.status === "cancelled") return;
 
+          dayCount++;
           weekAppointments++;
           if (slot.status in statusCounts) {
             statusCounts[slot.status]++;
           }
-          const slotDate = slot.start_at?.split("T")[0];
+          const slotDate = slot.start_at ? getLocalDateKey(slot.start_at) : dayKey;
           if (slotDate === today) {
             todayAppointments++;
           }
 
-          if (slot.start_at && new Date(slot.start_at) > new Date()) {
+          if (slot.start_at && new Date(slot.start_at) > now) {
             if (!nextAppointment || new Date(slot.start_at) < new Date(nextAppointment.start_at)) {
               nextAppointment = slot;
             }
           }
         });
+        weekDays.push({ date: dayKey, count: dayCount });
       });
 
+      const availableSlots = Object.values(availabilityData).reduce((total, daySlots) => {
+        return total + daySlots.filter((slot) => {
+          if (slot.status !== "free" || !slot.start_at) return false;
+          const slotDate = new Date(slot.start_at);
+          if (slotDate <= now) return false;
+          if (!nextAvailableSlot || slotDate < new Date(nextAvailableSlot.start_at)) {
+            nextAvailableSlot = slot;
+          }
+          return true;
+        }).length;
+      }, 0);
+
+      const pendingRequests = appointments
+        .filter((appointment) => appointment.status === "pending" && appointment.start_at && new Date(appointment.start_at) >= now)
+        .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+      const visiblePendingRequests = pendingRequests
+        .slice(0, 4)
+        .map((appointment) => ({
+          ...appointment,
+          patient_name: patientsById[appointment.patient_id]?.full_name || "Paciente",
+        }));
+
+      const bookingSlug = profile?.booking_slug || "";
       setStats({
         totalPatients: patients.length,
         todayAppointments,
         weekAppointments,
+        pendingRequestsTotal: pendingRequests.length,
+        pendingRequests: visiblePendingRequests,
+        availableSlots,
+        weekDays,
         nextAppointment,
+        nextAvailableSlot,
+        publicBooking: {
+          enabled: !!profile?.public_booking_enabled,
+          slug: bookingSlug,
+          link: bookingSlug ? `${window.location.origin}/reservar/${bookingSlug}` : "",
+        },
         statusCounts,
       });
     } catch (e) {
@@ -136,7 +231,7 @@ export default function Dashboard() {
   }
 
   function formatNextAppointment(appointment) {
-    if (!appointment?.start_at) return "Sin turnos proximos";
+    if (!appointment?.start_at) return "Sin turnos próximos";
 
     const date = new Date(appointment.start_at);
     return new Intl.DateTimeFormat("es-UY", {
@@ -146,6 +241,15 @@ export default function Dashboard() {
       hour: "2-digit",
       minute: "2-digit",
     }).format(date);
+  }
+
+  async function copyBookingLink() {
+    if (!stats.publicBooking.link) return;
+    try {
+      await navigator.clipboard.writeText(stats.publicBooking.link);
+    } catch (e) {
+      console.error("No se pudo copiar el link:", e);
+    }
   }
 
   if (loading) {
@@ -164,7 +268,7 @@ export default function Dashboard() {
           <span className="dashboard__eyebrow">Panel general</span>
           <h1 className="dashboard__hero-title">Inicio</h1>
           <p className="dashboard__hero-subtitle">
-            Resumen de agenda, pacientes y actividad de la semana.
+            Lo importante del consultorio para resolver hoy.
           </p>
         </div>
       </section>
@@ -173,11 +277,11 @@ export default function Dashboard() {
         <div className="dashboard__metric-card">
           <div className="dashboard__metric-top">
             <div className="dashboard__icon">{icons.patients}</div>
-            <div className="dashboard__metric-value">{stats.totalPatients}</div>
+            <div className="dashboard__metric-value">{stats.pendingRequestsTotal}</div>
           </div>
           <div className="dashboard__metric-line" />
-          <div className="dashboard__metric-label">Pacientes activos</div>
-          <div className="dashboard__metric-desc">Total cargado en la agenda</div>
+          <div className="dashboard__metric-label">Solicitudes pendientes</div>
+          <div className="dashboard__metric-desc">Turnos que esperan confirmación</div>
         </div>
 
         <div className="dashboard__metric-card">
@@ -193,11 +297,11 @@ export default function Dashboard() {
         <div className="dashboard__metric-card">
           <div className="dashboard__metric-top">
             <div className="dashboard__icon">{icons.week}</div>
-            <div className="dashboard__metric-value">{stats.weekAppointments}</div>
+            <div className="dashboard__metric-value">{stats.availableSlots}</div>
           </div>
           <div className="dashboard__metric-line" />
-          <div className="dashboard__metric-label">Turnos esta semana</div>
-          <div className="dashboard__metric-desc">Reservas visibles esta semana</div>
+          <div className="dashboard__metric-label">Horarios libres</div>
+          <div className="dashboard__metric-desc">Disponibles en la agenda pública</div>
         </div>
       </section>
 
@@ -208,7 +312,7 @@ export default function Dashboard() {
             <h2 className="dashboard__section-title">Proximo turno</h2>
           </div>
           <div className="dashboard__next-time">
-            {stats.nextAppointment ? formatNextAppointment(stats.nextAppointment) : "Sin turnos proximos"}
+            {stats.nextAppointment ? formatNextAppointment(stats.nextAppointment) : "Sin turnos próximos"}
           </div>
           {stats.nextAppointment && (
             <div className="dashboard__next-patient">
@@ -221,29 +325,86 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="dashboard__actions">
+        <div className="dashboard__pending-card">
           <div className="dashboard__section-head">
-            <div className="dashboard__icon">{icons.arrow}</div>
-            <h2 className="dashboard__section-title">Accesos rapidos</h2>
+            <div className="dashboard__icon">{icons.alert}</div>
+            <h2 className="dashboard__section-title">Por confirmar</h2>
           </div>
-          <div className="dashboard__actions-grid">
-            <button className="dashboard__action-btn" onClick={() => navigate("/appointments")}>
-              <span className="dashboard__action-icon">{icons.calendar}</span>
-              <span>Gestionar turnos</span>
-            </button>
-            <button className="dashboard__action-btn" onClick={() => navigate("/patients")}>
-              <span className="dashboard__action-icon">{icons.patients}</span>
-              <span>Ver pacientes</span>
-            </button>
-            <button className="dashboard__action-btn" onClick={() => navigate("/availability")}>
-              <span className="dashboard__action-icon">{icons.availability}</span>
-              <span>Disponibilidad</span>
-            </button>
-            <button className="dashboard__action-btn" onClick={() => navigate("/profile")}>
-              <span className="dashboard__action-icon">{icons.profile}</span>
-              <span>Mi perfil</span>
-            </button>
+          {stats.pendingRequests.length > 0 ? (
+            <div className="dashboard__request-list">
+              {stats.pendingRequests.map((request) => (
+                <button
+                  type="button"
+                  className="dashboard__request-row"
+                  key={request.id}
+                  onClick={() => navigate("/appointments")}
+                >
+                  <span>
+                    <strong>{formatShortDate(request.start_at)}</strong>
+                    <small>{request.patient_name}</small>
+                  </span>
+                  <em>{formatTime(request.start_at)}</em>
+                </button>
+              ))}
+              {stats.pendingRequestsTotal > stats.pendingRequests.length && (
+                <p className="dashboard__hint">
+                  Hay {stats.pendingRequestsTotal - stats.pendingRequests.length} solicitudes más en agenda.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="dashboard__empty-text">No hay solicitudes pendientes.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="dashboard__insights">
+        <div className="dashboard__week-card">
+          <div className="dashboard__section-head">
+            <div className="dashboard__icon">{icons.week}</div>
+            <h2 className="dashboard__section-title">Semana</h2>
           </div>
+          <div className="dashboard__week-strip">
+            {stats.weekDays.map((day) => (
+              <div
+                className={`dashboard__week-day${day.count > 0 ? " dashboard__week-day--busy" : ""}`}
+                key={day.date}
+              >
+                <span>{formatShortDate(`${day.date}T12:00:00`).split(" ")[0]}</span>
+                <strong>{day.count}</strong>
+              </div>
+            ))}
+          </div>
+          <p className="dashboard__hint">
+            {stats.weekAppointments} turnos cargados esta semana.
+          </p>
+        </div>
+
+        <div className="dashboard__booking-card">
+          <div className="dashboard__section-head">
+            <div className="dashboard__icon">{icons.link}</div>
+            <h2 className="dashboard__section-title">Link de reservas</h2>
+          </div>
+          {stats.publicBooking.enabled && stats.publicBooking.link ? (
+            <>
+              <div className="dashboard__booking-link">{stats.publicBooking.link}</div>
+              <div className="dashboard__button-row">
+                <button className="dashboard__secondary-btn" type="button" onClick={copyBookingLink}>
+                  Copiar link
+                </button>
+                <button className="dashboard__secondary-btn" type="button" onClick={() => navigate("/profile")}>
+                  Configurar
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="dashboard__empty-text">Tu agenda pública no está activa.</p>
+              <button className="dashboard__secondary-btn" type="button" onClick={() => navigate("/profile")}>
+                Activar desde perfil
+              </button>
+            </>
+          )}
         </div>
       </section>
 
