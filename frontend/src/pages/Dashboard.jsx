@@ -98,6 +98,14 @@ function formatTime(date) {
   }).format(new Date(date));
 }
 
+function formatAppointmentDate(date) {
+  return new Intl.DateTimeFormat("es-UY", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(date));
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -311,12 +319,28 @@ export default function Dashboard() {
             <div className="dashboard__icon">{icons.clock}</div>
             <h2 className="dashboard__section-title">Proximo turno</h2>
           </div>
-          <div className="dashboard__next-time">
-            {stats.nextAppointment ? formatNextAppointment(stats.nextAppointment) : "Sin turnos próximos"}
-          </div>
-          {stats.nextAppointment && (
-            <div className="dashboard__next-patient">
-              Con {stats.nextAppointment.patient_name || `Paciente ${stats.nextAppointment.patient_id}`}
+          {stats.nextAppointment ? (
+            <div className="dashboard__next-feature">
+              <div className="dashboard__next-illustration">{icons.calendar}</div>
+              <div className="dashboard__next-detail">
+                <div className="dashboard__next-date">
+                  {formatAppointmentDate(stats.nextAppointment.start_at)}
+                </div>
+                <div className="dashboard__next-hour">
+                  {formatTime(stats.nextAppointment.start_at)}
+                </div>
+                <div className="dashboard__next-patient">
+                  Con {stats.nextAppointment.patient_name || `Paciente ${stats.nextAppointment.patient_id}`}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="dashboard__next-empty">
+              <div className="dashboard__next-illustration">{icons.calendar}</div>
+              <div>
+                <div className="dashboard__next-time">{formatNextAppointment(stats.nextAppointment)}</div>
+                <div className="dashboard__next-patient">No hay sesiones próximas cargadas.</div>
+              </div>
             </div>
           )}
           <button className="dashboard__primary-btn" onClick={() => navigate("/appointments")}>
