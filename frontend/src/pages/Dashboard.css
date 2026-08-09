@@ -14,9 +14,9 @@
   position: relative;
   display: flex;
   align-items: flex-end;
-  min-height: 170px;
-  margin-bottom: 16px;
-  padding: 28px;
+  min-height: 140px;
+  margin-bottom: 14px;
+  padding: 24px;
   overflow: hidden;
   border: 1px solid rgba(207, 232, 220, 0.9);
   border-radius: 8px;
@@ -62,7 +62,7 @@
 .dashboard__hero-title {
   margin: 0;
   color: #ffffff;
-  font-size: 32px;
+  font-size: 30px;
   line-height: 1.15;
   text-shadow: 0 2px 5px rgba(16, 29, 63, 0.42);
 }
@@ -83,8 +83,8 @@
 .dashboard__metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .dashboard__metric-card,
@@ -103,9 +103,9 @@
 .dashboard__metric-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
-  padding: 18px 20px;
+  padding: 14px 16px;
 }
 
 .dashboard__metric-top {
@@ -131,8 +131,8 @@
 }
 
 .dashboard__icon {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
   border: 1px solid rgba(249, 115, 22, 0.18);
   border-radius: 8px;
@@ -154,8 +154,8 @@
 .dashboard__icon svg,
 .dashboard__action-icon svg,
 .dashboard__button-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -173,7 +173,7 @@
   grid-row: 1 / span 2;
   margin: 0;
   color: var(--color-text-strong);
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 900;
   line-height: 1;
 }
@@ -199,7 +199,7 @@
 .dashboard__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-  gap: 16px;
+  gap: 14px;
 }
 
 .dashboard__next-card,
@@ -208,7 +208,7 @@
 .dashboard__week-card,
 .dashboard__booking-card,
 .dashboard__status-card {
-  padding: 22px;
+  padding: 18px;
 }
 
 .dashboard__section-title {
@@ -221,8 +221,8 @@
 .dashboard__next-card {
   position: relative;
   overflow: hidden;
-  min-height: 300px;
-  padding: 28px;
+  min-height: 0;
+  padding: 20px;
   background:
     radial-gradient(circle at 16% 58%, rgba(249, 115, 22, 0.08), transparent 18rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94));
@@ -233,22 +233,22 @@
 }
 
 .dashboard__next-card--empty .dashboard__section-head {
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .dashboard__next-card--empty .dashboard__next-empty {
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 18px;
 }
 
 .dashboard__next-card--empty .dashboard__next-illustration {
-  width: 92px;
-  height: 92px;
+  width: 78px;
+  height: 78px;
 }
 
 .dashboard__next-card--empty .dashboard__next-illustration svg {
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
 }
 
 .dashboard__next-card--empty .dashboard__next-patient {
@@ -263,9 +263,9 @@
 }
 
 .dashboard__next-card .dashboard__section-head {
-  gap: 16px;
-  margin-bottom: 28px;
-  padding-bottom: 18px;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
 }
 
 .dashboard__next-card .dashboard__icon {
@@ -279,14 +279,14 @@
 }
 
 .dashboard__next-card .dashboard__section-title {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .dashboard__next-feature,
 .dashboard__next-empty {
   display: grid;
-  grid-template-columns: 128px minmax(0, 1fr);
-  gap: 26px;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 22px;
   align-items: center;
   max-width: 780px;
 }
@@ -295,8 +295,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 128px;
-  height: 128px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92), rgba(255, 237, 225, 0.72)),
@@ -306,8 +306,8 @@
 }
 
 .dashboard__next-illustration svg {
-  width: 64px;
-  height: 64px;
+  width: 54px;
+  height: 54px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.65;
@@ -320,31 +320,31 @@
 }
 
 .dashboard__next-date {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: #6f7898;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1.15;
 }
 
 .dashboard__next-hour {
   color: var(--color-text-strong);
-  font-size: 58px;
+  font-size: 50px;
   font-weight: 950;
   line-height: 0.98;
 }
 
 .dashboard__next-time {
   color: var(--color-text-strong);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1.25;
 }
 
 .dashboard__next-patient {
-  margin-top: 12px;
+  margin-top: 8px;
   color: var(--color-text-muted);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -363,8 +363,8 @@
   justify-content: center;
   gap: 9px;
   width: min(300px, 100%);
-  min-height: 50px;
-  margin-top: 28px;
+  min-height: 44px;
+  margin-top: 18px;
   padding: 0 26px;
   border: 1px solid var(--color-primary-deep);
   color: var(--color-primary-deep);
@@ -415,7 +415,7 @@
 }
 
 .dashboard__status-card {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .dashboard__request-list {
@@ -429,8 +429,8 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  min-height: 56px;
-  padding: 10px 12px;
+  min-height: 48px;
+  padding: 8px 10px;
   border: 1px solid var(--dashboard-card-border);
   border-radius: 8px;
   background: linear-gradient(90deg, #ffffff, rgba(122, 199, 255, 0.08));
@@ -453,7 +453,7 @@
 .dashboard__request-row strong {
   overflow: hidden;
   color: var(--color-text-strong);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -462,7 +462,7 @@
 .dashboard__request-row small {
   overflow: hidden;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -470,7 +470,7 @@
 
 .dashboard__request-row em {
   color: var(--color-primary-deep);
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 900;
 }
@@ -487,22 +487,22 @@
 .dashboard__insights {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 16px;
-  margin-top: 16px;
+  gap: 14px;
+  margin-top: 14px;
 }
 
 .dashboard__week-strip {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
 }
 
 .dashboard__week-day {
   display: grid;
   gap: 6px;
   place-items: center;
-  min-height: 74px;
-  padding: 10px 6px;
+  min-height: 58px;
+  padding: 8px 6px;
   border: 1px solid rgba(219, 229, 238, 0.96);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.72);
@@ -521,7 +521,7 @@
 
 .dashboard__week-day strong {
   color: var(--color-text-strong);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1;
 }
@@ -531,12 +531,12 @@
 }
 
 .dashboard__hint {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .dashboard__booking-link {
   overflow: hidden;
-  padding: 13px 14px;
+  padding: 10px 12px;
   border: 1px solid rgba(95, 108, 152, 0.16);
   border-radius: 8px;
   background: rgba(246, 248, 255, 0.86);
@@ -555,7 +555,7 @@
 }
 
 .dashboard__secondary-btn {
-  min-height: 40px;
+  min-height: 34px;
   padding: 0 14px;
   border: 1px solid rgba(18, 167, 124, 0.26);
   border-radius: 8px;
@@ -573,7 +573,7 @@
 .dashboard__status-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .dashboard__status-item {
@@ -581,7 +581,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
   align-items: center;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid var(--dashboard-card-border);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.66);
@@ -589,7 +589,7 @@
 
 .dashboard__status-item span {
   color: var(--color-text-strong);
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 900;
   line-height: 1;
 }
@@ -634,39 +634,39 @@
   }
 
   .dashboard__hero {
-    min-height: 190px;
+    min-height: 150px;
   }
 
   .dashboard__next-card {
-    padding: 32px;
+    padding: 20px;
   }
 
   .dashboard__next-feature,
   .dashboard__next-empty {
-    grid-template-columns: 150px minmax(0, 1fr);
-    gap: 28px;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 22px;
   }
 
   .dashboard__next-illustration {
-    width: 150px;
-    height: 150px;
+    width: 110px;
+    height: 110px;
   }
 
   .dashboard__next-illustration svg {
-    width: 76px;
-    height: 76px;
+    width: 54px;
+    height: 54px;
   }
 
   .dashboard__next-date {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .dashboard__next-hour {
-    font-size: 66px;
+    font-size: 50px;
   }
 
   .dashboard__next-patient {
-    font-size: 22px;
+    font-size: 16px;
   }
 }
 
