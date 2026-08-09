@@ -130,6 +130,8 @@ export default function Dashboard() {
     },
   });
   const [loading, setLoading] = useState(true);
+  const [confirmingId, setConfirmingId] = useState(null);
+  const [dashboardMsg, setDashboardMsg] = useState("");
 
   useEffect(() => {
     loadDashboardData();
@@ -255,8 +257,36 @@ export default function Dashboard() {
     if (!stats.publicBooking.link) return;
     try {
       await navigator.clipboard.writeText(stats.publicBooking.link);
+      setDashboardMsg("Link copiado");
     } catch (e) {
       console.error("No se pudo copiar el link:", e);
+    }
+  }
+
+  function openBookingLink() {
+    if (!stats.publicBooking.link) return;
+    window.open(stats.publicBooking.link, "_blank", "noopener,noreferrer");
+  }
+
+  async function confirmPendingRequest(appointmentId) {
+    if (!appointmentId || confirmingId) return;
+    setConfirmingId(appointmentId);
+    setDashboardMsg("");
+    try {
+      await api.patch(`/appointments/${appointmentId}`, { status: "scheduled" });
+      try {
+        await api.post(`/appointments/${appointmentId}/notify`, { method: "email" });
+        setDashboardMsg("Turno confirmado y email enviado");
+      } catch (notifyError) {
+        console.error(notifyError);
+        setDashboardMsg("Turno confirmado. No se pudo enviar el email.");
+      }
+      await loadDashboardData();
+    } catch (e) {
+      console.error(e);
+      setDashboardMsg(e.message || "No se pudo confirmar el turno");
+    } finally {
+      setConfirmingId(null);
     }
   }
 
@@ -317,7 +347,7 @@ export default function Dashboard() {
         <div className={`dashboard__next-card${stats.nextAppointment ? "" : " dashboard__next-card--empty"}`}>
           <div className="dashboard__section-head">
             <div className="dashboard__icon">{icons.clock}</div>
-            <h2 className="dashboard__section-title">Proximo turno</h2>
+            <h2 className="dashboard__section-title">Próximo turno</h2>
           </div>
           {stats.nextAppointment ? (
             <div className="dashboard__next-feature">
@@ -357,18 +387,28 @@ export default function Dashboard() {
           {stats.pendingRequests.length > 0 ? (
             <div className="dashboard__request-list">
               {stats.pendingRequests.map((request) => (
-                <button
-                  type="button"
+                <div
                   className="dashboard__request-row"
                   key={request.id}
-                  onClick={() => navigate("/appointments")}
                 >
-                  <span>
+                  <button
+                    type="button"
+                    className="dashboard__request-info"
+                    onClick={() => navigate("/appointments")}
+                  >
                     <strong>{formatShortDate(request.start_at)}</strong>
                     <small>{request.patient_name}</small>
-                  </span>
+                  </button>
                   <em>{formatTime(request.start_at)}</em>
-                </button>
+                  <button
+                    type="button"
+                    className="dashboard__confirm-btn"
+                    onClick={() => confirmPendingRequest(request.id)}
+                    disabled={confirmingId === request.id}
+                  >
+                    {confirmingId === request.id ? "..." : "Confirmar"}
+                  </button>
+                </div>
               ))}
               {stats.pendingRequestsTotal > stats.pendingRequests.length && (
                 <p className="dashboard__hint">
@@ -416,6 +456,9 @@ export default function Dashboard() {
                 <button className="dashboard__secondary-btn" type="button" onClick={copyBookingLink}>
                   Copiar link
                 </button>
+                <button className="dashboard__secondary-btn" type="button" onClick={openBookingLink}>
+                  Abrir link
+                </button>
                 <button className="dashboard__secondary-btn" type="button" onClick={() => navigate("/profile")}>
                   Configurar
                 </button>
@@ -431,6 +474,8 @@ export default function Dashboard() {
           )}
         </div>
       </section>
+
+      {dashboardMsg && <p className="dashboard__message">{dashboardMsg}</p>}
 
       <section className="dashboard__status-card">
         <div className="dashboard__section-head">
