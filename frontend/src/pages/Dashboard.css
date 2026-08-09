@@ -222,17 +222,51 @@
   position: relative;
   overflow: hidden;
   grid-column: 1 / -1;
-  min-height: 430px;
-  padding: 42px 48px;
+  min-height: 360px;
+  padding: 34px 44px;
   background:
     radial-gradient(circle at 16% 58%, rgba(249, 115, 22, 0.08), transparent 18rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94));
 }
 
+.dashboard__next-card--empty {
+  min-height: 280px;
+}
+
+.dashboard__next-card--empty .dashboard__section-head {
+  margin-bottom: 28px;
+}
+
+.dashboard__next-card--empty .dashboard__next-empty {
+  grid-template-columns: 118px minmax(0, 1fr);
+  gap: 28px;
+}
+
+.dashboard__next-card--empty .dashboard__next-illustration {
+  width: 118px;
+  height: 118px;
+}
+
+.dashboard__next-card--empty .dashboard__next-illustration svg {
+  width: 58px;
+  height: 58px;
+}
+
+.dashboard__next-card--empty .dashboard__next-patient {
+  margin-top: 10px;
+  font-size: 19px;
+}
+
+.dashboard__next-card--empty .dashboard__primary-btn {
+  min-height: 52px;
+  margin-top: 24px;
+  font-size: 16px;
+}
+
 .dashboard__next-card .dashboard__section-head {
   gap: 28px;
-  margin-bottom: 54px;
-  padding-bottom: 26px;
+  margin-bottom: 38px;
+  padding-bottom: 22px;
 }
 
 .dashboard__next-card .dashboard__icon {
@@ -252,8 +286,8 @@
 .dashboard__next-feature,
 .dashboard__next-empty {
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  gap: 42px;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 34px;
   align-items: center;
   max-width: 780px;
 }
@@ -262,8 +296,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 210px;
-  height: 210px;
+  width: 170px;
+  height: 170px;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92), rgba(255, 237, 225, 0.72)),
@@ -273,8 +307,8 @@
 }
 
 .dashboard__next-illustration svg {
-  width: 105px;
-  height: 105px;
+  width: 86px;
+  height: 86px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.65;
@@ -289,14 +323,14 @@
 .dashboard__next-date {
   margin-bottom: 12px;
   color: #6f7898;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 900;
   line-height: 1.15;
 }
 
 .dashboard__next-hour {
   color: var(--color-text-strong);
-  font-size: 84px;
+  font-size: 76px;
   font-weight: 950;
   line-height: 0.98;
 }
@@ -309,9 +343,9 @@
 }
 
 .dashboard__next-patient {
-  margin-top: 24px;
+  margin-top: 18px;
   color: var(--color-text-muted);
-  font-size: 27px;
+  font-size: 23px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -331,7 +365,7 @@
   gap: 9px;
   width: min(370px, 100%);
   min-height: 60px;
-  margin-top: 36px;
+  margin-top: 28px;
   padding: 0 26px;
   border: 1px solid var(--color-primary-deep);
   color: var(--color-primary-deep);

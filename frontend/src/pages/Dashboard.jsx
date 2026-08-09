@@ -314,7 +314,7 @@ export default function Dashboard() {
       </section>
 
       <section className="dashboard__grid">
-        <div className="dashboard__next-card">
+        <div className={`dashboard__next-card${stats.nextAppointment ? "" : " dashboard__next-card--empty"}`}>
           <div className="dashboard__section-head">
             <div className="dashboard__icon">{icons.clock}</div>
             <h2 className="dashboard__section-title">Proximo turno</h2>
