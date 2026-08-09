@@ -1,20 +1,20 @@
 .profile-page {
-  max-width: 900px;
+  max-width: 840px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .profile-page__header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.35rem;
   text-align: center;
 }
 
 .profile-page__title {
   position: relative;
   display: inline-block;
-  font-size: 2rem;
-  margin: 0 0 0.75rem 0;
-  padding-bottom: 0.6rem;
+  font-size: 1.65rem;
+  margin: 0 0 0.55rem 0;
+  padding-bottom: 0.45rem;
   color: var(--color-text-strong);
 }
 
@@ -31,15 +31,15 @@
 }
 
 .profile-page__description {
-  font-size: 1rem;
+  font-size: 0.92rem;
   color: var(--color-text-muted);
   margin: 0;
 }
 
 .profile-page__form {
   background: rgba(255, 255, 255, 0.84);
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: 8px;
+  padding: 1.35rem;
   border: 1px solid var(--color-border);
   border-top: 3px solid var(--color-accent-line);
   box-shadow: 0 12px 30px var(--color-shadow);
@@ -48,15 +48,15 @@
 .profile-page__photo-section {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
   flex-wrap: wrap;
 }
 
 .profile-page__photo-frame {
-  width: 108px;
-  height: 108px;
-  border-radius: 24px;
+  width: 88px;
+  height: 88px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--color-accent-line);
   background: var(--color-accent-surface);
@@ -72,7 +72,7 @@
 }
 
 .profile-page__photo-placeholder {
-  font-size: 2rem;
+  font-size: 1.55rem;
   font-weight: 800;
   color: var(--color-text-strong);
 }
@@ -86,11 +86,11 @@
 .profile-page__input,
 .profile-page__textarea {
   width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+  padding: 0.62rem;
+  margin-bottom: 0.8rem;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
   font-family: inherit;
   background: var(--color-surface);
   color: var(--color-text);
@@ -112,7 +112,7 @@
 }
 
 .profile-page__section {
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .profile-page__section-label {
