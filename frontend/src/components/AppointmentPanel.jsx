@@ -141,6 +141,7 @@ export default function AppointmentPanel({
               setForm((prev) => ({
                 ...prev,
                 patientId,
+                feeAmount: prev.feeAmount || patient?.session_fee_amount || "",
                 notifyMethod: nextMethod || prev.notifyMethod || "email",
                 notifyOnSave: prev.appointmentId ? prev.notifyOnSave : Boolean(patient?.email),
               }));
@@ -246,6 +247,34 @@ export default function AppointmentPanel({
             ))}
           </select>
         </label>
+
+        <div className="appointment-panel__billing">
+          <div className="appointment-panel__section-title">Pagos</div>
+          <div className="appointment-panel__grid">
+            <label className="appointment-panel__field">
+              Monto
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={form.feeAmount}
+                onChange={(e) => setForm((prev) => ({ ...prev, feeAmount: e.target.value }))}
+                placeholder={selectedPatient?.session_fee_amount ? String(selectedPatient.session_fee_amount) : "0"}
+              />
+            </label>
+            <label className="appointment-panel__field">
+              Estado de pago
+              <select
+                value={form.paymentStatus || "pending"}
+                onChange={(e) => setForm((prev) => ({ ...prev, paymentStatus: e.target.value }))}
+              >
+                <option value="pending">Pendiente</option>
+                <option value="paid">Pagado</option>
+                <option value="waived">Bonificado</option>
+              </select>
+            </label>
+          </div>
+        </div>
 
         <label className="appointment-panel__field">
           Notas

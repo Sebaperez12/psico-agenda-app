@@ -178,6 +178,10 @@
   line-height: 1;
 }
 
+.dashboard__metric-value--money {
+  font-size: 22px;
+}
+
 .dashboard__metric-line {
   display: none;
 }

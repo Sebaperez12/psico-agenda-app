@@ -457,6 +457,14 @@
   resize: vertical;
 }
 
+.appointment-panel__billing {
+  margin: 2px 0 12px;
+  padding: 12px;
+  border: 1px solid rgba(18, 167, 124, 0.18);
+  border-radius: 8px;
+  background: rgba(18, 167, 124, 0.06);
+}
+
 .appointment-panel__time-picker {
   position: relative;
 }

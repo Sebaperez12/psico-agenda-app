@@ -14,6 +14,8 @@ export function buildPatientProfileForm(patient) {
     emergency_contact_name: patient?.emergency_contact_name || "",
     emergency_contact_phone: patient?.emergency_contact_phone || "",
     notes: patient?.notes || "",
+    session_fee_amount: patient?.session_fee_amount || "",
+    billing_notes: patient?.billing_notes || "",
   };
 }
 

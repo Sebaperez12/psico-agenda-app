@@ -141,6 +141,29 @@ export default function PatientEditor({
           />
         </div>
 
+        <div className="patients-page__section-head patients-page__section-head--billing">
+          <h2>Pagos y honorarios</h2>
+          <p>Solo visible para el profesional. No aparece en links ni emails al paciente.</p>
+        </div>
+
+        <div className="patients-page__grid patients-page__grid--billing">
+          <input
+            className="patients-page__input"
+            type="number"
+            min="0"
+            step="100"
+            value={profileForm.session_fee_amount}
+            onChange={(e) => setProfileForm((current) => ({ ...current, session_fee_amount: e.target.value }))}
+            placeholder="Honorario por sesion"
+          />
+          <textarea
+            className="patients-page__input patients-page__textarea"
+            value={profileForm.billing_notes}
+            onChange={(e) => setProfileForm((current) => ({ ...current, billing_notes: e.target.value }))}
+            placeholder="Notas privadas de pago"
+          />
+        </div>
+
         <button
           className="patients-page__btn patients-page__btn--primary"
           onClick={() => onSaveProfile(patient.id)}

@@ -34,6 +34,8 @@ const EMPTY_FORM = {
   notifyMethod: "email",
   notes: "",
   status: "",
+  feeAmount: "",
+  paymentStatus: "pending",
 };
 
 export default function Appointments() {
@@ -188,6 +190,8 @@ export default function Appointments() {
       notifyMethod,
       notes: slot.notes || "",
       status: slot.status || "",
+      feeAmount: slot.fee_amount || "",
+      paymentStatus: slot.payment_status || "pending",
     });
     setSelectedDateKey(formatDateForInput(slot.start_at));
     setIsPanelOpen(true);
@@ -214,6 +218,8 @@ export default function Appointments() {
         status: form.patientId ? "scheduled" : "free",
         location: form.location || profileOfficeAddress,
         notes: form.notes,
+        fee_amount: form.feeAmount || 0,
+        payment_status: form.paymentStatus || "pending",
       };
 
       if (form.duration && Number(form.duration) > 0) {

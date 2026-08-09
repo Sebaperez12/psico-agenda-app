@@ -2,6 +2,15 @@ import PatientEditor from "./PatientEditor";
 import mailIcon from "../assets/mail.png";
 import { formatAppointmentSummary } from "../utils/appointmentFormatters";
 
+function formatMoney(value) {
+  const amount = Number(value || 0);
+  return new Intl.NumberFormat("es-UY", {
+    style: "currency",
+    currency: "UYU",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export default function PatientCard({
   patient,
   isExpanded,
@@ -33,6 +42,12 @@ export default function PatientCard({
           <span className="patients-page__contact-line">
             <img src={mailIcon} alt="" aria-hidden="true" />
             {patient.email || "Sin email"}
+          </span>
+          <span className="patients-page__billing-line">
+            Honorario: {patient.session_fee_amount ? formatMoney(patient.session_fee_amount) : "Sin definir"}
+          </span>
+          <span className={patient.billing_summary?.balance_due > 0 ? "patients-page__billing-line patients-page__billing-line--due" : "patients-page__billing-line"}>
+            Saldo: {formatMoney(patient.billing_summary?.balance_due)}
           </span>
         </div>
 

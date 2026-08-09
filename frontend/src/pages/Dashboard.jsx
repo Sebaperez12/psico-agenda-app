@@ -106,6 +106,14 @@ function formatAppointmentDate(date) {
   }).format(new Date(date));
 }
 
+function formatMoney(value) {
+  return new Intl.NumberFormat("es-UY", {
+    style: "currency",
+    currency: "UYU",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -115,6 +123,8 @@ export default function Dashboard() {
     pendingRequestsTotal: 0,
     pendingRequests: [],
     availableSlots: 0,
+    billingDue: 0,
+    patientsWithDebt: 0,
     weekDays: [],
     nextAppointment: null,
     nextAvailableSlot: null,
@@ -156,6 +166,10 @@ export default function Dashboard() {
         map[patient.id] = patient;
         return map;
       }, {});
+      const billingDue = patients.reduce((total, patient) => {
+        return total + Number(patient.billing_summary?.balance_due || 0);
+      }, 0);
+      const patientsWithDebt = patients.filter((patient) => Number(patient.billing_summary?.balance_due || 0) > 0).length;
       const now = new Date();
       const today = getLocalDateKey(now);
       let todayAppointments = 0;
@@ -223,6 +237,8 @@ export default function Dashboard() {
         pendingRequestsTotal: pendingRequests.length,
         pendingRequests: visiblePendingRequests,
         availableSlots,
+        billingDue,
+        patientsWithDebt,
         weekDays,
         nextAppointment,
         nextAvailableSlot,
@@ -335,11 +351,11 @@ export default function Dashboard() {
         <div className="dashboard__metric-card">
           <div className="dashboard__metric-top">
             <div className="dashboard__icon">{icons.week}</div>
-            <div className="dashboard__metric-value">{stats.availableSlots}</div>
+            <div className="dashboard__metric-value dashboard__metric-value--money">{formatMoney(stats.billingDue)}</div>
           </div>
           <div className="dashboard__metric-line" />
-          <div className="dashboard__metric-label">Horarios libres</div>
-          <div className="dashboard__metric-desc">Disponibles en la agenda pública</div>
+          <div className="dashboard__metric-label">Pendiente de cobro</div>
+          <div className="dashboard__metric-desc">{stats.patientsWithDebt} pacientes con saldo pendiente</div>
         </div>
       </section>
 

@@ -161,6 +161,16 @@
   object-fit: contain;
 }
 
+.patients-page__billing-line {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.patients-page__billing-line--due {
+  color: var(--color-primary-deep);
+}
+
 .patients-page__upcoming-label {
   font-size: 12px;
   font-weight: 700;
@@ -223,6 +233,10 @@
 
 .patients-page__section-head {
   margin-bottom: 12px;
+}
+
+.patients-page__section-head--billing {
+  margin-top: 14px;
 }
 
 .patients-page__section-head h2 {

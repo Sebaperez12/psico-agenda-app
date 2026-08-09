@@ -343,6 +343,15 @@ def create_app():
     def clean_text(value):
         return (value or "").strip()
 
+    def parse_money_amount(value, default=None):
+        if value in ("", None):
+            return default
+        try:
+            amount = float(str(value).replace(",", "."))
+        except (TypeError, ValueError):
+            return default
+        return round(max(amount, 0), 2)
+
     def slugify(value):
         normalized = clean_text(value).lower()
         normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
@@ -642,6 +651,10 @@ def create_app():
         created_count = 0
 
         for series in series_list:
+            series_patient = Patient.query.filter_by(
+                id=series.patient_id,
+                owner_user_id=owner_user_id,
+            ).first() if series.patient_id else None
             cursor_date = max(series.start_date, range_start.date())
             last_date = min(series.end_date, range_end.date() - timedelta(days=1)) if series.end_date else range_end.date() - timedelta(days=1)
 
@@ -667,6 +680,8 @@ def create_app():
                         status="scheduled" if series.patient_id else "free",
                         location=series.location,
                         notes=series.notes,
+                        fee_amount=(series_patient.session_fee_amount or 0) if series_patient else 0,
+                        payment_status="pending",
                     ))
                     existing_occurrences.add(occurrence_key)
                     created_count += 1
@@ -887,6 +902,9 @@ def create_app():
             "status": appointment.status,
             "location": appointment.location,
             "notes": appointment.notes,
+            "fee_amount": appointment.fee_amount or 0,
+            "payment_status": appointment.payment_status or "pending",
+            "paid_at": appointment.paid_at.isoformat() if appointment.paid_at else None,
             "recurring_series_id": appointment.recurring_series_id,
         }
 
@@ -894,6 +912,32 @@ def create_app():
         patient_data = patient.serialize()
         patient_data["next_appointment"] = serialize_appointment_summary(next_appointment)
         return patient_data
+
+    def build_patient_billing_summary(patient_id, appointments=None):
+        items = appointments or []
+        due_items = [
+            appointment for appointment in items
+            if (
+                appointment.patient_id == patient_id
+                and appointment.status not in {"cancelled", "free"}
+                and (appointment.payment_status or "pending") == "pending"
+                and (appointment.fee_amount or 0) > 0
+            )
+        ]
+        paid_items = [
+            appointment for appointment in items
+            if (
+                appointment.patient_id == patient_id
+                and appointment.status not in {"cancelled", "free"}
+                and (appointment.payment_status or "pending") == "paid"
+                and (appointment.fee_amount or 0) > 0
+            )
+        ]
+        return {
+            "balance_due": round(sum((item.fee_amount or 0) for item in due_items), 2),
+            "pending_count": len(due_items),
+            "paid_total": round(sum((item.fee_amount or 0) for item in paid_items), 2),
+        }
 
     # -------- MODELOS --------
     class User(db.Model):
@@ -969,6 +1013,8 @@ def create_app():
         emergency_contact_name = db.Column(db.String(120), nullable=True)
         emergency_contact_phone = db.Column(db.String(40), nullable=True)
         notes = db.Column(db.Text, nullable=True)
+        session_fee_amount = db.Column(db.Float, nullable=True)
+        billing_notes = db.Column(db.Text, nullable=True)
 
         created_at = db.Column(db.DateTime, server_default=db.func.now())
 
@@ -987,6 +1033,8 @@ def create_app():
                 "emergency_contact_name": self.emergency_contact_name,
                 "emergency_contact_phone": self.emergency_contact_phone,
                 "notes": self.notes,
+                "session_fee_amount": self.session_fee_amount or 0,
+                "billing_notes": self.billing_notes,
                 "created_at": self.created_at.isoformat() if self.created_at else None,
             }
 
@@ -1081,6 +1129,9 @@ def create_app():
         status = db.Column(db.String(20), nullable=False, default="scheduled")
         location = db.Column(db.Text, nullable=True)
         notes = db.Column(db.Text, nullable=True)
+        fee_amount = db.Column(db.Float, nullable=True)
+        payment_status = db.Column(db.String(20), nullable=False, default="pending")
+        paid_at = db.Column(db.DateTime, nullable=True)
         booking_confirm_token = db.Column(db.String(120), nullable=True, unique=True)
         last_auto_reminder_sent_at = db.Column(db.DateTime, nullable=True)
 
@@ -1098,6 +1149,9 @@ def create_app():
                 "status": self.status,
                 "location": self.location,
                 "notes": self.notes,
+                "fee_amount": self.fee_amount or 0,
+                "payment_status": self.payment_status or "pending",
+                "paid_at": self.paid_at.isoformat() if self.paid_at else None,
                 "last_auto_reminder_sent_at": self.last_auto_reminder_sent_at.isoformat() if self.last_auto_reminder_sent_at else None,
             }
 
@@ -1168,6 +1222,9 @@ def create_app():
         ensure_column("appointment", "booking_confirm_token", "VARCHAR(120)")
         ensure_column("appointment", "last_auto_reminder_sent_at", "DATETIME")
         ensure_column("appointment", "created_at", "DATETIME")
+        ensure_column("appointment", "fee_amount", "FLOAT")
+        ensure_column("appointment", "payment_status", "VARCHAR(20) DEFAULT 'pending'")
+        ensure_column("appointment", "paid_at", "DATETIME")
         ensure_column("patient", "dni", "VARCHAR(40)")
         ensure_column("patient", "date_of_birth", "DATE")
         ensure_column("patient", "address", "TEXT")
@@ -1176,6 +1233,8 @@ def create_app():
         ensure_column("patient", "emergency_contact_name", "VARCHAR(120)")
         ensure_column("patient", "emergency_contact_phone", "VARCHAR(40)")
         ensure_column("patient", "created_at", "DATETIME")
+        ensure_column("patient", "session_fee_amount", "FLOAT")
+        ensure_column("patient", "billing_notes", "TEXT")
 
     def configured_admin_emails():
         raw = get_env("ADMIN_EMAILS", "")
@@ -2336,6 +2395,7 @@ def create_app():
 
         patient_ids = [patient.id for patient in patients]
         history_by_patient = {patient_id: [] for patient_id in patient_ids}
+        billing_appointments = []
 
         if patient_ids:
             history_items = (
@@ -2349,6 +2409,7 @@ def create_app():
             )
 
             for appointment in history_items:
+                billing_appointments.append(appointment)
                 patient_history = history_by_patient.setdefault(appointment.patient_id, [])
                 if len(patient_history) < 8:
                     patient_history.append(serialize_appointment_summary(appointment))
@@ -2361,6 +2422,7 @@ def create_app():
                         next_appointments_by_patient.get(patient.id),
                     ),
                     "appointment_history": history_by_patient.get(patient.id, []),
+                    "billing_summary": build_patient_billing_summary(patient.id, billing_appointments),
                 }
                 for patient in patients
             ]
@@ -2383,6 +2445,8 @@ def create_app():
         emergency_contact_name = clean_text(body.get("emergency_contact_name")) or None
         emergency_contact_phone = clean_text(body.get("emergency_contact_phone")) or None
         notes = (body.get("notes") or "").strip() or None
+        session_fee_amount = parse_money_amount(body.get("session_fee_amount"), 0)
+        billing_notes = clean_text(body.get("billing_notes")) or None
 
         if not full_name:
             return jsonify({"msg": "full_name es obligatorio"}), 400
@@ -2402,6 +2466,8 @@ def create_app():
             emergency_contact_name=emergency_contact_name,
             emergency_contact_phone=emergency_contact_phone,
             notes=notes,
+            session_fee_amount=session_fee_amount,
+            billing_notes=billing_notes,
         )
         db.session.add(p)
         db.session.commit()
@@ -2456,6 +2522,12 @@ def create_app():
 
         if "notes" in body:
             patient.notes = clean_text(body.get("notes")) or None
+
+        if "session_fee_amount" in body:
+            patient.session_fee_amount = parse_money_amount(body.get("session_fee_amount"), 0)
+
+        if "billing_notes" in body:
+            patient.billing_notes = clean_text(body.get("billing_notes")) or None
 
         db.session.commit()
         return jsonify({"patient": patient.serialize()}), 200
@@ -2660,6 +2732,9 @@ def create_app():
                         "recurring_series_id": overlapping_appt.recurring_series_id if overlapping_appt else None,
                         "location": overlapping_appt.location if overlapping_appt else None,
                         "notes": overlapping_appt.notes if overlapping_appt else None,
+                        "fee_amount": overlapping_appt.fee_amount if overlapping_appt else 0,
+                        "payment_status": overlapping_appt.payment_status if overlapping_appt else "pending",
+                        "paid_at": overlapping_appt.paid_at.isoformat() if overlapping_appt and overlapping_appt.paid_at else None,
                     })
 
                     cursor += step_minutes
@@ -2683,6 +2758,9 @@ def create_app():
                     "recurring_series_id": appt.recurring_series_id,
                     "location": appt.location,
                     "notes": appt.notes,
+                    "fee_amount": appt.fee_amount or 0,
+                    "payment_status": appt.payment_status or "pending",
+                    "paid_at": appt.paid_at.isoformat() if appt.paid_at else None,
                 })
 
         # 4) ordenar cada día por hora
@@ -2763,6 +2841,9 @@ def create_app():
                     "status": appointment.status,
                     "location": appointment.location,
                     "notes": appointment.notes,
+                    "fee_amount": appointment.fee_amount or 0,
+                    "payment_status": appointment.payment_status or "pending",
+                    "paid_at": appointment.paid_at.isoformat() if appointment.paid_at else None,
                 }
                 weekly_preview[day_key].append(slot_data)
 
@@ -2780,9 +2861,12 @@ def create_app():
         location = clean_text(body.get("location")) or get_default_appointment_location(user_id)
         notes = (body.get("notes") or "").strip() or None
         recurrence = body.get("recurrence") if isinstance(body.get("recurrence"), dict) else None
+        payment_status = clean_text(body.get("payment_status")) or "pending"
 
         if not start_at_str:
             return jsonify({"msg": "start_at es obligatorio"}), 400
+        if payment_status not in {"pending", "paid", "waived"}:
+            return jsonify({"msg": "Estado de pago invalido"}), 400
 
         patient = None
         if patient_id is not None:
@@ -2797,6 +2881,9 @@ def create_app():
 
         user = User.query.get(user_id)
         minutes = duration_minutes if isinstance(duration_minutes, int) and duration_minutes > 0 else user.default_session_minutes
+        default_fee = patient.session_fee_amount if patient else 0
+        fee_amount = parse_money_amount(body.get("fee_amount"), default_fee or 0)
+        paid_at = get_local_now() if payment_status == "paid" else None
 
         if recurrence:
             frequency = recurrence.get("frequency")
@@ -2833,6 +2920,9 @@ def create_app():
                 status="scheduled" if patient_id else "free",
                 location=location,
                 notes=notes,
+                fee_amount=fee_amount if patient_id else 0,
+                payment_status=payment_status if patient_id else "pending",
+                paid_at=paid_at if patient_id else None,
             )
 
             if overlaps_existing_appointment(user_id, appointment.start_at, appointment.end_at):
@@ -2860,6 +2950,9 @@ def create_app():
             status="scheduled" if patient_id else "free",
             location=location,
             notes=notes,
+            fee_amount=fee_amount if patient_id else 0,
+            payment_status=payment_status if patient_id else "pending",
+            paid_at=paid_at if patient_id else None,
         )
 
         db.session.add(appointment)
@@ -2882,6 +2975,7 @@ def create_app():
         end_at = appointment.end_at
         patient_id = appointment.patient_id
         location = appointment.location
+        selected_patient = None
         recurrence = body.get("recurrence") if isinstance(body.get("recurrence"), dict) else None
 
         if "start_at" in body:
@@ -2905,12 +2999,12 @@ def create_app():
             if incoming_patient_id in ("", None):
                 patient_id = None
             else:
-                patient = Patient.query.filter_by(
+                selected_patient = Patient.query.filter_by(
                     id=incoming_patient_id,
                     owner_user_id=user_id
                 ).first()
 
-                if not patient:
+                if not selected_patient:
                     return jsonify({"msg": "Paciente no existe"}), 404
 
                 patient_id = incoming_patient_id
@@ -2933,6 +3027,20 @@ def create_app():
             appointment.status = status
             if status != "pending":
                 appointment.booking_confirm_token = None
+
+        if "fee_amount" in body:
+            appointment.fee_amount = parse_money_amount(body.get("fee_amount"), 0)
+        elif "patient_id" in body and selected_patient and not appointment.fee_amount:
+            appointment.fee_amount = selected_patient.session_fee_amount or 0
+
+        if "payment_status" in body:
+            payment_status = clean_text(body.get("payment_status")) or "pending"
+            if payment_status not in {"pending", "paid", "waived"}:
+                return jsonify({"msg": "Estado de pago invalido"}), 400
+            appointment.payment_status = payment_status
+            appointment.paid_at = get_local_now() if payment_status == "paid" and not appointment.paid_at else None
+            if payment_status != "paid":
+                appointment.paid_at = None
 
         if "notes" in body:
             appointment.notes = (body.get("notes") or "").strip() or None

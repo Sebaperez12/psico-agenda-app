@@ -123,6 +123,8 @@ export default function Patients() {
         emergency_contact_name: profileForm.emergency_contact_name || null,
         emergency_contact_phone: profileForm.emergency_contact_phone || null,
         notes: profileForm.notes || null,
+        session_fee_amount: profileForm.session_fee_amount || 0,
+        billing_notes: profileForm.billing_notes || null,
       });
       await loadPatients(patientId);
       setProfileStatus("Perfil del paciente actualizado");
