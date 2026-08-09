@@ -394,6 +394,131 @@
   font-weight: 900;
 }
 
+.booking-page__success {
+  position: sticky;
+  top: 22px;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 34px 28px;
+  border: 1px solid rgba(18, 167, 124, 0.24);
+  border-top: 4px solid var(--color-primary-deep);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(18, 167, 124, 0.16), transparent 14rem),
+    linear-gradient(180deg, #ffffff 0%, #f4fffb 100%);
+  box-shadow: 0 20px 48px rgba(16, 24, 60, 0.12);
+  text-align: center;
+  animation: booking-success-enter 420ms ease-out both;
+}
+
+.booking-page__success-mark {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-deep));
+  color: #ffffff;
+  box-shadow: 0 18px 42px rgba(18, 167, 124, 0.24);
+}
+
+.booking-page__success-mark::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border: 1px solid rgba(18, 167, 124, 0.24);
+  border-radius: inherit;
+  animation: booking-success-pulse 1.6s ease-out infinite;
+}
+
+.booking-page__success-mark span {
+  width: 34px;
+  height: 18px;
+  border-left: 6px solid currentColor;
+  border-bottom: 6px solid currentColor;
+  transform: translateY(-3px) rotate(-45deg);
+  animation: booking-success-check 520ms ease-out 180ms both;
+}
+
+.booking-page__success-kicker {
+  margin: 4px 0 0;
+  color: var(--color-primary-deep);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.booking-page__success h2 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: clamp(1.7rem, 4vw, 2.25rem);
+  line-height: 1.08;
+}
+
+.booking-page__success-copy {
+  max-width: 340px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.booking-page__success-summary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0;
+  margin-top: 6px;
+  border: 1px solid #dbe5ee;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.78);
+  text-align: left;
+}
+
+.booking-page__success-summary span,
+.booking-page__success-summary strong {
+  padding: 13px 14px;
+  border-bottom: 1px solid #e4ebf2;
+}
+
+.booking-page__success-summary span:nth-last-child(-n + 2),
+.booking-page__success-summary strong:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.booking-page__success-summary span {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.booking-page__success-summary strong {
+  min-width: 0;
+  color: var(--color-text-strong);
+  font-size: 0.96rem;
+  text-transform: capitalize;
+}
+
+.booking-page__success-button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 4px;
+  border: 1px solid var(--color-primary-deep);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-primary-deep);
+  font-weight: 900;
+}
+
+.booking-page__success-button:hover {
+  background: rgba(18, 167, 124, 0.08);
+}
+
 .booking-page__privacy {
   margin: 2px 0 0;
   color: var(--color-text-muted);
@@ -454,6 +579,42 @@
   color: var(--color-primary);
 }
 
+@keyframes booking-success-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes booking-success-check {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) rotate(-45deg) scale(0.72);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(-3px) rotate(-45deg) scale(1);
+  }
+}
+
+@keyframes booking-success-pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.92);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
 @media (max-width: 1080px) {
   .booking-page__workspace,
   .booking-page__picker {
@@ -461,6 +622,10 @@
   }
 
   .booking-page__form {
+    position: static;
+  }
+
+  .booking-page__success {
     position: static;
   }
 
@@ -545,5 +710,14 @@
 
   .booking-page__notice-card {
     grid-template-columns: 1fr;
+  }
+
+  .booking-page__success {
+    padding: 28px 18px;
+  }
+
+  .booking-page__success-mark {
+    width: 78px;
+    height: 78px;
   }
 }

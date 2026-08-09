@@ -55,6 +55,7 @@ export default function PublicBooking() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", notes: "" });
   const [msg, setMsg] = useState("");
+  const [submittedRequest, setSubmittedRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -172,11 +173,17 @@ export default function PublicBooking() {
     setMsg("");
     setSaving(true);
     try {
+      const requestedSlot = selectedSlot;
+      const patientName = form.full_name;
       const data = await api.post(`/public/booking/${slug}/appointments`, {
         ...form,
-        start_at: selectedSlot.start_at,
+        start_at: requestedSlot.start_at,
       });
-      setMsg(data.msg || "Solicitud enviada");
+      setSubmittedRequest({
+        patientName,
+        startAt: requestedSlot.start_at,
+        message: data.msg || "Solicitud enviada",
+      });
       setSelectedSlot(null);
       setForm({ full_name: "", email: "", phone: "", notes: "" });
       await loadAvailability();
@@ -191,6 +198,16 @@ export default function PublicBooking() {
   useEffect(() => {
     loadAvailability();
   }, [slug]);
+
+  useEffect(() => {
+    if (!submittedRequest) return;
+    window.setTimeout(() => {
+      document.querySelector(".booking-page__success")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
+  }, [submittedRequest]);
 
   useEffect(() => {
     if (!visibleMonthDays.length) {
@@ -332,47 +349,78 @@ export default function PublicBooking() {
           )}
         </div>
 
-        <form className="booking-page__form" onSubmit={submitBooking}>
-          <div className="booking-page__section-heading booking-page__section-heading--compact">
-            <span className="booking-page__step">2</span>
-            <div>
-              <h2>Tus datos</h2>
+        {submittedRequest ? (
+          <section className="booking-page__success" aria-live="polite">
+            <div className="booking-page__success-mark" aria-hidden="true">
+              <span />
             </div>
-          </div>
-          <p className="booking-page__selected">
-            {selectedSlot
-              ? `${dayFormatter.format(new Date(selectedSlot.start_at))} - ${timeFormatter.format(new Date(selectedSlot.start_at))}`
-              : "Selecciona un horario"}
-          </p>
-          <input
-            value={form.full_name}
-            onChange={(e) => setForm((prev) => ({ ...prev, full_name: e.target.value }))}
-            placeholder="Nombre y apellido"
-            required
-          />
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-            placeholder="Email"
-          />
-          <input
-            value={form.phone}
-            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-            placeholder="Telefono"
-          />
-          <textarea
-            value={form.notes}
-            onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-            placeholder="Motivo de consulta (opcional)"
-            rows="4"
-          />
-          <button type="submit" disabled={saving || !selectedSlot}>
-            {saving ? "Enviando..." : "Solicitar consulta"}
-          </button>
-          <p className="booking-page__privacy">Tus datos estan protegidos y solo seran usados para esta reserva.</p>
-          {msg && <p className="booking-page__msg">{msg}</p>}
-        </form>
+            <p className="booking-page__success-kicker">Solicitud enviada</p>
+            <h2>Tu pedido de turno fue recibido</h2>
+            <p className="booking-page__success-copy">
+              El profesional va a revisar la solicitud y recibiras un email cuando confirme el turno.
+            </p>
+            <div className="booking-page__success-summary">
+              <span>Fecha</span>
+              <strong>{capitalize(dayFormatter.format(new Date(submittedRequest.startAt)))}</strong>
+              <span>Hora</span>
+              <strong>{timeFormatter.format(new Date(submittedRequest.startAt))}</strong>
+              <span>Paciente</span>
+              <strong>{submittedRequest.patientName}</strong>
+            </div>
+            <button
+              type="button"
+              className="booking-page__success-button"
+              onClick={() => {
+                setSubmittedRequest(null);
+                setMsg("");
+              }}
+            >
+              Solicitar otro turno
+            </button>
+          </section>
+        ) : (
+          <form className="booking-page__form" onSubmit={submitBooking}>
+            <div className="booking-page__section-heading booking-page__section-heading--compact">
+              <span className="booking-page__step">2</span>
+              <div>
+                <h2>Tus datos</h2>
+              </div>
+            </div>
+            <p className="booking-page__selected">
+              {selectedSlot
+                ? `${dayFormatter.format(new Date(selectedSlot.start_at))} - ${timeFormatter.format(new Date(selectedSlot.start_at))}`
+                : "Selecciona un horario"}
+            </p>
+            <input
+              value={form.full_name}
+              onChange={(e) => setForm((prev) => ({ ...prev, full_name: e.target.value }))}
+              placeholder="Nombre y apellido"
+              required
+            />
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+              placeholder="Email"
+            />
+            <input
+              value={form.phone}
+              onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+              placeholder="Telefono"
+            />
+            <textarea
+              value={form.notes}
+              onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+              placeholder="Motivo de consulta (opcional)"
+              rows="4"
+            />
+            <button type="submit" disabled={saving || !selectedSlot}>
+              {saving ? "Enviando..." : "Solicitar consulta"}
+            </button>
+            <p className="booking-page__privacy">Tus datos estan protegidos y solo seran usados para esta reserva.</p>
+            {msg && <p className="booking-page__msg">{msg}</p>}
+          </form>
+        )}
       </section>
 
       <section className="booking-page__notice-card">
