@@ -37,13 +37,16 @@ export default function Home() {
             <Link className="home-page__button" to="/login">
               Ya tengo cuenta
             </Link>
+            <a className="home-page__button" href="#video">
+              Ver video
+            </a>
           </div>
         </div>
 
         <div className="home-page__side">
           <p className="home-page__note">
-            Pensado para psicologos y terapeutas que quieren reducir lo administrativo sin perder una
-            forma de trabajo cercana.
+            Hoy es una agenda para tu consultorio. La idea de fondo es construir, de a poco,
+            un espacio compartido para terapeutas que buscan trabajar con mas claridad.
           </p>
 
           <section className="home-page__grid" aria-label="Funcionalidades">
@@ -66,7 +69,7 @@ export default function Home() {
           </section>
 
           <p className="home-page__closing">
-            Una mesa mas despejada para empezar el dia con claridad.
+            Una herramienta individual, pensada para crecer hacia comunidad.
           </p>
         </div>
       </section>
