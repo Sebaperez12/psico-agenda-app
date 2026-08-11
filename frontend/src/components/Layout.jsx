@@ -48,7 +48,7 @@ export default function Layout() {
         </div>
 
         <nav className="layout__nav">
-          <NavLink to="/" className={getNavLinkClass}>
+          <NavLink to="/dashboard" className={getNavLinkClass}>
             Inicio
           </NavLink>
 
@@ -105,7 +105,7 @@ export default function Layout() {
             </div>
 
             <nav className="layout__nav">
-              <NavLink to="/" className={getNavLinkClass} onClick={closeMenu}>
+              <NavLink to="/dashboard" className={getNavLinkClass} onClick={closeMenu}>
                 Inicio
               </NavLink>
 

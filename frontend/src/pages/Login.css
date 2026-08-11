@@ -88,6 +88,18 @@
   backdrop-filter: blur(16px);
 }
 
+.login-card__back {
+  display: inline-flex;
+  margin-bottom: 12px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.login-card__back:hover {
+  color: var(--color-text-strong);
+}
+
 .login-card__brand {
   display: flex;
   align-items: center;

@@ -13,12 +13,14 @@ import PatientHistory from "./pages/PatientHistory";
 import Availability from "./pages/Availability";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import Home from "./pages/Home";
 import PublicBooking from "./pages/PublicBooking";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/reservar/:slug" element={<PublicBooking />} />
 
@@ -34,7 +36,7 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
 
             <Route element={<ProfileRequiredRoute />}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/appointments" element={<Appointments />} />
               <Route path="/patients" element={<Patients />} />
               <Route path="/patients/:patientId/history" element={<PatientHistory />} />

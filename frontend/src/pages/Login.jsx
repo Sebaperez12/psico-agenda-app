@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../assets/logo 6.png";
 import portada from "../assets/PORTADA.png";
 import api from "../services/api";
 import "./Login.css";
 
 export default function Login() {
-  const [mode, setMode] = useState("login");
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState(searchParams.get("mode") === "register" ? "register" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -94,6 +95,9 @@ export default function Login() {
 
       <section className="login-page__panel" aria-label="Acceso a TherapyDesk">
         <div className="login-card">
+          <Link className="login-card__back" to="/">
+            Volver al inicio
+          </Link>
           <div className="login-card__brand">
             <img src={logo} alt="TherapyDesk" className="login-card__logo" />
             <div>
