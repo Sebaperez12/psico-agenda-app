@@ -90,6 +90,13 @@ export default function Availability() {
     );
   }, [rules]);
 
+  const configuredWeekdays = useMemo(
+    () => rulesByWeekday
+      .map((dayRules, index) => ({ dayRules, index }))
+      .filter(({ dayRules }) => dayRules.length > 0),
+    [rulesByWeekday]
+  );
+
   function resetRuleForm() {
     setEditingRuleId(null);
     setWeekday(0);
@@ -272,31 +279,29 @@ export default function Availability() {
           )}
         </div>
 
-        <div className="availability-page__days">
-          {dayNames.map((day, index) => {
-            const dayRules = rulesByWeekday[index];
-            const hasActiveRule = dayRules.some((rule) => rule.active);
+        {configuredWeekdays.length === 0 ? (
+          <p className="patients-page__empty">No hay bloques todavia.</p>
+        ) : (
+          <div className="availability-page__days">
+            {configuredWeekdays.map(({ dayRules, index }) => {
+              const day = dayNames[index];
+              const hasActiveRule = dayRules.some((rule) => rule.active);
 
-            return (
-              <div className="availability-page__day-row" key={day}>
-                <div className="availability-page__day-badge">{dayInitials[index]}</div>
-                <strong className="availability-page__day-name">{day}</strong>
-                <div className="availability-page__day-hours">
-                  {dayRules.length === 0 ? (
-                    <span className="availability-page__empty-pill">No disponible</span>
-                  ) : (
-                    dayRules.map((rule) => (
+              return (
+                <div className="availability-page__day-row" key={day}>
+                  <div className="availability-page__day-badge">{dayInitials[index]}</div>
+                  <strong className="availability-page__day-name">{day}</strong>
+                  <div className="availability-page__day-hours">
+                    {dayRules.map((rule) => (
                       <span
                         className={rule.active ? "availability-page__time-pill" : "availability-page__time-pill availability-page__time-pill--off"}
                         key={rule.id}
                       >
                         {rule.start_time} a {rule.end_time}
                       </span>
-                    ))
-                  )}
-                </div>
-                <div className="availability-page__day-actions">
-                  {dayRules.length > 0 && (
+                    ))}
+                  </div>
+                  <div className="availability-page__day-actions">
                     <button
                       className={hasActiveRule ? "availability-page__switch availability-page__switch--on" : "availability-page__switch"}
                       onClick={() => toggleDayRules(dayRules)}
@@ -306,22 +311,18 @@ export default function Availability() {
                     >
                       <span />
                     </button>
-                  )}
-                  {dayRules[0] && (
-                    <>
-                      <button className="availability-page__icon-btn" onClick={() => editRule(dayRules[0])} aria-label={`Editar ${day}`}>
-                        Editar
-                      </button>
-                      <button className="availability-page__icon-btn availability-page__icon-btn--danger" onClick={() => deleteRule(dayRules[0].id)} aria-label={`Eliminar ${day}`}>
-                        Borrar
-                      </button>
-                    </>
-                  )}
+                    <button className="availability-page__icon-btn" onClick={() => editRule(dayRules[0])} aria-label={`Editar ${day}`}>
+                      Editar
+                    </button>
+                    <button className="availability-page__icon-btn availability-page__icon-btn--danger" onClick={() => deleteRule(dayRules[0].id)} aria-label={`Eliminar ${day}`}>
+                      Borrar
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {msg && <p className="patients-page__msg"><b>{msg}</b></p>}
