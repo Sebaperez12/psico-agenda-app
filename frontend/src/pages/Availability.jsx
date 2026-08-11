@@ -3,6 +3,7 @@ import api from "../services/api";
 import "./Availability.css";
 
 const dayNames = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"];
+const dayInitials = ["LU", "MA", "MI", "JU", "VI", "SA", "DO"];
 
 function buildTimeOptions(step = 10) {
   const times = [];
@@ -24,6 +25,8 @@ export default function Availability() {
   const [visibleAgendaStartTime, setVisibleAgendaStartTime] = useState("06:00");
   const [visibleAgendaEndTime, setVisibleAgendaEndTime] = useState("22:00");
   const [savingVisibleRange, setSavingVisibleRange] = useState(false);
+  const [editingRuleId, setEditingRuleId] = useState(null);
+  const [savingRuleId, setSavingRuleId] = useState(null);
   const [msg, setMsg] = useState("");
 
   const timeOptions = useMemo(() => buildTimeOptions(10), []);
@@ -79,18 +82,49 @@ export default function Availability() {
     }
   }
 
-  async function createRule() {
+  const rulesByWeekday = useMemo(() => {
+    return dayNames.map((_, index) =>
+      rules
+        .filter((rule) => Number(rule.weekday) === index)
+        .sort((a, b) => a.start_time.localeCompare(b.start_time))
+    );
+  }, [rules]);
+
+  function resetRuleForm() {
+    setEditingRuleId(null);
+    setWeekday(0);
+    setStartTime(visibleAgendaStartTime);
+    setEndTime(visibleAgendaEndTime);
+  }
+
+  function editRule(rule) {
     setMsg("");
+    setEditingRuleId(rule.id);
+    setWeekday(rule.weekday);
+    setStartTime(rule.start_time);
+    setEndTime(rule.end_time);
+  }
+
+  async function saveRule() {
+    setMsg("");
+    const payload = {
+      weekday: Number(weekday),
+      start_time: startTime,
+      end_time: endTime,
+      active: true,
+    };
+
     try {
-      await api.post("/availability/rules", {
-        weekday: Number(weekday),
-        start_time: startTime,
-        end_time: endTime,
-        active: true,
-      });
+      if (editingRuleId) {
+        await api.patch(`/availability/rules/${editingRuleId}`, payload);
+        setMsg("Bloque actualizado");
+      } else {
+        await api.post("/availability/rules", payload);
+        setMsg("Bloque creado");
+      }
 
       await loadRules();
-      setMsg("Bloque creado");
+      resetRuleForm();
     } catch (e) {
       console.error(e);
       setMsg(e.message);
@@ -109,6 +143,27 @@ export default function Availability() {
     }
   }
 
+  async function toggleDayRules(dayRules) {
+    const shouldDisable = dayRules.some((rule) => rule.active);
+    setMsg("");
+    try {
+      for (const rule of dayRules) {
+        if (rule.active === shouldDisable) {
+          setSavingRuleId(rule.id);
+          await api.patch(`/availability/rules/${rule.id}`, {
+            active: !shouldDisable,
+          });
+        }
+      }
+      await loadRules();
+    } catch (e) {
+      console.error(e);
+      setMsg(e.message);
+    } finally {
+      setSavingRuleId(null);
+    }
+  }
+
   useEffect(() => {
     loadRules();
     loadProfileSettings();
@@ -116,17 +171,15 @@ export default function Availability() {
 
   return (
     <div className="availability-page">
-      <h1 className="availability-page__title">Disponibilidad</h1>
-      <p className="availability-page__description">
-        Configura el rango visible de la agenda y tus bloques de atencion semanal.
-      </p>
-
-      <section className="availability-page__card">
-        <div>
-          <h2 className="availability-page__section-title">Rango visible de agenda</h2>
-          <p className="availability-page__section-help">
-            El calendario de Turnos se mostrara desde esta hora hasta esta hora.
-          </p>
+      <section className="availability-page__card availability-page__card--range">
+        <div className="availability-page__section-head">
+          <span className="availability-page__section-icon" aria-hidden="true">Cal</span>
+          <div>
+            <h1 className="availability-page__section-title">Horario general</h1>
+            <p className="availability-page__section-help">
+              Define el rango de horas en el que estas disponible.
+            </p>
+          </div>
         </div>
 
         <div className="availability-page__range-grid">
@@ -166,65 +219,110 @@ export default function Availability() {
         </div>
       </section>
 
-      <h2 className="availability-page__section-title">Bloques de disponibilidad</h2>
-      <div className="availability-page__form">
-        <label className="availability-page__field">
-          Dia
-          <select className="availability-page__select" value={weekday} onChange={(e) => setWeekday(e.target.value)}>
-            {dayNames.map((day, index) => (
-              <option key={day} value={index}>
-                {day}
-              </option>
-            ))}
-          </select>
-        </label>
+      <section className="availability-page__card">
+        <div className="availability-page__section-toolbar">
+          <div>
+            <h2 className="availability-page__section-title">Bloques de disponibilidad</h2>
+            <p className="availability-page__section-help">
+              Configura los dias y horarios en los que atiendes.
+            </p>
+          </div>
+          <button className="patients-page__btn availability-page__refresh" onClick={loadRules}>Refrescar</button>
+        </div>
 
-        <label className="availability-page__field">
-          Desde
-          <select className="availability-page__select" value={startTime} onChange={(e) => setStartTime(e.target.value)}>
-            {availabilityTimeOptions.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="availability-page__form">
+          <label className="availability-page__field">
+            Dia
+            <select className="availability-page__select" value={weekday} onChange={(e) => setWeekday(e.target.value)}>
+              {dayNames.map((day, index) => (
+                <option key={day} value={index}>
+                  {day}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="availability-page__field">
-          Hasta
-          <select className="availability-page__select" value={endTime} onChange={(e) => setEndTime(e.target.value)}>
-            {availabilityTimeOptions.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label className="availability-page__field">
+            Desde
+            <select className="availability-page__select" value={startTime} onChange={(e) => setStartTime(e.target.value)}>
+              {availabilityTimeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <button className="patients-page__btn patients-page__btn--primary" onClick={createRule}>Agregar</button>
-        <button className="patients-page__btn" onClick={loadRules}>Refrescar</button>
-      </div>
+          <label className="availability-page__field">
+            Hasta
+            <select className="availability-page__select" value={endTime} onChange={(e) => setEndTime(e.target.value)}>
+              {availabilityTimeOptions.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      {rules.length === 0 ? (
-        <p className="patients-page__empty">No hay bloques todavia.</p>
-      ) : (
-        <ul className="patients-page__list">
-          {rules.map((rule) => (
-            <li className="patients-page__item" key={rule.id}>
-              <div className="patients-page__item-info">
-                <strong>{dayNames[rule.weekday]}</strong>
-                <span>{rule.start_time} a {rule.end_time}</span>
+          <button className="patients-page__btn patients-page__btn--primary" onClick={saveRule}>
+            {editingRuleId ? "Guardar" : "Agregar"}
+          </button>
+          {editingRuleId && (
+            <button className="patients-page__btn" onClick={resetRuleForm}>Cancelar</button>
+          )}
+        </div>
+
+        <div className="availability-page__days">
+          {dayNames.map((day, index) => {
+            const dayRules = rulesByWeekday[index];
+            const hasActiveRule = dayRules.some((rule) => rule.active);
+
+            return (
+              <div className="availability-page__day-row" key={day}>
+                <div className="availability-page__day-badge">{dayInitials[index]}</div>
+                <strong className="availability-page__day-name">{day}</strong>
+                <div className="availability-page__day-hours">
+                  {dayRules.length === 0 ? (
+                    <span className="availability-page__empty-pill">No disponible</span>
+                  ) : (
+                    dayRules.map((rule) => (
+                      <span
+                        className={rule.active ? "availability-page__time-pill" : "availability-page__time-pill availability-page__time-pill--off"}
+                        key={rule.id}
+                      >
+                        {rule.start_time} a {rule.end_time}
+                      </span>
+                    ))
+                  )}
+                </div>
+                <div className="availability-page__day-actions">
+                  {dayRules.length > 0 && (
+                    <button
+                      className={hasActiveRule ? "availability-page__switch availability-page__switch--on" : "availability-page__switch"}
+                      onClick={() => toggleDayRules(dayRules)}
+                      disabled={dayRules.some((rule) => savingRuleId === rule.id)}
+                      aria-label={hasActiveRule ? `Desactivar ${day}` : `Activar ${day}`}
+                      aria-pressed={hasActiveRule}
+                    >
+                      <span />
+                    </button>
+                  )}
+                  {dayRules[0] && (
+                    <>
+                      <button className="availability-page__icon-btn" onClick={() => editRule(dayRules[0])} aria-label={`Editar ${day}`}>
+                        Editar
+                      </button>
+                      <button className="availability-page__icon-btn availability-page__icon-btn--danger" onClick={() => deleteRule(dayRules[0].id)} aria-label={`Eliminar ${day}`}>
+                        Borrar
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-              <button
-                className="patients-page__item-delete"
-                onClick={() => deleteRule(rule.id)}
-              >
-                borrar
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+            );
+          })}
+        </div>
+      </section>
 
       {msg && <p className="patients-page__msg"><b>{msg}</b></p>}
     </div>
