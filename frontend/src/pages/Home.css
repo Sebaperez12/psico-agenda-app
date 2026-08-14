@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: min(1060px, 100%);
+  width: min(1240px, 100%);
   min-height: 116px;
   margin: 0 auto;
   gap: 18px;
