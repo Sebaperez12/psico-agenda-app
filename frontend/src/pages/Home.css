@@ -109,7 +109,7 @@
 
 .home-page__main {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.88fr);
   gap: 46px;
   align-items: center;
   width: min(1180px, 100%);
@@ -180,6 +180,8 @@
 
 .home-page__preview-group {
   min-width: 0;
+  width: min(560px, 100%);
+  justify-self: end;
 }
 
 .home-page__preview {
@@ -297,6 +299,11 @@
 
   .home-page__preview {
     aspect-ratio: 16 / 9;
+  }
+
+  .home-page__preview-group {
+    width: 100%;
+    justify-self: stretch;
   }
 }
 
