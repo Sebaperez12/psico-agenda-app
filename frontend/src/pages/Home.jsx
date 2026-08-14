@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import dashboardImage from "../assets/dashboard.png";
 import logo from "../assets/logo 6.png";
 import "./Home.css";
 
 const videoId = "H8ZIw7-imh0";
 const videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1`;
-const videoPoster = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
 export default function Home() {
   const [videoOpen, setVideoOpen] = useState(false);
@@ -57,7 +57,7 @@ export default function Home() {
 
         <div className="home-page__preview-group">
           <button className="home-page__preview" type="button" onClick={() => setVideoOpen(true)} aria-label="Ver demo de TherapyDesk">
-            <img src={videoPoster} alt="" />
+            <img src={dashboardImage} alt="" />
             <span className="home-page__preview-play" aria-hidden="true">
               <span className="home-page__play-icon" />
             </span>
