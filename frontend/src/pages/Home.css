@@ -82,12 +82,12 @@
 .home-page__main {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
-  gap: 56px;
+  gap: 46px;
   align-items: center;
   width: min(1180px, 100%);
   min-height: calc(100vh - 78px);
   margin: 0 auto;
-  padding: 56px 0 34px;
+  padding: 42px 0 28px;
 }
 
 .home-page__hero {
@@ -95,9 +95,9 @@
 }
 
 .home-page__eyebrow {
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   color: var(--color-primary-deep);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -106,15 +106,15 @@
 .home-page__hero h1 {
   margin: 0;
   color: var(--color-text-strong);
-  font-size: clamp(46px, 5.3vw, 72px);
-  line-height: 1.02;
+  font-size: clamp(40px, 4.4vw, 60px);
+  line-height: 1.06;
 }
 
 .home-page__intro {
-  max-width: 520px;
-  margin: 20px 0 0;
+  max-width: 480px;
+  margin: 18px 0 0;
   color: var(--color-text);
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
@@ -122,9 +122,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 30px 0 0;
+  margin: 22px 0 0;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -271,7 +271,7 @@
   }
 
   .home-page__hero h1 {
-    font-size: 46px;
+    font-size: 40px;
   }
 
   .home-page__preview {
@@ -321,11 +321,11 @@
   }
 
   .home-page__hero h1 {
-    font-size: 37px;
+    font-size: 34px;
   }
 
   .home-page__intro {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .home-page__preview-play {
