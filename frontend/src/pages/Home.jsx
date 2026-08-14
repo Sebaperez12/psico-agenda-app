@@ -43,15 +43,15 @@ export default function Home() {
 
       <section className="home-page__main">
         <div className="home-page__hero">
-          <p className="home-page__eyebrow">Agenda clinica para terapeutas</p>
-          <h1>Ordena tu practica sin sumar mas trabajo.</h1>
+          <p className="home-page__eyebrow">Agenda clínica para terapeutas</p>
+          <h1>Ordena tu práctica sin sumar más trabajo.</h1>
           <p className="home-page__intro">
-            TherapyDesk reune agenda, pacientes, disponibilidad y reservas en un solo lugar para
-            que puedas trabajar con mas claridad.
+            TherapyDesk reúne agenda, pacientes, disponibilidad y reservas en un solo lugar para
+            que puedas trabajar con más claridad.
           </p>
           <p className="home-page__trust">
             <span aria-hidden="true" />
-            Seguro, confidencial y disenado para psicologos.
+            Seguro, confidencial y diseñado para psicólogos.
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default function Home() {
       </section>
 
       {videoOpen && (
-        <div className="home-page__video-modal" role="dialog" aria-modal="true" aria-label="Video de presentacion">
+        <div className="home-page__video-modal" role="dialog" aria-modal="true" aria-label="Video de presentación">
           <button className="home-page__video-backdrop" type="button" onClick={() => setVideoOpen(false)} aria-label="Cerrar video" />
           <div className="home-page__video-dialog">
             <button className="home-page__video-close" type="button" onClick={() => setVideoOpen(false)} aria-label="Cerrar video">
@@ -75,7 +75,7 @@ export default function Home() {
             </button>
             <iframe
               src={videoUrl}
-              title="Video de presentacion de TherapyDesk"
+              title="Video de presentación de TherapyDesk"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
