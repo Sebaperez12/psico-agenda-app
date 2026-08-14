@@ -1,4 +1,5 @@
 .login-page {
+  position: relative;
   height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1.06fr) minmax(380px, 0.94fr);
@@ -7,6 +8,31 @@
     radial-gradient(circle at 80% 14%, rgba(16, 24, 60, 0.10), transparent 28%),
     linear-gradient(180deg, #eef2ff, #f5f7ff);
   color: var(--color-text);
+}
+
+.login-page__home-link {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 5;
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 50%;
+  background: rgba(16, 24, 60, 0.62);
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 12px 28px rgba(16, 24, 60, 0.18);
+}
+
+.login-page__home-link:hover {
+  background: rgba(16, 24, 60, 0.82);
+  color: #ffffff;
 }
 
 .login-page__visual {
@@ -86,18 +112,6 @@
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 24px 54px rgba(16, 24, 60, 0.16);
   backdrop-filter: blur(16px);
-}
-
-.login-card__back {
-  display: inline-flex;
-  margin-bottom: 12px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.login-card__back:hover {
-  color: var(--color-text-strong);
 }
 
 .login-card__brand {

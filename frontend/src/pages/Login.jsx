@@ -83,6 +83,9 @@ export default function Login() {
 
   return (
     <main className="login-page">
+      <Link className="login-page__home-link" to="/" aria-label="Volver al inicio">
+        ←
+      </Link>
       <section className="login-page__visual" aria-label="Consultorio terapeutico">
         <img src={portada} alt="" className="login-page__image" />
         <div className="login-page__visual-shade" />
@@ -95,9 +98,6 @@ export default function Login() {
 
       <section className="login-page__panel" aria-label="Acceso a TherapyDesk">
         <div className="login-card">
-          <Link className="login-card__back" to="/">
-            Volver al inicio
-          </Link>
           <div className="login-card__brand">
             <img src={logo} alt="TherapyDesk" className="login-card__logo" />
             <div>
