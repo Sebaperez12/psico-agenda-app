@@ -1,9 +1,7 @@
 .home-page {
   min-height: 100vh;
-  padding: 26px;
-  background:
-    radial-gradient(circle at 72% 18%, rgba(18, 167, 124, 0.13), transparent 28%),
-    linear-gradient(135deg, #f7f9ff 0%, #eef4ff 52%, #f8fbff 100%);
+  padding: 22px 26px 26px;
+  background: #f7f9ff;
   color: var(--color-text);
 }
 
@@ -12,8 +10,14 @@
   align-items: center;
   justify-content: space-between;
   width: min(1180px, 100%);
+  min-height: 72px;
   margin: 0 auto;
   gap: 18px;
+  border: 1px solid rgba(207, 232, 220, 0.85);
+  border-radius: 22px;
+  padding: 12px 14px 12px 18px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 34px rgba(16, 29, 63, 0.08);
 }
 
 .home-page__brand {
@@ -40,12 +44,12 @@
 
 .home-page__nav a {
   display: inline-flex;
-  min-height: 46px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   gap: 10px;
   border: 1px solid rgba(31, 42, 95, 0.16);
-  border-radius: 8px;
+  border-radius: 14px;
   padding: 0 20px;
   background: rgba(255, 255, 255, 0.78);
   color: var(--color-text-strong);
@@ -56,8 +60,9 @@
 }
 
 .home-page__nav-primary {
-  border-color: rgba(4, 116, 87, 0.28);
-  color: var(--color-primary-deep);
+  border-color: var(--color-primary-deep);
+  background: var(--color-primary-deep);
+  color: #ffffff;
 }
 
 .home-page__play-icon {
@@ -147,7 +152,7 @@
   overflow: hidden;
   aspect-ratio: 16 / 10;
   border: 1px solid rgba(207, 232, 220, 0.95);
-  border-radius: 8px;
+  border-radius: 28px;
   padding: 0;
   background: #ffffff;
   box-shadow: 0 28px 70px rgba(16, 29, 63, 0.16);
@@ -218,7 +223,7 @@
   width: min(960px, 100%);
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 24px;
   background: #0f172a;
   box-shadow: 0 26px 70px rgba(8, 15, 35, 0.34);
 }
@@ -243,7 +248,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.58);
-  border-radius: 8px;
+  border-radius: 14px;
   background: rgba(8, 15, 35, 0.58);
   color: #ffffff;
   font-size: 22px;
@@ -274,7 +279,9 @@
   }
 
   .home-page__header {
-    align-items: flex-start;
+    align-items: center;
+    border-radius: 18px;
+    padding: 10px;
   }
 
   .home-page__brand {
@@ -288,15 +295,13 @@
   }
 
   .home-page__nav {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    gap: 6px;
   }
 
   .home-page__nav a {
-    min-height: 38px;
-    padding: 0 12px;
-    font-size: 12px;
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 
   .home-page__main {
@@ -318,6 +323,10 @@
   .home-page__preview-play {
     width: 64px;
     height: 64px;
+  }
+
+  .home-page__preview {
+    border-radius: 20px;
   }
 
   .home-page__preview-caption {
