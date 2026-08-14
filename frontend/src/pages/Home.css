@@ -38,8 +38,7 @@
   gap: 10px;
 }
 
-.home-page__nav a,
-.home-page__button {
+.home-page__nav a {
   display: inline-flex;
   min-height: 46px;
   align-items: center;
@@ -59,14 +58,6 @@
 .home-page__nav-primary {
   border-color: rgba(4, 116, 87, 0.28);
   color: var(--color-primary-deep);
-}
-
-.home-page__button--primary {
-  min-width: 168px;
-  border-color: var(--color-primary-deep);
-  background: var(--color-primary-deep);
-  color: #ffffff;
-  box-shadow: 0 16px 32px rgba(4, 116, 87, 0.22);
 }
 
 .home-page__play-icon {
@@ -116,18 +107,11 @@
   line-height: 1.62;
 }
 
-.home-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 34px;
-}
-
 .home-page__trust {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 26px 0 0;
+  margin: 30px 0 0;
   color: var(--color-text-muted);
   font-size: 14px;
   font-weight: 800;
@@ -329,11 +313,6 @@
 
   .home-page__intro {
     font-size: 16px;
-  }
-
-  .home-page__button {
-    width: 100%;
-    min-height: 48px;
   }
 
   .home-page__preview-play {

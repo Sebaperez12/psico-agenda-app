@@ -49,19 +49,6 @@ export default function Home() {
             TherapyDesk reune agenda, pacientes, disponibilidad y reservas en un solo lugar para
             que puedas trabajar con mas claridad.
           </p>
-          <div className="home-page__actions">
-            <button
-              className="home-page__button home-page__button--primary"
-              type="button"
-              onClick={() => setVideoOpen(true)}
-            >
-              <span className="home-page__play-icon" aria-hidden="true" />
-              Ver video
-            </button>
-            <Link className="home-page__button" to="/login?mode=register">
-              Crear cuenta
-            </Link>
-          </div>
           <p className="home-page__trust">
             <span aria-hidden="true" />
             Seguro, confidencial y disenado para psicologos.
