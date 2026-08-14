@@ -18,7 +18,7 @@
   border-radius: 0;
   padding: 18px max(26px, calc((100vw - 1060px) / 2));
   overflow: hidden;
-  background: #10183c;
+  background: linear-gradient(135deg, #10183c 0%, #172154 100%);
   box-shadow: 0 14px 34px rgba(16, 29, 63, 0.18);
 }
 
@@ -294,7 +294,7 @@
     margin: 0 auto;
     padding: 14px 16px;
     border-radius: 0;
-    background: #10183c;
+    background: linear-gradient(135deg, #10183c 0%, #172154 100%);
   }
 
   .home-page__brand {
