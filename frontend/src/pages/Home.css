@@ -203,8 +203,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(120, 73, 28, 0.03), rgba(120, 73, 28, 0.38)),
-    linear-gradient(90deg, rgba(249, 168, 85, 0.22), rgba(16, 29, 63, 0.06));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.24)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(16, 29, 63, 0.18));
 }
 
 .home-page__preview-play {
