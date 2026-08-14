@@ -1,6 +1,6 @@
 .home-page {
   min-height: 100vh;
-  padding: 18px 34px 26px;
+  padding: 0 34px 26px;
   background: #f7f9ff;
   color: var(--color-text);
 }
@@ -309,7 +309,7 @@
 
 @media (max-width: 560px) {
   .home-page {
-    padding: 12px 16px 16px;
+    padding: 0 16px 16px;
   }
 
   .home-page__header {
