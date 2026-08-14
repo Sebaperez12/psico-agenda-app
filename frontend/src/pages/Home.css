@@ -11,16 +11,16 @@
   align-items: center;
   justify-content: space-between;
   width: calc(100% + 52px);
-  min-height: 78px;
+  min-height: 132px;
   margin: 0 -26px;
   gap: 18px;
   border: 0;
   border-radius: 0;
-  padding: 14px max(26px, calc((100vw - 1180px) / 2 + 26px));
+  padding: 22px max(26px, calc((100vw - 1180px) / 2 + 26px));
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(16, 24, 60, 0.92), rgba(16, 24, 60, 0.76)),
-    url("/portada.png") center 46% / cover no-repeat;
+    linear-gradient(90deg, rgba(16, 24, 60, 0.86), rgba(16, 24, 60, 0.56)),
+    url("/portada.png") center 48% / cover no-repeat;
   box-shadow: 0 14px 34px rgba(16, 29, 63, 0.18);
 }
 
@@ -93,7 +93,7 @@
   gap: 46px;
   align-items: center;
   width: min(1180px, 100%);
-  min-height: calc(100vh - 78px);
+  min-height: calc(100vh - 132px);
   margin: 0 auto;
   padding: 42px 0 28px;
 }
@@ -295,9 +295,12 @@
   .home-page__header {
     align-items: center;
     width: calc(100% + 32px);
-    min-height: 64px;
+    min-height: 104px;
     margin: 0 -16px;
-    padding: 10px 16px;
+    padding: 14px 16px;
+    background:
+      linear-gradient(90deg, rgba(16, 24, 60, 0.88), rgba(16, 24, 60, 0.58)),
+      url("/portada.png") center 48% / cover no-repeat;
   }
 
   .home-page__brand {
