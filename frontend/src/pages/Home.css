@@ -22,31 +22,7 @@
   box-shadow: 0 14px 34px rgba(16, 29, 63, 0.18);
 }
 
-.home-page__header::before,
-.home-page__header::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
-
-.home-page__header::before {
-  background: url("/portada.png") center 63% / cover no-repeat;
-  transform: scaleX(-1);
-}
-
-.home-page__header::after {
-  background: linear-gradient(
-    90deg,
-    rgba(16, 24, 60, 0.9) 0%,
-    rgba(16, 24, 60, 0.72) 38%,
-    rgba(16, 24, 60, 0.22) 74%,
-    rgba(16, 24, 60, 0) 100%
-  );
-}
-
 .home-page__brand {
-  position: relative;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -63,8 +39,6 @@
 }
 
 .home-page__nav {
-  position: relative;
-  z-index: 2;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -321,20 +295,6 @@
     padding: 14px 16px;
     border-radius: 0;
     background: #10183c;
-  }
-
-  .home-page__header::before {
-    background-position: center 64%;
-  }
-
-  .home-page__header::after {
-    background: linear-gradient(
-      90deg,
-      rgba(16, 24, 60, 0.92) 0%,
-      rgba(16, 24, 60, 0.74) 48%,
-      rgba(16, 24, 60, 0.26) 82%,
-      rgba(16, 24, 60, 0) 100%
-    );
   }
 
   .home-page__brand {
