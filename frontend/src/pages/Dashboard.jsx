@@ -329,7 +329,7 @@ export default function Dashboard() {
 
       <section className="dashboard__video-card" aria-label="Video de presentacion">
         <iframe
-          src="https://www.youtube.com/embed/H8ZIw7-imh0?autoplay=1&mute=1&loop=1&playlist=H8ZIw7-imh0&controls=0&rel=0&playsinline=1"
+          src="https://www.youtube.com/embed/H8ZIw7-imh0?rel=0&playsinline=1"
           title="Video de presentacion de TherapyDesk"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
