@@ -55,13 +55,15 @@ export default function Home() {
           </p>
         </div>
 
-        <button className="home-page__preview" type="button" onClick={() => setVideoOpen(true)}>
-          <img src={videoPoster} alt="" />
-          <span className="home-page__preview-play" aria-hidden="true">
-            <span className="home-page__play-icon" />
-          </span>
-          <span className="home-page__preview-caption">Ver demo de TherapyDesk</span>
-        </button>
+        <div className="home-page__preview-group">
+          <button className="home-page__preview" type="button" onClick={() => setVideoOpen(true)} aria-label="Ver demo de TherapyDesk">
+            <img src={videoPoster} alt="" />
+            <span className="home-page__preview-play" aria-hidden="true">
+              <span className="home-page__play-icon" />
+            </span>
+          </button>
+          <p className="home-page__preview-caption">Mira en una demo breve como TherapyDesk ordena tu agenda y tus pacientes.</p>
+        </div>
       </section>
 
       {videoOpen && (
