@@ -1,11 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import logo from "../assets/logo 6.png";
 import "./Home.css";
 
+const videoId = "H8ZIw7-imh0";
+const videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1`;
+const videoPoster = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
 export default function Home() {
   const [videoOpen, setVideoOpen] = useState(false);
   const isLoggedIn = Boolean(localStorage.getItem("token"));
+
+  useEffect(() => {
+    if (!videoOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setVideoOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [videoOpen]);
 
   if (isLoggedIn) {
     return <Navigate to="/dashboard" replace />;
@@ -27,10 +44,10 @@ export default function Home() {
       <section className="home-page__main">
         <div className="home-page__hero">
           <p className="home-page__eyebrow">Agenda clinica para terapeutas</p>
-          <h1>Ordena tu practica. Enfocate en lo que realmente importa.</h1>
+          <h1>Ordena tu practica sin sumar mas trabajo.</h1>
           <p className="home-page__intro">
-            TherapyDesk te ayuda a gestionar tu agenda, tus pacientes y tu consultorio desde un
-            solo lugar. Menos tareas administrativas, mas tiempo para tus pacientes.
+            TherapyDesk reune agenda, pacientes, disponibilidad y reservas en un solo lugar para
+            que puedas trabajar con mas claridad.
           </p>
           <div className="home-page__actions">
             <button
@@ -42,7 +59,7 @@ export default function Home() {
               Ver video
             </button>
             <Link className="home-page__button" to="/login?mode=register">
-              Registrarme
+              Crear cuenta
             </Link>
           </div>
           <p className="home-page__trust">
@@ -50,6 +67,15 @@ export default function Home() {
             Seguro, confidencial y disenado para psicologos.
           </p>
         </div>
+
+        <button className="home-page__preview" type="button" onClick={() => setVideoOpen(true)}>
+          <img src={videoPoster} alt="" />
+          <span className="home-page__preview-shade" aria-hidden="true" />
+          <span className="home-page__preview-play" aria-hidden="true">
+            <span className="home-page__play-icon" />
+          </span>
+          <span className="home-page__preview-caption">Ver demo de TherapyDesk</span>
+        </button>
       </section>
 
       {videoOpen && (
@@ -60,7 +86,7 @@ export default function Home() {
               x
             </button>
             <iframe
-              src="https://www.youtube.com/embed/H8ZIw7-imh0?rel=0&playsinline=1"
+              src={videoUrl}
               title="Video de presentacion de TherapyDesk"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
