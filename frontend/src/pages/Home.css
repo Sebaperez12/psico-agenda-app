@@ -1,6 +1,6 @@
 .home-page {
   min-height: 100vh;
-  padding: 0 34px 26px;
+  padding: 0 0 26px;
   background: #f7f9ff;
   color: var(--color-text);
 }
@@ -10,13 +10,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: min(1240px, 100%);
+  width: 100%;
   min-height: 116px;
   margin: 0 auto;
   gap: 18px;
-  border: 1px solid rgba(207, 232, 220, 0.9);
-  border-radius: 8px;
-  padding: 18px 22px;
+  border: 0;
+  border-radius: 0;
+  padding: 18px max(26px, calc((100vw - 1060px) / 2));
   overflow: hidden;
   background: #10183c;
   box-shadow: 0 14px 34px rgba(16, 29, 63, 0.18);
@@ -115,7 +115,7 @@
   width: min(1060px, 100%);
   min-height: calc(100vh - 144px);
   margin: 0 auto;
-  padding: 42px 0 28px;
+  padding: 42px 26px 28px;
 }
 
 .home-page__hero {
@@ -309,7 +309,7 @@
 
 @media (max-width: 560px) {
   .home-page {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
   }
 
   .home-page__header {
@@ -318,7 +318,7 @@
     min-height: 104px;
     margin: 0 auto;
     padding: 14px 16px;
-    border-radius: 8px;
+    border-radius: 0;
     background: #10183c;
   }
 
