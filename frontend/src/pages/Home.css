@@ -6,6 +6,7 @@
 }
 
 .home-page__header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -16,11 +17,16 @@
   border: 0;
   border-radius: 0;
   padding: 14px max(26px, calc((100vw - 1180px) / 2 + 26px));
-  background: #10183c;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(16, 24, 60, 0.92), rgba(16, 24, 60, 0.76)),
+    url("/portada.png") center 46% / cover no-repeat;
   box-shadow: 0 14px 34px rgba(16, 29, 63, 0.18);
 }
 
 .home-page__brand {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -37,6 +43,8 @@
 }
 
 .home-page__nav {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 10px;
