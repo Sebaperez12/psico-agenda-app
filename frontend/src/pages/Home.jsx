@@ -27,8 +27,8 @@ export default function Home() {
           <p className="home-page__eyebrow">Agenda clinica para terapeutas</p>
           <h1>Ordenar tu practica no deberia llevarte mas trabajo.</h1>
           <p className="home-page__intro">
-            TherapyDesk reune turnos, pacientes, disponibilidad, reservas y pendientes en un lugar simple.
-            La idea es que puedas mirar tu dia y entender que necesita atencion.
+            Mira en el video como TherapyDesk te ayuda a ordenar turnos, pacientes y disponibilidad
+            desde un lugar simple.
           </p>
           <div className="home-page__actions">
             <Link className="home-page__button home-page__button--primary" to="/login?mode=register">
@@ -37,40 +37,16 @@ export default function Home() {
             <Link className="home-page__button" to="/login">
               Ya tengo cuenta
             </Link>
-            <a className="home-page__button" href="#video">
-              Ver video
-            </a>
           </div>
         </div>
 
-        <div className="home-page__side">
-          <p className="home-page__note">
-            Hoy es una agenda para tu consultorio. La idea de fondo es construir, de a poco,
-            un espacio compartido para terapeutas que buscan trabajar con mas claridad.
-          </p>
-
-          <section className="home-page__grid" aria-label="Funcionalidades">
-            <article>
-              <h3>Agenda</h3>
-              <p>Turnos, estados y horarios de la semana.</p>
-            </article>
-            <article>
-              <h3>Pacientes</h3>
-              <p>Datos utiles e historial en un mismo lugar.</p>
-            </article>
-            <article>
-              <h3>Reservas</h3>
-              <p>Un enlace publico dentro de tu disponibilidad.</p>
-            </article>
-            <article>
-              <h3>Pendientes</h3>
-              <p>Confirmaciones y cobros visibles sin mezclar todo.</p>
-            </article>
-          </section>
-
-          <p className="home-page__closing">
-            Una herramienta individual, pensada para crecer hacia comunidad.
-          </p>
+        <div className="home-page__video-frame" aria-label="Video de presentacion">
+          <iframe
+            src="https://www.youtube.com/embed/H8ZIw7-imh0"
+            title="Video de presentacion de TherapyDesk"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
         </div>
       </section>
     </main>

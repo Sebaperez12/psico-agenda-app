@@ -327,6 +327,15 @@ export default function Dashboard() {
         </div>
       </section>
 
+      <section className="dashboard__video-card" aria-label="Video de presentacion">
+        <iframe
+          src="https://www.youtube.com/embed/H8ZIw7-imh0"
+          title="Video de presentacion de TherapyDesk"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </section>
+
       <section className="dashboard__metrics">
         <div className="dashboard__metric-card">
           <div className="dashboard__metric-top">
