@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import dashboardImage from "../assets/dashboard.png";
 import logo from "../assets/logo 6.png";
@@ -8,8 +8,18 @@ const videoId = "H8ZIw7-imh0";
 const videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1`;
 
 export default function Home() {
+  const pageRef = useRef(null);
+  const wheelResetRef = useRef(null);
   const [videoOpen, setVideoOpen] = useState(false);
   const isLoggedIn = Boolean(localStorage.getItem("token"));
+
+  useEffect(() => {
+    return () => {
+      if (wheelResetRef.current) {
+        window.clearTimeout(wheelResetRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!videoOpen) return undefined;
@@ -28,8 +38,28 @@ export default function Home() {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const handleHomeWheel = (event) => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const direction = Math.sign(event.deltaY);
+    const page = pageRef.current;
+    if (!page || direction === 0) return;
+
+    page.style.setProperty("--home-wheel-shift", `${direction * 10}px`);
+    page.style.setProperty("--home-wheel-tilt", `${direction * 0.7}deg`);
+
+    if (wheelResetRef.current) {
+      window.clearTimeout(wheelResetRef.current);
+    }
+
+    wheelResetRef.current = window.setTimeout(() => {
+      page.style.setProperty("--home-wheel-shift", "0px");
+      page.style.setProperty("--home-wheel-tilt", "0deg");
+    }, 180);
+  };
+
   return (
-    <main className="home-page">
+    <main className="home-page" ref={pageRef} onWheel={handleHomeWheel}>
       <header className="home-page__header">
         <Link className="home-page__brand" to="/">
           <img src={logo} alt="TherapyDesk" />
