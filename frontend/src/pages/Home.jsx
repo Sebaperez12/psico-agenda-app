@@ -41,9 +41,12 @@ export default function Home() {
         </div>
 
         <div className="home-page__video-frame" aria-label="Video de presentacion">
-          <video autoPlay muted loop playsInline>
-            <source src="/therapydesk-demo.mp4" type="video/mp4" />
-          </video>
+          <iframe
+            src="https://www.youtube.com/embed/H8ZIw7-imh0?autoplay=1&mute=1&loop=1&playlist=H8ZIw7-imh0&controls=0&rel=0&playsinline=1"
+            title="Video de presentacion de TherapyDesk"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
         </div>
       </section>
     </main>
