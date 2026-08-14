@@ -313,7 +313,7 @@
   }
 
   .home-page__main {
-    padding-top: 44px;
+    padding: 44px 32px 0;
   }
 
   .home-page__eyebrow {
