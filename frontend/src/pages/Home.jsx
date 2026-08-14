@@ -57,7 +57,6 @@ export default function Home() {
 
         <button className="home-page__preview" type="button" onClick={() => setVideoOpen(true)}>
           <img src={videoPoster} alt="" />
-          <span className="home-page__preview-shade" aria-hidden="true" />
           <span className="home-page__preview-play" aria-hidden="true">
             <span className="home-page__play-icon" />
           </span>
