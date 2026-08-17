@@ -13,7 +13,7 @@
 .login-page__home-link {
   position: fixed;
   top: 18px;
-  left: 18px;
+  right: 18px;
   z-index: 5;
   display: inline-flex;
   width: 42px;
