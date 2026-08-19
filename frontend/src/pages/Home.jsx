@@ -43,11 +43,11 @@ export default function Home() {
 
       <section className="home-page__main">
         <div className="home-page__hero">
-          <p className="home-page__eyebrow">Agenda clínica para terapeutas</p>
+          <p className="home-page__eyebrow">Agenda clínica gratuita para terapeutas</p>
           <h1>Ordena tu práctica sin sumar más trabajo.</h1>
           <p className="home-page__intro">
-            TherapyDesk reúne agenda, pacientes, disponibilidad y reservas en un solo lugar para
-            que puedas trabajar con más claridad.
+            TherapyDesk es una agenda clínica gratuita que reúne pacientes, disponibilidad y
+            reservas en un solo lugar para que puedas trabajar con más claridad.
           </p>
           <div className="home-page__actions">
             <Link className="home-page__cta home-page__cta--primary" to="/login?mode=register">
@@ -57,6 +57,9 @@ export default function Home() {
               Ya tengo cuenta
             </Link>
           </div>
+          <p className="home-page__free-note">
+            Crear y usar tu cuenta es gratis.
+          </p>
           <p className="home-page__trust">
             <span aria-hidden="true" />
             Seguro, confidencial y diseñado para psicólogos.
