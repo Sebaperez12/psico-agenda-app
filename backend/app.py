@@ -998,6 +998,12 @@ def create_app():
                 "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             }
 
+    class PageVisit(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        page = db.Column(db.String(80), nullable=False, default="home")
+        visitor_key = db.Column(db.String(80), nullable=False)
+        created_at = db.Column(db.DateTime, server_default=db.func.now())
+
     class Patient(db.Model):
         id = db.Column(db.Integer, primary_key=True)
         owner_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -1398,10 +1404,36 @@ def create_app():
         data["user_name"] = profile.full_name if profile and profile.full_name else data["user_email"]
         return data
 
+    def get_site_visit_stats():
+        today_start = get_local_now().replace(hour=0, minute=0, second=0, microsecond=0)
+        return {
+            "total_visits": PageVisit.query.count(),
+            "unique_visitors": db.session.query(func.count(func.distinct(PageVisit.visitor_key))).scalar() or 0,
+            "today_visits": PageVisit.query.filter(PageVisit.created_at >= today_start).count(),
+        }
+
     # -------- RUTAS --------
     @app.get("/")
     def health():
         return {"msg": "Backend OK"}
+
+    @app.post("/site-visits")
+    def record_site_visit():
+        body = request.get_json(silent=True) or {}
+        visitor_key = clean_text(body.get("visitor_key"))
+        page = clean_text(body.get("page")) or "home"
+
+        if not visitor_key or len(visitor_key) > 80:
+            return jsonify({"msg": "visitor_key invalido"}), 400
+        if not re.fullmatch(r"[A-Za-z0-9_-]{8,80}", visitor_key):
+            return jsonify({"msg": "visitor_key invalido"}), 400
+        if len(page) > 80:
+            page = page[:80]
+
+        db.session.add(PageVisit(page=page, visitor_key=visitor_key))
+        db.session.commit()
+
+        return jsonify({"visit_stats": get_site_visit_stats()}), 201
 
     @app.get("/debug/mail-config")
     def debug_mail_config():
@@ -2084,6 +2116,7 @@ def create_app():
                 serialize_password_reset_request(reset_request)
                 for reset_request in reset_requests
             ],
+            "site_visit_stats": get_site_visit_stats(),
         }), 200
 
     @app.post("/admin/psychologists")

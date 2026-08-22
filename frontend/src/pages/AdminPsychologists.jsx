@@ -11,6 +11,11 @@ export default function AdminPsychologists() {
   const navigate = useNavigate();
   const [psychologists, setPsychologists] = useState([]);
   const [passwordResetRequests, setPasswordResetRequests] = useState([]);
+  const [siteVisitStats, setSiteVisitStats] = useState({
+    total_visits: 0,
+    unique_visitors: 0,
+    today_visits: 0,
+  });
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -39,6 +44,11 @@ export default function AdminPsychologists() {
       const data = await api.get("/admin/psychologists");
       setPsychologists(data.psychologists || []);
       setPasswordResetRequests(data.password_reset_requests || []);
+      setSiteVisitStats(data.site_visit_stats || {
+        total_visits: 0,
+        unique_visitors: 0,
+        today_visits: 0,
+      });
     } catch (error) {
       setMsg(error.message);
     } finally {
@@ -236,6 +246,18 @@ export default function AdminPsychologists() {
         <div>
           <span>{totals.incomplete}</span>
           <strong>Perfil pendiente</strong>
+        </div>
+        <div>
+          <span>{siteVisitStats.total_visits}</span>
+          <strong>Visitas landing</strong>
+        </div>
+        <div>
+          <span>{siteVisitStats.unique_visitors}</span>
+          <strong>Visitantes unicos</strong>
+        </div>
+        <div>
+          <span>{siteVisitStats.today_visits}</span>
+          <strong>Visitas hoy</strong>
         </div>
       </div>
 

@@ -2,14 +2,46 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import dashboardImage from "../assets/dashboard.png";
 import logo from "../assets/logo 6.png";
+import api from "../services/api";
 import "./Home.css";
 
 const videoId = "H8ZIw7-imh0";
 const videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1`;
+const visitorStorageKey = "therapydesk_visitor_key";
+const homeVisitSessionKey = "therapydesk_home_visit_recorded";
+
+function createVisitorKey() {
+  if (window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function getVisitorKey() {
+  const existingKey = localStorage.getItem(visitorStorageKey);
+  if (existingKey) return existingKey;
+
+  const newKey = createVisitorKey();
+  localStorage.setItem(visitorStorageKey, newKey);
+  return newKey;
+}
 
 export default function Home() {
   const [videoOpen, setVideoOpen] = useState(false);
   const isLoggedIn = Boolean(localStorage.getItem("token"));
+
+  useEffect(() => {
+    if (isLoggedIn || sessionStorage.getItem(homeVisitSessionKey)) return;
+
+    sessionStorage.setItem(homeVisitSessionKey, "1");
+    api.post("/site-visits", {
+      page: "home",
+      visitor_key: getVisitorKey(),
+    }).catch(() => {
+      sessionStorage.removeItem(homeVisitSessionKey);
+    });
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (!videoOpen) return undefined;
