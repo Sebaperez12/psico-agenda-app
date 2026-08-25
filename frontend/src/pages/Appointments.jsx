@@ -216,6 +216,11 @@ export default function Appointments() {
     return Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
   }
 
+  function goToToday() {
+    setSelectedDateKey(getLocalDateKey(new Date()));
+    setWeekOffset(0);
+  }
+
   async function saveAppointment() {
     setMsg("");
 
@@ -364,7 +369,11 @@ export default function Appointments() {
 
   useEffect(() => {
     loadWeeklyPreview(weekOffset);
-    setSelectedDateKey(getLocalDateKey(getWeekDays(new Date(), weekOffset)[0]));
+    const visibleWeekDays = getWeekDays(new Date(), weekOffset);
+    setSelectedDateKey((currentDateKey) => {
+      const isCurrentDateVisible = visibleWeekDays.some((day) => getLocalDateKey(day) === currentDateKey);
+      return isCurrentDateVisible ? currentDateKey : getLocalDateKey(visibleWeekDays[0]);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekOffset]);
 
@@ -379,7 +388,7 @@ export default function Appointments() {
         </div>
 
         <div className="appointments-page__actions">
-          <button type="button" className="appointments-page__button" onClick={() => setWeekOffset(0)}>
+          <button type="button" className="appointments-page__button" onClick={goToToday}>
             Hoy
           </button>
           <button

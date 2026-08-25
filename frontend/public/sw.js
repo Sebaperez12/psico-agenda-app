@@ -1,4 +1,4 @@
-const CACHE_NAME = 'therapydesk-v1'
+const CACHE_NAME = 'therapydesk-v2'
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
@@ -17,12 +17,34 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => caches.match('/')),
+    )
+    return
+  }
+
+  const destination = event.request.destination
+  const shouldRefreshFirst = ['script', 'style', 'worker', 'document'].includes(destination)
+
+  if (shouldRefreshFirst) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseClone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone))
+          return response
+        })
+        .catch(() => caches.match(event.request)),
     )
     return
   }
