@@ -13,6 +13,11 @@ export async function fetchWeeklyPreview(weekOffset = 0) {
   };
 }
 
+export async function fetchAppointments() {
+  const data = await api.get("/appointments");
+  return data.appointments || [];
+}
+
 export async function createAppointmentRequest(payload) {
   return await api.post("/appointments", payload);
 }

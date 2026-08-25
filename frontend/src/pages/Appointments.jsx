@@ -13,6 +13,7 @@ import AppointmentPanel from "../components/AppointmentPanel";
 import { DEFAULT_END_HOUR, DEFAULT_START_HOUR, HOUR_HEIGHT, getVisibleAgendaRange } from "../utils/appointmentLayout";
 import {
   fetchPatients,
+  fetchAppointments,
   fetchWeeklyPreview,
   createAppointmentRequest,
   updateAppointmentRequest,
@@ -37,6 +38,56 @@ const EMPTY_FORM = {
   feeAmount: "",
   paymentStatus: "pending",
 };
+
+function normalizeAppointmentSlot(appointment) {
+  const appointmentId = appointment.appointment_id || appointment.id;
+
+  return {
+    ...appointment,
+    appointment_id: appointmentId,
+    id: appointmentId,
+    patient_id: appointment.patient_id || null,
+    recurring_series_id: appointment.recurring_series_id || null,
+    fee_amount: appointment.fee_amount || 0,
+    payment_status: appointment.payment_status || "pending",
+  };
+}
+
+function mergeAppointmentsIntoPreview(previewDays, appointments, weekDays) {
+  const mergedDays = {};
+
+  weekDays.forEach((day) => {
+    const dayKey = getLocalDateKey(day);
+    mergedDays[dayKey] = [...(previewDays[dayKey] || [])];
+  });
+
+  appointments.forEach((appointment) => {
+    if (!appointment.start_at) return;
+
+    const dayKey = getLocalDateKey(new Date(appointment.start_at));
+    if (!mergedDays[dayKey]) return;
+
+    const normalizedAppointment = normalizeAppointmentSlot(appointment);
+    const existingIndex = mergedDays[dayKey].findIndex(
+      (item) => item.appointment_id === normalizedAppointment.appointment_id
+    );
+
+    if (existingIndex >= 0) {
+      mergedDays[dayKey][existingIndex] = {
+        ...mergedDays[dayKey][existingIndex],
+        ...normalizedAppointment,
+      };
+    } else {
+      mergedDays[dayKey].push(normalizedAppointment);
+    }
+  });
+
+  Object.keys(mergedDays).forEach((dayKey) => {
+    mergedDays[dayKey].sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+  });
+
+  return mergedDays;
+}
 
 export default function Appointments() {
   const [patients, setPatients] = useState([]);
@@ -130,9 +181,20 @@ export default function Appointments() {
 
   async function loadWeeklyPreview(offset = weekOffset) {
     try {
-      const previewData = await fetchWeeklyPreview(offset);
-      setWeeklyPreview(previewData.days || {});
+      const [previewResult, appointmentsResult] = await Promise.allSettled([
+        fetchWeeklyPreview(offset),
+        fetchAppointments(),
+      ]);
+      const previewData = previewResult.status === "fulfilled" ? previewResult.value : { days: {}, slotMinutes: 50 };
+      const appointmentsData = appointmentsResult.status === "fulfilled" ? appointmentsResult.value : [];
+      const visibleWeekDays = getWeekDays(new Date(), offset);
+
+      setWeeklyPreview(mergeAppointmentsIntoPreview(previewData.days || {}, appointmentsData, visibleWeekDays));
       setDefaultSessionMinutes(previewData.slotMinutes || 50);
+
+      if (previewResult.status === "rejected") {
+        throw previewResult.reason;
+      }
     } catch (e) {
       console.error(e);
       setMsg(e.message);
