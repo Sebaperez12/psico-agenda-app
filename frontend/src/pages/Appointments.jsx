@@ -96,6 +96,20 @@ export default function Appointments() {
 
     return normalized;
   }, [weekDays, weeklyPreview]);
+  const selectedDayAppointments = useMemo(
+    () => appointmentsByDay[getLocalDateKey(selectedDay)] || [],
+    [appointmentsByDay, selectedDay]
+  );
+  const mobileHourRows = useMemo(() => {
+    const rowHours = new Set(calendarHours);
+
+    selectedDayAppointments.forEach((slot) => {
+      if (!slot.start_at) return;
+      rowHours.add(new Date(slot.start_at).getHours());
+    });
+
+    return Array.from(rowHours).sort((a, b) => a - b);
+  }, [calendarHours, selectedDayAppointments]);
 
   const weekTotal = useMemo(
     () => Object.values(appointmentsByDay).reduce((total, items) => total + items.length, 0),
@@ -500,8 +514,8 @@ export default function Appointments() {
       </section>
 
       <section className="appointments-mobile-list">
-        {calendarHours.map((hour) => {
-          const hourItems = (appointmentsByDay[getLocalDateKey(selectedDay)] || []).filter(
+        {mobileHourRows.map((hour) => {
+          const hourItems = selectedDayAppointments.filter(
             (slot) => new Date(slot.start_at).getHours() === hour
           );
 
