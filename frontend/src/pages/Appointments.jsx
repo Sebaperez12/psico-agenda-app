@@ -85,7 +85,7 @@ export default function Appointments() {
       const seenIds = new Set();
 
       normalized[dayKey] = (weeklyPreview[dayKey] || [])
-        .filter((item) => item.appointment_id && item.patient_id)
+        .filter((item) => item.appointment_id)
         .filter((item) => {
           if (seenIds.has(item.appointment_id)) return false;
           seenIds.add(item.appointment_id);
@@ -149,6 +149,10 @@ export default function Appointments() {
   }
 
   function getPatientName(id) {
+    if (!id) {
+      return "Turno sin paciente";
+    }
+
     const patient = patients.find((p) => p.id === id);
     return patient ? patient.full_name : `Paciente ${id}`;
   }
