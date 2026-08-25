@@ -207,6 +207,15 @@ export default function Appointments() {
     setForm(EMPTY_FORM);
   }
 
+  function getWeekOffsetForDate(dateKey) {
+    const targetDate = new Date(`${dateKey}T00:00:00`);
+    const currentWeekStart = getWeekDays(new Date(), 0)[0];
+    const targetWeekStart = getWeekDays(targetDate, 0)[0];
+    const diffMs = targetWeekStart.getTime() - currentWeekStart.getTime();
+
+    return Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+  }
+
   async function saveAppointment() {
     setMsg("");
 
@@ -287,8 +296,13 @@ export default function Appointments() {
         setMsg(successMessage);
       }
 
+      const savedDateKey = form.date;
+      const nextWeekOffset = getWeekOffsetForDate(savedDateKey);
+
+      setWeekOffset(nextWeekOffset);
+      setSelectedDateKey(savedDateKey);
       closePanel();
-      await loadWeeklyPreview();
+      await loadWeeklyPreview(nextWeekOffset);
     } catch (e) {
       console.error(e);
       setMsg(e.message);
