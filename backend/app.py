@@ -5,12 +5,12 @@ import secrets
 import threading
 from datetime import timedelta, datetime
 from pathlib import Path
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urlencode, urlparse
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
-from flask import Flask, jsonify, request, send_from_directory, has_request_context
+from flask import Flask, jsonify, redirect, request, send_from_directory, has_request_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import (
@@ -2070,35 +2070,24 @@ def create_app():
     @app.get("/auth/verify-email/<token>")
     def verify_email(token):
         normalized_token = clean_text(token)
+        frontend_base_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.app").rstrip("/")
+
+        def email_confirmed_redirect(status):
+            query = urlencode({"status": status})
+            return redirect(f"{frontend_base_url}/email-confirmed?{query}", code=302)
+
         if not normalized_token:
-            return "Link de verificacion invalido.", 400
+            return email_confirmed_redirect("invalid")
 
         user = User.query.filter_by(email_verification_token=normalized_token).first()
         if not user:
-            return "Este link de verificacion no existe o ya fue usado.", 404
+            return email_confirmed_redirect("invalid")
 
         user.email_verified = True
         user.email_verification_token = None
         db.session.commit()
 
-        frontend_base_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.onrender.com").rstrip("/")
-        return f"""
-        <!doctype html>
-        <html lang="es">
-          <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>Email confirmado</title>
-          </head>
-          <body style="font-family:Arial,sans-serif;background:#f4f7fb;color:#10204a;padding:32px;">
-            <main style="max-width:560px;margin:0 auto;background:white;border:1px solid #dfe6f2;border-radius:8px;padding:28px;">
-              <h1 style="margin-top:0;">Email confirmado</h1>
-              <p>Tu email ya quedo verificado en TherapyDesk.</p>
-              <p><a href="{escape(frontend_base_url)}/login" style="color:#0f8f68;font-weight:700;">Volver a iniciar sesion</a></p>
-            </main>
-          </body>
-        </html>
-        """, 200
+        return email_confirmed_redirect("success")
 
     @app.post("/auth/resend-verification")
     @jwt_required()
