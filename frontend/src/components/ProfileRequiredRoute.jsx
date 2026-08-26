@@ -12,6 +12,10 @@ export default function ProfileRequiredRoute() {
       try {
         const data = await api.get("/me");
         if (!active) return;
+        if (!data?.user?.email_verified) {
+          setStatus("unverified");
+          return;
+        }
         setStatus(data?.user?.has_profile ? "ready" : "missing");
       } catch (error) {
         if (!active) return;
@@ -34,6 +38,10 @@ export default function ProfileRequiredRoute() {
   }
 
   if (status === "missing") {
+    return <Navigate to="/profile" replace />;
+  }
+
+  if (status === "unverified") {
     return <Navigate to="/profile" replace />;
   }
 

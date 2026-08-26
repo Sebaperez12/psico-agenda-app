@@ -29,6 +29,7 @@ function getVisitorKey() {
 
 export default function Home() {
   const [videoOpen, setVideoOpen] = useState(false);
+  const [loggedInRedirect, setLoggedInRedirect] = useState("");
   const isLoggedIn = Boolean(localStorage.getItem("token"));
 
   useEffect(() => {
@@ -44,6 +45,33 @@ export default function Home() {
   }, [isLoggedIn]);
 
   useEffect(() => {
+    if (!isLoggedIn) return;
+
+    let active = true;
+    api.get("/me")
+      .then((data) => {
+        if (!active) return;
+        if (data?.user?.role === "admin") {
+          setLoggedInRedirect("/admin");
+        } else if (!data?.user?.email_verified) {
+          setLoggedInRedirect("/profile");
+        } else {
+          setLoggedInRedirect("/dashboard");
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        if (active) {
+          setLoggedInRedirect("");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isLoggedIn]);
+
+  useEffect(() => {
     if (!videoOpen) return undefined;
 
     const handleKeyDown = (event) => {
@@ -56,8 +84,8 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [videoOpen]);
 
-  if (isLoggedIn) {
-    return <Navigate to="/dashboard" replace />;
+  if (loggedInRedirect) {
+    return <Navigate to={loggedInRedirect} replace />;
   }
 
   return (

@@ -37,6 +37,10 @@ export default function Login() {
         nav("/admin");
         return;
       }
+      if (!data?.user?.email_verified) {
+        nav("/profile");
+        return;
+      }
       nav("/appointments");
     } catch (e) {
       setMsg(e.message);
@@ -53,6 +57,10 @@ export default function Login() {
       localStorage.setItem("token", data.access_token);
       if (data?.user?.role === "admin") {
         nav("/admin");
+        return;
+      }
+      if (!data?.user?.email_verified) {
+        nav("/profile");
         return;
       }
       nav(data?.user?.has_profile ? "/appointments" : "/profile");
