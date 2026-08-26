@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../assets/logo 6.png";
-import api from "../services/api";
 import "./layout.css";
 
 export default function Layout() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -18,26 +16,6 @@ export default function Layout() {
 
   const getNavLinkClass = ({ isActive }) =>
     isActive ? "layout__nav-link layout__nav-link--active" : "layout__nav-link";
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadCurrentUser() {
-      try {
-        const data = await api.get("/me");
-        if (active) {
-          setIsAdmin(data?.user?.role === "admin");
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    loadCurrentUser();
-    return () => {
-      active = false;
-    };
-  }, []);
 
   return (
     <div className="layout">
@@ -89,12 +67,6 @@ export default function Layout() {
           <NavLink to="/profile" className={getNavLinkClass}>
             Mi Perfil
           </NavLink>
-
-          {isAdmin && (
-            <NavLink to="/admin" className={getNavLinkClass}>
-              Administracion
-            </NavLink>
-          )}
         </nav>
 
         <button type="button" className="layout__logout" onClick={logout}>
@@ -152,12 +124,6 @@ export default function Layout() {
               <NavLink to="/profile" className={getNavLinkClass} onClick={closeMenu}>
                 Mi Perfil
               </NavLink>
-
-              {isAdmin && (
-                <NavLink to="/admin" className={getNavLinkClass} onClick={closeMenu}>
-                  Administracion
-                </NavLink>
-              )}
             </nav>
 
             <button type="button" className="layout__logout" onClick={logout}>
