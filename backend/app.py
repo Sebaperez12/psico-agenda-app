@@ -1261,11 +1261,6 @@ def create_app():
         if admin_emails:
             return admin_emails
 
-        fallback = normalize_email(app.config.get("MAIL_USERNAME"))
-        if fallback and fallback != "apikey":
-            print("[REGISTRATION EMAIL] ADMIN_EMAILS no configurado; usando MAIL_USERNAME para avisos admin")
-            return {fallback}
-
         print("[REGISTRATION EMAIL] ADMIN_EMAILS no configurado; no se enviaran avisos admin")
         return set()
 
