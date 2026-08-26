@@ -54,7 +54,7 @@ export default function Home() {
         if (data?.user?.role === "admin") {
           setLoggedInRedirect("/admin");
         } else if (!data?.user?.email_verified) {
-          setLoggedInRedirect("/profile");
+          setLoggedInRedirect("/confirm-email");
         } else {
           setLoggedInRedirect("/dashboard");
         }

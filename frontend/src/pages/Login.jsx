@@ -38,7 +38,7 @@ export default function Login() {
         return;
       }
       if (!data?.user?.email_verified) {
-        nav("/profile");
+        nav("/confirm-email");
         return;
       }
       nav("/appointments");
@@ -60,7 +60,7 @@ export default function Login() {
         return;
       }
       if (!data?.user?.email_verified) {
-        nav("/profile");
+        nav("/confirm-email");
         return;
       }
       nav(data?.user?.has_profile ? "/appointments" : "/profile");

@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import PublicBooking from "./pages/PublicBooking";
+import ConfirmEmail from "./pages/ConfirmEmail";
 
 export default function App() {
   return (
@@ -25,6 +26,8 @@ export default function App() {
         <Route path="/reservar/:slug" element={<PublicBooking />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/confirm-email" element={<ConfirmEmail />} />
+
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminPsychologists />} />

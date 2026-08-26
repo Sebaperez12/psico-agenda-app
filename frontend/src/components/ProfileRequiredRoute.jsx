@@ -42,7 +42,7 @@ export default function ProfileRequiredRoute() {
   }
 
   if (status === "unverified") {
-    return <Navigate to="/profile" replace />;
+    return <Navigate to="/confirm-email" replace />;
   }
 
   return <Outlet />;

@@ -1,0 +1,182 @@
+.confirm-email-page {
+  min-height: 100vh;
+  padding: 32px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(135deg, rgba(221, 246, 239, 0.92), rgba(241, 246, 255, 0.95)),
+    url("/portada.png") center / cover;
+  color: #061744;
+}
+
+.confirm-email-card {
+  width: min(1040px, 100%);
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+  overflow: hidden;
+  border: 1px solid rgba(11, 119, 99, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 24px 80px rgba(9, 35, 85, 0.16);
+}
+
+.confirm-email-card__copy {
+  padding: clamp(28px, 5vw, 64px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.confirm-email-card__brand {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 42px;
+  color: #061744;
+  font-weight: 900;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+.confirm-email-card__brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.confirm-email-card__eyebrow {
+  margin: 0 0 10px;
+  color: #0a8f78;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.confirm-email-card h1 {
+  max-width: 620px;
+  margin: 0;
+  color: #061744;
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.confirm-email-card__text {
+  max-width: 560px;
+  margin: 22px 0 0;
+  color: #5e6da0;
+  font-size: 19px;
+  line-height: 1.6;
+}
+
+.confirm-email-card__text strong {
+  color: #061744;
+  overflow-wrap: anywhere;
+}
+
+.confirm-email-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+.confirm-email-card__actions button {
+  min-height: 52px;
+  padding: 0 24px;
+  border: 1px solid #0a8f78;
+  border-radius: 8px;
+  background: #0a8f78;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.confirm-email-card__actions button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.confirm-email-card__actions .confirm-email-card__secondary {
+  background: #ffffff;
+  color: #061744;
+  border-color: rgba(6, 23, 68, 0.16);
+}
+
+.confirm-email-card__msg {
+  width: fit-content;
+  max-width: 100%;
+  margin: 22px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #e7f8f2;
+  color: #087461;
+  font-weight: 800;
+}
+
+.confirm-email-card__hint {
+  margin: 18px 0 0;
+  color: #7a86ad;
+  font-size: 15px;
+}
+
+.confirm-email-card__visual {
+  display: grid;
+  place-items: center;
+  padding: 36px;
+  background:
+    linear-gradient(180deg, rgba(9, 37, 91, 0.08), rgba(10, 143, 120, 0.12)),
+    #eef8f5;
+}
+
+.confirm-email-card__visual img {
+  width: min(100%, 360px);
+  max-height: 420px;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 34px rgba(9, 35, 85, 0.16));
+}
+
+@media (max-width: 760px) {
+  .confirm-email-page {
+    padding: 16px;
+  }
+
+  .confirm-email-card {
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .confirm-email-card__copy {
+    padding: 28px 22px 32px;
+  }
+
+  .confirm-email-card__brand {
+    margin-bottom: 28px;
+  }
+
+  .confirm-email-card h1 {
+    font-size: 36px;
+  }
+
+  .confirm-email-card__text {
+    font-size: 17px;
+  }
+
+  .confirm-email-card__actions button {
+    width: 100%;
+  }
+
+  .confirm-email-card__visual {
+    min-height: 220px;
+    padding: 16px 24px 30px;
+    order: -1;
+  }
+
+  .confirm-email-card__visual img {
+    max-height: 190px;
+  }
+}
