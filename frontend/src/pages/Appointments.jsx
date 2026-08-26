@@ -237,6 +237,18 @@ export default function Appointments() {
     return patients.find((patient) => String(patient.id) === String(id));
   }
 
+  function getNotifySkipReason(patientId, patient) {
+    if (!patientId) {
+      return "no se envio email porque el turno no tiene paciente";
+    }
+
+    if (!patient?.email) {
+      return "no se envio email porque el paciente no tiene email cargado";
+    }
+
+    return "";
+  }
+
   async function openCreate(day, hour = 9) {
     await loadPatients();
     setForm({
@@ -347,6 +359,11 @@ export default function Appointments() {
             console.error(notifyError);
             successMessage = `${successMessage}, pero no se pudo notificar: ${notifyError.message}`;
           }
+        } else if (form.notifyOnSave) {
+          const skipReason = getNotifySkipReason(form.patientId, notifyPatient);
+          if (skipReason) {
+            successMessage = `${successMessage}, pero ${skipReason}`;
+          }
         }
 
         setMsg(successMessage);
@@ -371,6 +388,11 @@ export default function Appointments() {
           } catch (notifyError) {
             console.error(notifyError);
             successMessage = `${successMessage}, pero no se pudo notificar: ${notifyError.message}`;
+          }
+        } else if (form.notifyOnSave) {
+          const skipReason = getNotifySkipReason(form.patientId, notifyPatient);
+          if (skipReason) {
+            successMessage = `${successMessage}, pero ${skipReason}`;
           }
         }
 
