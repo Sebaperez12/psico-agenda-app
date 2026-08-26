@@ -1,4 +1,4 @@
-const CACHE_NAME = 'therapydesk-v2'
+const CACHE_NAME = 'therapydesk-v3'
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
@@ -25,6 +25,23 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
+
+  const url = new URL(event.request.url)
+  const isApiRequest = [
+    '/appointments',
+    '/availability',
+    '/patients',
+    '/profile',
+    '/admin',
+    '/public',
+    '/site-visits',
+    '/debug',
+  ].some((path) => url.pathname === path || url.pathname.startsWith(`${path}/`))
+
+  if (isApiRequest) {
+    event.respondWith(fetch(event.request))
+    return
+  }
 
   if (event.request.mode === 'navigate') {
     event.respondWith(

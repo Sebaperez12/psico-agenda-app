@@ -22,6 +22,7 @@ async function request(path, options = {}) {
   try {
     res = await fetch(`${API_URL}${path}`, {
       ...options,
+      cache: "no-store",
       headers: authHeaders(options.headers || {}),
     });
   } catch {
