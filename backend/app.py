@@ -310,6 +310,9 @@ def create_app():
         configured_url = clean_text(get_env("BACKEND_BASE_URL")).rstrip("/")
         if is_public_http_url(configured_url):
             return configured_url
+        render_url = clean_text(get_env("RENDER_EXTERNAL_URL")).rstrip("/")
+        if is_public_http_url(render_url):
+            return render_url
         if not has_request_context():
             return ""
 
@@ -319,7 +322,8 @@ def create_app():
         host = forwarded_host or request.host
         if not scheme or not host:
             return ""
-        return f"{scheme}://{host}".rstrip("/")
+        inferred_url = f"{scheme}://{host}".rstrip("/")
+        return inferred_url if is_public_http_url(inferred_url) else ""
 
     def is_public_http_url(value):
         parsed = urlparse(value or "")
@@ -1298,10 +1302,10 @@ def create_app():
         user.email_verification_sent_at = get_local_now()
         db.session.commit()
 
-        base_url = get_backend_base_url() or get_env("BACKEND_BASE_URL", "").rstrip("/")
+        base_url = get_backend_base_url()
         if not base_url:
-            print(f"[EMAIL VERIFY ERROR] BACKEND_BASE_URL no configurado para {user.email}")
-            return False, "BACKEND_BASE_URL no configurado"
+            print(f"[EMAIL VERIFY ERROR] BACKEND_BASE_URL invalido o no configurado para {user.email}")
+            return False, "BACKEND_BASE_URL debe ser la URL publica real del backend"
 
         verify_url = f"{base_url}/auth/verify-email/{quote(user.email_verification_token)}"
         display_name = full_name or user.email
