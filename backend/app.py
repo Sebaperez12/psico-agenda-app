@@ -105,7 +105,7 @@ def create_app():
     app.config["MAIL_TIMEOUT"] = int(get_env("MAIL_TIMEOUT", 10))
     app.config["MAIL_USERNAME"] = get_env("MAIL_USERNAME", "")
     app.config["MAIL_PASSWORD"] = get_env("MAIL_PASSWORD", "")
-    app.config["MAIL_DEFAULT_SENDER"] = get_env("MAIL_DEFAULT_SENDER", "noreply@psico-agenda.com")
+    app.config["MAIL_DEFAULT_SENDER"] = get_env("MAIL_DEFAULT_SENDER", "")
 
     CORS(
         app,
@@ -159,6 +159,7 @@ def create_app():
 
         placeholder_values = {
             "",
+            "noreply@psico-agenda.com",
             "your-email@gmail.com",
             "your-app-password",
             "tu-email@gmail.com",
@@ -1462,6 +1463,46 @@ def create_app():
         recipient = normalize_email(body.get("recipient")) or normalize_email(app.config.get("MAIL_DEFAULT_SENDER"))
         if not recipient:
             return jsonify({"msg": "recipient es obligatorio"}), 400
+
+        sent, error_message = send_email(
+            recipient=recipient,
+            subject="Prueba de email TherapyDesk",
+            body="Si recibiste este email, la configuracion de envio esta funcionando.",
+            html_body="<p>Si recibiste este email, la configuracion de envio esta funcionando.</p>",
+            sender_name="TherapyDesk",
+        )
+        if not sent:
+            return jsonify({"sent": False, "msg": error_message}), 502
+        return jsonify({"sent": True, "msg": f"Email de prueba enviado a {recipient}"}), 200
+
+    @app.get("/email/status")
+    @jwt_required()
+    def email_status():
+        brevo_api_key = clean_text(app.config.get("BREVO_API_KEY"))
+        username = clean_text(app.config.get("MAIL_USERNAME"))
+        password = clean_text(app.config.get("MAIL_PASSWORD"))
+        sender = clean_text(app.config.get("MAIL_DEFAULT_SENDER"))
+
+        return jsonify({
+            "email_mode": "brevo_api" if brevo_api_key else "smtp",
+            "brevo_api_key_configured": bool(brevo_api_key),
+            "mail_server": app.config.get("MAIL_SERVER"),
+            "mail_username_configured": bool(username),
+            "mail_password_configured": bool(password),
+            "mail_default_sender": sender,
+            "mail_default_sender_configured": bool(sender),
+        }), 200
+
+    @app.post("/email/test")
+    @jwt_required()
+    def send_authenticated_test_email():
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        body = request.get_json(silent=True) or {}
+        recipient = normalize_email(body.get("recipient")) or normalize_email(user.email if user else "")
+
+        if not recipient:
+            return jsonify({"sent": False, "msg": "No hay email destinatario para la prueba"}), 400
 
         sent, error_message = send_email(
             recipient=recipient,
