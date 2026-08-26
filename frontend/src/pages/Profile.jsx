@@ -6,6 +6,7 @@ import "./Profile.css";
 export default function Profile() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
   const [notificationEmail, setNotificationEmail] = useState("");
   const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
   const [autoReminderMethod, setAutoReminderMethod] = useState("email");
@@ -28,6 +29,7 @@ export default function Profile() {
   const [emailTestRecipient, setEmailTestRecipient] = useState("");
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [sendingEmailTest, setSendingEmailTest] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
@@ -50,6 +52,7 @@ export default function Profile() {
     try {
       const data = await api.get("/profile");
       setEmail(data.email || "");
+      setEmailVerified(!!data.email_verified);
       setNotificationEmail(data.notification_email || "");
       setAutoRemindersEnabled(!!data.auto_reminders_enabled);
       setAutoReminderMethod(data.auto_reminder_method || "email");
@@ -67,6 +70,7 @@ export default function Profile() {
       if (e.status === 404) {
         const me = await api.get("/me");
         setEmail(me?.user?.email || "");
+        setEmailVerified(!!me?.user?.email_verified);
         setNotificationEmail("");
         setAutoRemindersEnabled(false);
         setAutoReminderMethod("email");
@@ -116,6 +120,20 @@ export default function Profile() {
       setMsg(e.message);
     } finally {
       setSendingEmailTest(false);
+    }
+  }
+
+  async function resendVerificationEmail() {
+    setMsg("");
+    setResendingVerification(true);
+    try {
+      const data = await api.post("/auth/resend-verification", {});
+      setMsg(data.msg || "Email de verificacion reenviado");
+    } catch (e) {
+      console.error(e);
+      setMsg(e.message);
+    } finally {
+      setResendingVerification(false);
     }
   }
 
@@ -250,6 +268,19 @@ export default function Profile() {
         </div>
 
         <input className="profile-page__input" value={email} readOnly placeholder="Email" />
+        <div className={`profile-page__verify-banner${emailVerified ? " profile-page__verify-banner--ok" : ""}`}>
+          <span>{emailVerified ? "Email verificado" : "Email pendiente de verificacion"}</span>
+          {!emailVerified && (
+            <button
+              type="button"
+              className="profile-page__btn"
+              onClick={resendVerificationEmail}
+              disabled={resendingVerification}
+            >
+              {resendingVerification ? "Enviando..." : "Reenviar confirmacion"}
+            </button>
+          )}
+        </div>
         <input
           className="profile-page__input"
           value={notificationEmail}

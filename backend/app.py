@@ -949,6 +949,9 @@ def create_app():
         default_session_minutes = db.Column(db.Integer, nullable=False, default=50)
         role = db.Column(db.String(20), nullable=False, default="psychologist")
         is_active = db.Column(db.Boolean, nullable=False, default=True)
+        email_verified = db.Column(db.Boolean, nullable=False, default=False)
+        email_verification_token = db.Column(db.String(120), nullable=True, unique=True)
+        email_verification_sent_at = db.Column(db.DateTime, nullable=True)
 
         def serialize(self):
             return {
@@ -957,6 +960,7 @@ def create_app():
                 "default_session_minutes": self.default_session_minutes,
                 "role": self.role or "psychologist",
                 "is_active": bool(self.is_active),
+                "email_verified": bool(self.email_verified),
             }
 
     class AdminAuditLog(db.Model):
@@ -1203,6 +1207,9 @@ def create_app():
         ensure_column("user", "default_session_minutes", "INTEGER DEFAULT 50")
         ensure_column("user", "role", "VARCHAR(20) DEFAULT 'psychologist'")
         ensure_column("user", "is_active", "BOOLEAN DEFAULT 1")
+        ensure_column("user", "email_verified", "BOOLEAN DEFAULT 0")
+        ensure_column("user", "email_verification_token", "VARCHAR(120)")
+        ensure_column("user", "email_verification_sent_at", "DATETIME")
         ensure_column("admin_audit_log", "target_user_id", "INTEGER")
         ensure_column("password_reset_request", "mail_sent", "BOOLEAN DEFAULT 0")
         ensure_column("password_reset_request", "mail_error", "TEXT")
@@ -1285,6 +1292,51 @@ def create_app():
         if not sent:
             print(f"[REGISTRATION EMAIL ERROR] welcome to {user_email}: {error_message}")
 
+    def send_email_verification(user, full_name=None):
+        if not user.email_verification_token:
+            user.email_verification_token = secrets.token_urlsafe(32)
+        user.email_verification_sent_at = get_local_now()
+        db.session.commit()
+
+        base_url = get_backend_base_url() or get_env("BACKEND_BASE_URL", "").rstrip("/")
+        if not base_url:
+            print(f"[EMAIL VERIFY ERROR] BACKEND_BASE_URL no configurado para {user.email}")
+            return False, "BACKEND_BASE_URL no configurado"
+
+        verify_url = f"{base_url}/auth/verify-email/{quote(user.email_verification_token)}"
+        display_name = full_name or user.email
+        subject = "Confirma tu email en TherapyDesk"
+        body = (
+            f"Hola {display_name},\n\n"
+            "Para confirmar que este email te pertenece, abrí este link:\n\n"
+            f"{verify_url}\n\n"
+            "Si no creaste esta cuenta, podés ignorar este mensaje.\n\n"
+            "TherapyDesk"
+        )
+        html_body = f"""
+        <div style="font-family:Arial,sans-serif;color:#10204a;line-height:1.5">
+          <h2 style="margin:0 0 12px">Confirma tu email</h2>
+          <p>Hola <strong>{escape(display_name)}</strong>,</p>
+          <p>Necesitamos confirmar que este email te pertenece.</p>
+          <p>
+            <a href="{escape(verify_url)}" style="display:inline-block;background:#0f8f68;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700">
+              Confirmar email
+            </a>
+          </p>
+          <p style="color:#5f6f9f">Si no creaste esta cuenta, podés ignorar este mensaje.</p>
+        </div>
+        """
+        sent, error_message = send_email(
+            user.email,
+            subject,
+            body,
+            html_body=html_body,
+            sender_name="TherapyDesk",
+        )
+        if not sent:
+            print(f"[EMAIL VERIFY ERROR] to {user.email}: {error_message}")
+        return sent, error_message
+
     def notify_admins_about_registration(user_email, full_name, professional_title, office_address):
         admin_emails = configured_admin_emails()
         if not admin_emails:
@@ -1320,6 +1372,7 @@ def create_app():
                 print(f"[REGISTRATION EMAIL ERROR] admin notice to {admin_email}: {error_message}")
 
     def send_registration_emails_async(user, profile):
+        user_id = user.id
         user_email = user.email
         full_name = profile.full_name
         professional_title = profile.professional_title
@@ -1329,6 +1382,9 @@ def create_app():
             with app.app_context():
                 try:
                     send_registration_welcome_email(user_email, full_name)
+                    fresh_user = User.query.get(user_id)
+                    if fresh_user and not fresh_user.email_verified:
+                        send_email_verification(fresh_user, full_name)
                     notify_admins_about_registration(
                         user_email,
                         full_name,
@@ -1342,9 +1398,17 @@ def create_app():
         threading.Thread(target=worker, daemon=True).start()
 
     def sync_configured_admin(user):
-        if user and user.email in configured_admin_emails() and user.role != "admin":
-            user.role = "admin"
-            db.session.commit()
+        if user and user.email in configured_admin_emails():
+            changed = False
+            if user.role != "admin":
+                user.role = "admin"
+                changed = True
+            if not user.email_verified:
+                user.email_verified = True
+                user.email_verification_token = None
+                changed = True
+            if changed:
+                db.session.commit()
 
     def get_current_user():
         user_id = int(get_jwt_identity())
@@ -1965,10 +2029,13 @@ def create_app():
         if exists:
             return jsonify({"msg": "Ese email ya está registrado"}), 409
 
+        is_configured_admin = email in configured_admin_emails()
         user = User(
             email=email,
             password_hash=generate_password_hash(password),
-            role="admin" if email in configured_admin_emails() else "psychologist",
+            role="admin" if is_configured_admin else "psychologist",
+            email_verified=is_configured_admin,
+            email_verification_token=None if is_configured_admin else secrets.token_urlsafe(32),
         )
         db.session.add(user)
         db.session.flush()
@@ -1999,6 +2066,55 @@ def create_app():
             },
             "profile": profile.serialize(user.email),
         }), 201
+
+    @app.get("/auth/verify-email/<token>")
+    def verify_email(token):
+        normalized_token = clean_text(token)
+        if not normalized_token:
+            return "Link de verificacion invalido.", 400
+
+        user = User.query.filter_by(email_verification_token=normalized_token).first()
+        if not user:
+            return "Este link de verificacion no existe o ya fue usado.", 404
+
+        user.email_verified = True
+        user.email_verification_token = None
+        db.session.commit()
+
+        frontend_base_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.onrender.com").rstrip("/")
+        return f"""
+        <!doctype html>
+        <html lang="es">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Email confirmado</title>
+          </head>
+          <body style="font-family:Arial,sans-serif;background:#f4f7fb;color:#10204a;padding:32px;">
+            <main style="max-width:560px;margin:0 auto;background:white;border:1px solid #dfe6f2;border-radius:8px;padding:28px;">
+              <h1 style="margin-top:0;">Email confirmado</h1>
+              <p>Tu email ya quedo verificado en TherapyDesk.</p>
+              <p><a href="{escape(frontend_base_url)}/login" style="color:#0f8f68;font-weight:700;">Volver a iniciar sesion</a></p>
+            </main>
+          </body>
+        </html>
+        """, 200
+
+    @app.post("/auth/resend-verification")
+    @jwt_required()
+    def resend_email_verification():
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"msg": "Usuario no existe"}), 404
+        if user.email_verified:
+            return jsonify({"msg": "El email ya esta verificado"}), 200
+
+        profile = PsychologistProfile.query.filter_by(owner_user_id=user_id).first()
+        sent, error_message = send_email_verification(user, profile.full_name if profile else None)
+        if not sent:
+            return jsonify({"msg": error_message or "No se pudo enviar la verificacion"}), 502
+        return jsonify({"msg": f"Email de verificacion enviado a {user.email}"}), 200
 
     @app.post("/auth/login")
     def login():
@@ -3479,7 +3595,9 @@ def create_app():
             profile.booking_slug = generate_unique_booking_slug(profile.full_name)
             db.session.commit()
 
-        return jsonify(profile.serialize(user.email if user else None)), 200
+        profile_data = profile.serialize(user.email if user else None)
+        profile_data["email_verified"] = bool(user.email_verified) if user else False
+        return jsonify(profile_data), 200
 
     @app.post("/profile")
     @jwt_required()
