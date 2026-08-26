@@ -181,6 +181,15 @@
   box-shadow: 0 10px 24px var(--color-shadow);
 }
 
+.admin-psychologists__admins {
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid rgba(40, 169, 121, 0.22);
+  border-radius: 8px;
+  background: rgba(245, 255, 251, 0.86);
+  box-shadow: 0 10px 24px var(--color-shadow);
+}
+
 .admin-psychologists__reset-head {
   display: flex;
   align-items: center;
@@ -214,7 +223,13 @@
   gap: 8px;
 }
 
-.admin-psychologists__reset-item {
+.admin-psychologists__admin-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-psychologists__reset-item,
+.admin-psychologists__admin-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -227,26 +242,36 @@
 
 .admin-psychologists__reset-item strong,
 .admin-psychologists__reset-item span,
-.admin-psychologists__reset-item small {
+.admin-psychologists__reset-item small,
+.admin-psychologists__admin-item strong,
+.admin-psychologists__admin-item span {
   display: block;
 }
 
-.admin-psychologists__reset-item strong {
+.admin-psychologists__reset-item strong,
+.admin-psychologists__admin-item strong {
   color: var(--color-text-strong);
   font-size: 14px;
 }
 
 .admin-psychologists__reset-item span,
-.admin-psychologists__reset-item small {
+.admin-psychologists__reset-item small,
+.admin-psychologists__admin-item span {
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 700;
 }
 
-.admin-psychologists__reset-item button {
+.admin-psychologists__reset-item button,
+.admin-psychologists__admin-item button {
   min-height: 38px;
   border-radius: 8px;
   font-weight: 800;
+}
+
+.admin-psychologists__admin-item button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .admin-psychologists__toolbar {
@@ -366,7 +391,8 @@
 
   .admin-psychologists__hero-actions,
   .admin-psychologists__create-actions,
-  .admin-psychologists__reset-item {
+  .admin-psychologists__reset-item,
+  .admin-psychologists__admin-item {
     width: 100%;
     flex-direction: column;
     align-items: stretch;
@@ -374,7 +400,8 @@
 
   .admin-psychologists__hero-actions button,
   .admin-psychologists__create-actions button,
-  .admin-psychologists__reset-item button {
+  .admin-psychologists__reset-item button,
+  .admin-psychologists__admin-item button {
     width: 100%;
   }
 }

@@ -10,6 +10,7 @@ function getDisplayName(psychologist) {
 export default function AdminPsychologists() {
   const navigate = useNavigate();
   const [psychologists, setPsychologists] = useState([]);
+  const [adminUsers, setAdminUsers] = useState([]);
   const [passwordResetRequests, setPasswordResetRequests] = useState([]);
   const [siteVisitStats, setSiteVisitStats] = useState({
     total_visits: 0,
@@ -43,6 +44,7 @@ export default function AdminPsychologists() {
     try {
       const data = await api.get("/admin/psychologists");
       setPsychologists(data.psychologists || []);
+      setAdminUsers(data.admin_users || []);
       setPasswordResetRequests(data.password_reset_requests || []);
       setSiteVisitStats(data.site_visit_stats || {
         total_visits: 0,
@@ -65,6 +67,20 @@ export default function AdminPsychologists() {
       setPsychologists((current) =>
         current.map((item) => (item.id === psychologist.id ? data.psychologist : item))
       );
+    } catch (error) {
+      setMsg(error.message);
+    }
+  }
+
+  async function demoteAdmin(adminUser) {
+    const confirmed = window.confirm(`Quitar rol admin a ${adminUser.email}?`);
+    if (!confirmed) return;
+
+    setMsg("");
+    try {
+      const data = await api.patch(`/admin/users/${adminUser.id}/demote`, {});
+      setMsg(data.msg || "Rol admin actualizado");
+      await loadPsychologists();
     } catch (error) {
       setMsg(error.message);
     }
@@ -233,6 +249,33 @@ export default function AdminPsychologists() {
           </div>
         </form>
       )}
+
+      <section className="admin-psychologists__admins">
+        <div className="admin-psychologists__reset-head">
+          <h2>Administradores</h2>
+          <span>{adminUsers.length}</span>
+        </div>
+        <div className="admin-psychologists__admin-list">
+          {adminUsers.map((adminUser) => (
+            <div key={adminUser.id} className="admin-psychologists__admin-item">
+              <div>
+                <strong>{adminUser.email}</strong>
+                <span>{adminUser.configured ? "Configurado en Render" : "Guardado en base de datos"}</span>
+              </div>
+              <button
+                type="button"
+                disabled={adminUser.configured}
+                onClick={() => demoteAdmin(adminUser)}
+              >
+                Quitar admin
+              </button>
+            </div>
+          ))}
+          {adminUsers.length === 0 && (
+            <p className="admin-psychologists__empty">No hay administradores para mostrar.</p>
+          )}
+        </div>
+      </section>
 
       <div className="admin-psychologists__stats">
         <div>

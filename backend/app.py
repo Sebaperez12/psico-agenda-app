@@ -2251,6 +2251,12 @@ def create_app():
             .order_by(User.created_at.desc(), User.id.desc())
             .all()
         )
+        admin_users = (
+            User.query
+            .filter(User.role == "admin")
+            .order_by(User.created_at.asc(), User.id.asc())
+            .all()
+        )
         reset_requests = (
             PasswordResetRequest.query
             .filter_by(status="pending")
@@ -2273,8 +2279,43 @@ def create_app():
                 serialize_password_reset_request(reset_request)
                 for reset_request in reset_requests
             ],
+            "admin_users": [
+                {
+                    **admin_user.serialize(),
+                    "created_at": admin_user.created_at.isoformat() if admin_user.created_at else None,
+                    "configured": admin_user.email in configured_admin_emails(),
+                }
+                for admin_user in admin_users
+            ],
             "site_visit_stats": get_site_visit_stats(),
         }), 200
+
+    @app.patch("/admin/users/<int:target_user_id>/demote")
+    @jwt_required()
+    def admin_demote_user(target_user_id):
+        admin_user, error = require_admin_user()
+        if error:
+            return error
+
+        target_user = User.query.get(target_user_id)
+        if not target_user:
+            return jsonify({"msg": "Usuario no existe"}), 404
+        if target_user.role != "admin":
+            return jsonify({"msg": "Ese usuario no tiene rol admin"}), 400
+        if target_user.email in configured_admin_emails():
+            return jsonify({
+                "msg": "Ese email esta en ADMIN_EMAILS. Quitalo de Render antes de bajarlo de admin.",
+            }), 400
+
+        target_user.role = "psychologist"
+        add_admin_audit_log(
+            admin_user,
+            target_user,
+            "admin_demoted",
+            "Rol admin quitado desde administracion",
+        )
+        db.session.commit()
+        return jsonify({"msg": f"Rol admin quitado a {target_user.email}"}), 200
 
     @app.post("/admin/psychologists")
     @jwt_required()
