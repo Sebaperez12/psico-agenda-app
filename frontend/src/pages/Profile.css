@@ -115,6 +115,42 @@
   margin-bottom: 0.85rem;
 }
 
+.profile-page__email-section {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.profile-page__email-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-page__email-status span {
+  min-width: 0;
+  padding: 0.65rem;
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  font-size: 0.86rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.profile-page__email-test {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.profile-page__email-test .profile-page__input {
+  margin-bottom: 0;
+}
+
 .profile-page__section-label {
   margin: 0 0 0.75rem 0;
   font-size: 0.95rem;
@@ -288,7 +324,9 @@
   }
 
   .profile-page__booking-grid,
-  .profile-page__booking-link {
+  .profile-page__booking-link,
+  .profile-page__email-status,
+  .profile-page__email-test {
     grid-template-columns: 1fr;
   }
 

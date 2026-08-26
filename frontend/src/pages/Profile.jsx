@@ -24,6 +24,10 @@ export default function Profile() {
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [isCreate, setIsCreate] = useState(false);
+  const [emailStatus, setEmailStatus] = useState(null);
+  const [emailTestRecipient, setEmailTestRecipient] = useState("");
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [sendingEmailTest, setSendingEmailTest] = useState(false);
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
@@ -82,6 +86,36 @@ export default function Profile() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadEmailStatus() {
+    setCheckingEmail(true);
+    try {
+      const data = await api.get("/email/status");
+      setEmailStatus(data);
+      setEmailTestRecipient((prev) => prev || notificationEmail || email || "");
+    } catch (e) {
+      console.error(e);
+      setMsg(e.message);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }
+
+  async function sendEmailTest() {
+    setMsg("");
+    setSendingEmailTest(true);
+    try {
+      const data = await api.post("/email/test", {
+        recipient: emailTestRecipient.trim() || notificationEmail || email,
+      });
+      setMsg(data.msg || "Email de prueba enviado");
+    } catch (e) {
+      console.error(e);
+      setMsg(e.message);
+    } finally {
+      setSendingEmailTest(false);
     }
   }
 
@@ -166,6 +200,13 @@ export default function Profile() {
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    if (!loading) {
+      loadEmailStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
   if (loading) {
     return <div className="profile-page">Cargando...</div>;
   }
@@ -215,6 +256,38 @@ export default function Profile() {
           onChange={(e) => setNotificationEmail(e.target.value)}
           placeholder="Email para notificaciones (opcional)"
         />
+        <div className="profile-page__section profile-page__email-section">
+          <p className="profile-page__section-label">Email</p>
+          <div className="profile-page__email-status">
+            <span>Modo: {emailStatus?.email_mode || "-"}</span>
+            <span>Sender: {emailStatus?.mail_default_sender || "Sin configurar"}</span>
+            <span>Brevo API: {emailStatus?.brevo_api_key_configured ? "Configurado" : "Sin configurar"}</span>
+          </div>
+          <div className="profile-page__email-test">
+            <input
+              className="profile-page__input"
+              value={emailTestRecipient}
+              onChange={(e) => setEmailTestRecipient(e.target.value)}
+              placeholder="Email de prueba"
+            />
+            <button
+              type="button"
+              className="profile-page__btn"
+              onClick={sendEmailTest}
+              disabled={sendingEmailTest}
+            >
+              {sendingEmailTest ? "Enviando..." : "Probar email"}
+            </button>
+            <button
+              type="button"
+              className="profile-page__btn"
+              onClick={loadEmailStatus}
+              disabled={checkingEmail}
+            >
+              {checkingEmail ? "Revisando..." : "Actualizar estado"}
+            </button>
+          </div>
+        </div>
         <div className="profile-page__section">
           <p className="profile-page__section-label">Recordatorios automáticos</p>
           <label className="profile-page__toggle">
