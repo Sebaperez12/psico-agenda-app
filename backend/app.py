@@ -465,7 +465,12 @@ def create_app():
         inspector = inspect(db.engine)
         columns = {column["name"] for column in inspector.get_columns(table_name)}
         if column_name not in columns:
-            db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {production_column_sql(column_sql)}"))
+            preparer = db.engine.dialect.identifier_preparer
+            table_identifier = preparer.quote(table_name)
+            column_identifier = preparer.quote(column_name)
+            db.session.execute(text(
+                f"ALTER TABLE {table_identifier} ADD COLUMN {column_identifier} {production_column_sql(column_sql)}"
+            ))
             db.session.commit()
 
     def get_default_appointment_location(user_id):
