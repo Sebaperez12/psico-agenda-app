@@ -300,17 +300,14 @@ export default function Profile() {
 
           <div className="profile-page__booking-grid">
             <label>
-              Final del link
-              <div className="profile-page__slug-field">
-                <span>{`${window.location.origin}/reservar/`}</span>
-                <input
-                  className="profile-page__input"
-                  value={bookingSlug}
-                  onChange={(e) => setBookingSlug(e.target.value)}
-                  placeholder="dra-apellido"
-                />
-              </div>
-              <small>Esto es lo que va al final del link. Es unico para cada psicologo.</small>
+              Personalizar link
+              <input
+                className="profile-page__input"
+                value={bookingSlug}
+                onChange={(e) => setBookingSlug(e.target.value)}
+                placeholder="dra-apellido"
+              />
+              <small>Cada psicologo tiene un link unico.</small>
             </label>
             <label>
               Reserva con anticipacion
