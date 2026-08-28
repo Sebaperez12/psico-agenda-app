@@ -82,12 +82,30 @@
   padding: 24px;
 }
 
+@media (min-width: 761px) {
+  .admin-layout__sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 20;
+    width: 260px;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .admin-layout__main {
+    grid-column: 2;
+  }
+}
+
 @media (max-width: 760px) {
   .admin-layout {
     grid-template-columns: 1fr;
   }
 
   .admin-layout__sidebar {
+    position: static;
+    width: auto;
+    height: auto;
     min-height: auto;
   }
 }
