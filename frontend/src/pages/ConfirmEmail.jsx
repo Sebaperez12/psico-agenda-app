@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import logo from "../assets/logo 6.png";
-import mailImage from "../assets/mail.png";
+import sessionImage from "../assets/PORTADA.png";
 import api from "../services/api";
 import "./ConfirmEmail.css";
 
@@ -11,6 +11,8 @@ export default function ConfirmEmail() {
   const [user, setUser] = useState(null);
   const [msg, setMsg] = useState("");
   const [resending, setResending] = useState(false);
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -50,6 +52,26 @@ export default function ConfirmEmail() {
     navigate("/login", { replace: true });
   }
 
+  async function deletePendingAccount() {
+    if (!deleteArmed) {
+      setMsg("");
+      setDeleteArmed(true);
+      return;
+    }
+
+    setMsg("");
+    setDeleting(true);
+    try {
+      await api.delete("/account", { confirm_email: user?.email });
+      localStorage.removeItem("token");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      setMsg(error.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (status === "loading") {
     return <main className="confirm-email-page">Cargando...</main>;
   }
@@ -74,8 +96,9 @@ export default function ConfirmEmail() {
           <p className="confirm-email-card__eyebrow">Cuenta pendiente</p>
           <h1 id="confirm-email-title">Falta confirmar tu email</h1>
           <p className="confirm-email-card__text">
-            Para proteger tu cuenta y evitar registros con correos ajenos, confirma el mensaje que
-            te enviamos a <strong>{user?.email || "tu email"}</strong>.
+            Para proteger tu cuenta y evitar registros con correos ajenos, necesitamos confirmar{" "}
+            <strong>{user?.email || "tu email"}</strong>. Si no encontrás el mensaje de
+            confirmacion, podes reenviarlo desde aca.
           </p>
 
           <div className="confirm-email-card__actions">
@@ -84,6 +107,18 @@ export default function ConfirmEmail() {
             </button>
             <button type="button" className="confirm-email-card__secondary" onClick={logout}>
               Cambiar cuenta
+            </button>
+            <button
+              type="button"
+              className="confirm-email-card__danger"
+              onClick={deletePendingAccount}
+              disabled={deleting}
+            >
+              {deleting
+                ? "Eliminando..."
+                : deleteArmed
+                  ? "Confirmar eliminacion"
+                  : "Eliminar cuenta"}
             </button>
           </div>
 
@@ -94,7 +129,7 @@ export default function ConfirmEmail() {
         </div>
 
         <div className="confirm-email-card__visual" aria-hidden="true">
-          <img src={mailImage} alt="" />
+          <img src={sessionImage} alt="" />
         </div>
       </section>
     </main>

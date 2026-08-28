@@ -107,6 +107,17 @@
   border-color: rgba(6, 23, 68, 0.16);
 }
 
+.confirm-email-card__actions .confirm-email-card__danger {
+  background: #ffffff;
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.24);
+}
+
+.confirm-email-card__actions .confirm-email-card__danger:hover {
+  background: #fff4f2;
+  border-color: rgba(180, 35, 24, 0.38);
+}
+
 .confirm-email-card__msg {
   width: fit-content;
   max-width: 100%;
@@ -125,19 +136,18 @@
 }
 
 .confirm-email-card__visual {
-  display: grid;
-  place-items: center;
-  padding: 36px;
+  min-height: 560px;
   background:
     linear-gradient(180deg, rgba(9, 37, 91, 0.08), rgba(10, 143, 120, 0.12)),
     #eef8f5;
 }
 
 .confirm-email-card__visual img {
-  width: min(100%, 360px);
-  max-height: 420px;
-  object-fit: contain;
-  filter: drop-shadow(0 20px 34px rgba(9, 35, 85, 0.16));
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
 }
 
 @media (max-width: 760px) {
@@ -171,12 +181,11 @@
   }
 
   .confirm-email-card__visual {
-    min-height: 220px;
-    padding: 16px 24px 30px;
+    min-height: 240px;
     order: -1;
   }
 
   .confirm-email-card__visual img {
-    max-height: 190px;
+    max-height: 240px;
   }
 }

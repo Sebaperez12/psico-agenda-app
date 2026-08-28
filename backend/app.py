@@ -1922,6 +1922,8 @@ def create_app():
             appointment.booking_confirm_token = None
             db.session.commit()
 
+            email_sent = False
+            email_error = None
             if patient.email:
                 date_str = format_date_in_spanish(appointment.start_at)
                 date_short_str = format_date_in_spanish(appointment.start_at, include_year=False)
@@ -1936,7 +1938,7 @@ def create_app():
                 contact_email = profile.notification_email or user.email
                 patient_subject_date = date_short_str[:1].upper() + date_short_str[1:]
 
-                send_email(
+                email_sent, email_error = send_email(
                     recipient=patient.email,
                     subject=f"{patient_subject_date} - {time_str} | {psychologist_name} | Turno confirmado",
                     body=(
@@ -1996,9 +1998,21 @@ def create_app():
                     reply_to=contact_email,
                 )
 
+            if email_sent:
+                confirm_message = f"El turno de {patient.full_name} quedo confirmado. Tambien se envio la confirmacion al paciente."
+            elif patient.email:
+                confirm_message = (
+                    f"El turno de {patient.full_name} quedo confirmado, pero no se pudo enviar el email al paciente: "
+                    f"{email_error or 'revisa la configuracion de email'}."
+                )
+            else:
+                confirm_message = (
+                    f"El turno de {patient.full_name} quedo confirmado. No se envio email porque el paciente no tiene email registrado."
+                )
+
             return confirmation_page(
                 "Turno confirmado",
-                f"El turno de {patient.full_name} quedo confirmado. Tambien se envio la confirmacion al paciente si tenia email registrado.",
+                confirm_message,
             )
 
         if appointment.status == "scheduled":
@@ -2076,9 +2090,13 @@ def create_app():
         normalized_token = clean_text(token)
         frontend_base_url = get_env("FRONTEND_BASE_URL", "https://therapydesk.app").rstrip("/")
 
-        def email_confirmed_redirect(status):
-            query = urlencode({"status": status})
-            return redirect(f"{frontend_base_url}/email-confirmed?{query}", code=302)
+        def email_confirmed_redirect(status, user=None):
+            query = {"status": status}
+            if user:
+                profile = PsychologistProfile.query.filter_by(owner_user_id=user.id).first()
+                query["access_token"] = create_access_token(identity=str(user.id))
+                query["next"] = "/appointments" if profile else "/profile"
+            return redirect(f"{frontend_base_url}/email-confirmed#{urlencode(query)}", code=302)
 
         if not normalized_token:
             return email_confirmed_redirect("invalid")
@@ -2091,7 +2109,7 @@ def create_app():
         user.email_verification_token = None
         db.session.commit()
 
-        return email_confirmed_redirect("success")
+        return email_confirmed_redirect("success", user)
 
     @app.post("/auth/resend-verification")
     @jwt_required()
