@@ -1453,6 +1453,19 @@ def create_app():
             detail=detail,
         ))
 
+    def delete_psychologist_account(user):
+        user_id = user.id
+        AdminAuditLog.query.filter_by(target_user_id=user_id).update({"target_user_id": None})
+        AdminAuditLog.query.filter_by(admin_user_id=user_id).delete()
+        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
+        RecurringAppointmentException.query.filter_by(owner_user_id=user_id).delete()
+        Appointment.query.filter_by(owner_user_id=user_id).delete()
+        RecurringAppointmentSeries.query.filter_by(owner_user_id=user_id).delete()
+        AvailabilityRule.query.filter_by(owner_user_id=user_id).delete()
+        PsychologistProfile.query.filter_by(owner_user_id=user_id).delete()
+        Patient.query.filter_by(owner_user_id=user_id).delete()
+        db.session.delete(user)
+
     def serialize_admin_audit_log(log):
         data = log.serialize()
         admin = User.query.get(log.admin_user_id)
@@ -2215,17 +2228,7 @@ def create_app():
         if confirm_email != user.email:
             return jsonify({"msg": "Para eliminar la cuenta, confirma tu email"}), 400
 
-        user_id = user.id
-        AdminAuditLog.query.filter_by(target_user_id=user_id).update({"target_user_id": None})
-        AdminAuditLog.query.filter_by(admin_user_id=user_id).delete()
-        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
-        RecurringAppointmentException.query.filter_by(owner_user_id=user_id).delete()
-        Appointment.query.filter_by(owner_user_id=user_id).delete()
-        RecurringAppointmentSeries.query.filter_by(owner_user_id=user_id).delete()
-        AvailabilityRule.query.filter_by(owner_user_id=user_id).delete()
-        PsychologistProfile.query.filter_by(owner_user_id=user_id).delete()
-        Patient.query.filter_by(owner_user_id=user_id).delete()
-        db.session.delete(user)
+        delete_psychologist_account(user)
         db.session.commit()
 
         return jsonify({"msg": "Cuenta eliminada"}), 200
@@ -2539,6 +2542,35 @@ def create_app():
             "msg": "Estado actualizado",
             "psychologist": serialize_admin_psychologist(user),
         }), 200
+
+    @app.delete("/admin/psychologists/<int:psychologist_id>")
+    @jwt_required()
+    def admin_delete_psychologist(psychologist_id):
+        admin_user, error = require_admin_user()
+        if error:
+            return error
+
+        user = User.query.get(psychologist_id)
+        if not user or user.role != "psychologist":
+            return jsonify({"msg": "Psicologo no encontrado"}), 404
+
+        body = request.get_json(silent=True) or {}
+        confirm_email = normalize_email(body.get("confirm_email"))
+        if confirm_email != user.email:
+            return jsonify({"msg": "Para eliminar el psicologo, confirma su email"}), 400
+
+        deleted_email = user.email
+        add_admin_audit_log(
+            admin_user,
+            user,
+            "psychologist_deleted",
+            f"Cuenta de psicologo eliminada: {deleted_email}",
+        )
+        db.session.flush()
+        delete_psychologist_account(user)
+        db.session.commit()
+
+        return jsonify({"msg": f"Psicologo eliminado: {deleted_email}"}), 200
 
     @app.patch("/admin/psychologists/<int:psychologist_id>/password")
     @jwt_required()

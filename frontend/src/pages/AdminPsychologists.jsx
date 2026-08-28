@@ -32,6 +32,7 @@ export default function AdminPsychologists() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
@@ -83,6 +84,35 @@ export default function AdminPsychologists() {
       await loadPsychologists();
     } catch (error) {
       setMsg(error.message);
+    }
+  }
+
+  async function deletePsychologist(psychologist) {
+    const displayName = getDisplayName(psychologist);
+    const confirmed = window.confirm(
+      `Vas a borrar a ${displayName} y todos sus pacientes, turnos y configuraciones. Esta accion no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    const confirmEmail = window.prompt(`Para confirmar, escribi el email del psicologo: ${psychologist.email}`);
+    if (!confirmEmail) return;
+    if (confirmEmail.trim().toLowerCase() !== psychologist.email.trim().toLowerCase()) {
+      setMsg("El email no coincide. No se elimino el psicologo.");
+      return;
+    }
+
+    setDeletingId(psychologist.id);
+    setMsg("");
+    try {
+      const data = await api.delete(`/admin/psychologists/${psychologist.id}`, {
+        confirm_email: confirmEmail,
+      });
+      setPsychologists((current) => current.filter((item) => item.id !== psychologist.id));
+      setMsg(data.msg || "Psicologo eliminado");
+    } catch (error) {
+      setMsg(error.message);
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -386,20 +416,31 @@ export default function AdminPsychologists() {
                         : "-"}
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="admin-psychologists__status-btn"
-                        onClick={() => navigate(`/admin/psychologists/${psychologist.id}`)}
-                      >
-                        Ver
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-psychologists__status-btn admin-psychologists__status-btn--secondary"
-                        onClick={() => updateStatus(psychologist, !psychologist.is_active)}
-                      >
-                        {psychologist.is_active ? "Desactivar" : "Activar"}
-                      </button>
+                      <div className="admin-psychologists__actions">
+                        <button
+                          type="button"
+                          className="admin-psychologists__status-btn"
+                          onClick={() => navigate(`/admin/psychologists/${psychologist.id}`)}
+                        >
+                          Ver
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-psychologists__status-btn admin-psychologists__status-btn--secondary"
+                          onClick={() => updateStatus(psychologist, !psychologist.is_active)}
+                          disabled={deletingId === psychologist.id}
+                        >
+                          {psychologist.is_active ? "Desactivar" : "Activar"}
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-psychologists__status-btn admin-psychologists__status-btn--danger"
+                          onClick={() => deletePsychologist(psychologist)}
+                          disabled={deletingId === psychologist.id}
+                        >
+                          {deletingId === psychologist.id ? "Borrando..." : "Borrar"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -360,14 +360,31 @@
 }
 
 .admin-psychologists__status-btn {
-  margin-right: 8px;
   border-color: var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-strong);
 }
 
+.admin-psychologists__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .admin-psychologists__status-btn--secondary {
   color: var(--color-text-muted);
+}
+
+.admin-psychologists__status-btn--danger {
+  border-color: rgba(220, 38, 38, 0.24);
+  background: rgba(254, 242, 242, 0.94);
+  color: #b91c1c;
+}
+
+.admin-psychologists__status-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .admin-psychologists__empty {
