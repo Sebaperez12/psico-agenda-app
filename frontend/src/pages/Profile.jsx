@@ -39,6 +39,10 @@ export default function Profile() {
       setMsg("La foto debe ser una imagen");
       return;
     }
+    if (file.size > 1_800_000) {
+      setMsg("La foto es demasiado grande. Usa una imagen menor a 1.8 MB.");
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = () => setPhotoDataUrl(String(reader.result || ""));
@@ -440,10 +444,14 @@ export default function Profile() {
         </div>
 
         <div className="profile-page__actions">
-          <button className="profile-page__btn profile-page__btn--primary" onClick={saveProfile}>
+          <button
+            className="profile-page__btn profile-page__btn--primary"
+            onClick={saveProfile}
+            disabled={saving}
+          >
             {saving ? "Guardando..." : isCreate ? "Crear Perfil" : "Guardar Cambios"}
           </button>
-          <button className="profile-page__btn" onClick={loadProfile}>
+          <button className="profile-page__btn" onClick={loadProfile} disabled={saving}>
             Cancelar
           </button>
         </div>

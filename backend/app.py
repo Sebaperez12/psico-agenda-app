@@ -357,6 +357,14 @@ def create_app():
             return default
         return round(max(amount, 0), 2)
 
+    def parse_int_value(value, default=None):
+        if value in ("", None) or isinstance(value, bool):
+            return default
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
     def slugify(value):
         normalized = clean_text(value).lower()
         normalized = re.sub(r"[^a-z0-9]+", "-", normalized)
@@ -1530,6 +1538,16 @@ def create_app():
         if not user.is_active:
             return None, (jsonify({"msg": "Usuario inactivo"}), 403)
         if user.role != "admin":
+            return None, (jsonify({"msg": "No autorizado"}), 403)
+        return user, None
+
+    def require_psychologist_user():
+        user = get_current_user()
+        if not user:
+            return None, (jsonify({"msg": "Usuario no existe"}), 404)
+        if not user.is_active:
+            return None, (jsonify({"msg": "Usuario inactivo"}), 403)
+        if user.role != "psychologist":
             return None, (jsonify({"msg": "No autorizado"}), 403)
         return user, None
 
@@ -3770,9 +3788,12 @@ def create_app():
     @app.get("/profile")
     @jwt_required()
     def get_profile():
-        user_id = int(get_jwt_identity())
+        user, error = require_psychologist_user()
+        if error:
+            return error
+
+        user_id = user.id
         profile = PsychologistProfile.query.filter_by(owner_user_id=user_id).first()
-        user = User.query.get(user_id)
 
         if not profile:
             return jsonify({"msg": "Perfil no encontrado"}), 404
@@ -3788,8 +3809,11 @@ def create_app():
     @app.post("/profile")
     @jwt_required()
     def create_profile():
-        user_id = int(get_jwt_identity())
-        user = User.query.get(user_id)
+        user, error = require_psychologist_user()
+        if error:
+            return error
+
+        user_id = user.id
         
         existing = PsychologistProfile.query.filter_by(owner_user_id=user_id).first()
         if existing:
@@ -3800,6 +3824,14 @@ def create_app():
         if profile_error:
             return jsonify({"msg": profile_error}), 400
 
+        reminder_method = (body.get("auto_reminder_method") or "email").lower()
+        if reminder_method not in {"email", "whatsapp"}:
+            return jsonify({"msg": "auto_reminder_method invalido"}), 400
+
+        reminder_hours = parse_int_value(body.get("auto_reminder_hours_before"), 24)
+        if reminder_hours <= 0:
+            return jsonify({"msg": "auto_reminder_hours_before invalido"}), 400
+
         profile = PsychologistProfile(
             owner_user_id=user_id,
             full_name=profile_data["full_name"],
@@ -3809,8 +3841,8 @@ def create_app():
             office_addresses_json=json.dumps(profile_data["office_addresses"]),
             notification_email=profile_data["notification_email"],
             auto_reminders_enabled=bool(body.get("auto_reminders_enabled", False)),
-            auto_reminder_method=(body.get("auto_reminder_method") or "email").lower(),
-            auto_reminder_hours_before=int(body.get("auto_reminder_hours_before") or 24),
+            auto_reminder_method=reminder_method,
+            auto_reminder_hours_before=reminder_hours,
             visible_agenda_start_time=profile_data["visible_agenda_start_time"],
             visible_agenda_end_time=profile_data["visible_agenda_end_time"],
             booking_slug=generate_unique_booking_slug(profile_data["full_name"]),
@@ -3824,9 +3856,12 @@ def create_app():
     @app.patch("/profile")
     @jwt_required()
     def update_profile():
-        user_id = int(get_jwt_identity())
+        user, error = require_psychologist_user()
+        if error:
+            return error
+
+        user_id = user.id
         profile = PsychologistProfile.query.filter_by(owner_user_id=user_id).first()
-        user = User.query.get(user_id)
 
         if not profile:
             return jsonify({"msg": "Perfil no existe, crea uno primero"}), 404
@@ -3878,7 +3913,7 @@ def create_app():
             profile.auto_reminder_method = method
 
         if "auto_reminder_hours_before" in body:
-            hours = body.get("auto_reminder_hours_before")
+            hours = parse_int_value(body.get("auto_reminder_hours_before"))
             if not isinstance(hours, int) or hours <= 0:
                 return jsonify({"msg": "auto_reminder_hours_before inválido"}), 400
             profile.auto_reminder_hours_before = hours
@@ -3905,13 +3940,14 @@ def create_app():
                 profile.booking_slug = generate_unique_booking_slug(profile.full_name)
 
         if "public_booking_min_notice_hours" in body:
-            hours = body.get("public_booking_min_notice_hours")
+            hours = parse_int_value(body.get("public_booking_min_notice_hours"))
             if not isinstance(hours, int) or hours < 0 or hours > 720:
                 return jsonify({"msg": "public_booking_min_notice_hours debe estar entre 0 y 720"}), 400
             profile.public_booking_min_notice_hours = hours
 
         if "booking_slug" in body:
-            slug = normalize_booking_slug(body.get("booking_slug"))
+            raw_slug = clean_text(body.get("booking_slug"))
+            slug = normalize_booking_slug(raw_slug or profile.full_name)
             if len(slug) < 4:
                 return jsonify({"msg": "El link de reservas debe tener al menos 4 caracteres"}), 400
             existing = PsychologistProfile.query.filter(
