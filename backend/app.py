@@ -477,6 +477,49 @@ def create_app():
             ))
             db.session.commit()
 
+    def repair_legacy_defaults():
+        db.session.execute(text("UPDATE \"user\" SET default_session_minutes = 50 WHERE default_session_minutes IS NULL"))
+        db.session.execute(text("UPDATE \"user\" SET role = 'psychologist' WHERE role IS NULL OR role = ''"))
+        db.session.execute(text("UPDATE \"user\" SET is_active = TRUE WHERE is_active IS NULL"))
+        db.session.execute(text("UPDATE \"user\" SET email_verified = FALSE WHERE email_verified IS NULL"))
+        db.session.execute(text(
+            "UPDATE psychologist_profile "
+            "SET visible_agenda_start_time = '06:00' "
+            "WHERE visible_agenda_start_time IS NULL OR visible_agenda_start_time = ''"
+        ))
+        db.session.execute(text(
+            "UPDATE psychologist_profile "
+            "SET visible_agenda_end_time = '22:00' "
+            "WHERE visible_agenda_end_time IS NULL OR visible_agenda_end_time = ''"
+        ))
+        db.session.execute(text(
+            "UPDATE psychologist_profile "
+            "SET auto_reminders_enabled = FALSE "
+            "WHERE auto_reminders_enabled IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE psychologist_profile "
+            "SET auto_reminder_method = 'email' "
+            "WHERE auto_reminder_method IS NULL OR auto_reminder_method = ''"
+        ))
+        db.session.execute(text(
+            "UPDATE psychologist_profile "
+            "SET auto_reminder_hours_before = 24 "
+            "WHERE auto_reminder_hours_before IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE psychologist_profile "
+            "SET public_booking_enabled = FALSE "
+            "WHERE public_booking_enabled IS NULL"
+        ))
+        db.session.execute(text(
+            "UPDATE psychologist_profile "
+            "SET public_booking_min_notice_hours = 24 "
+            "WHERE public_booking_min_notice_hours IS NULL"
+        ))
+        db.session.execute(text("UPDATE appointment SET payment_status = 'pending' WHERE payment_status IS NULL OR payment_status = ''"))
+        db.session.commit()
+
     def get_default_appointment_location(user_id):
         profile = PsychologistProfile.query.filter_by(owner_user_id=user_id).first()
         if profile and profile.office_address:
@@ -518,7 +561,7 @@ def create_app():
             "office_addresses": office_addresses[:5],
             "photo_data_url": profile.photo_data_url,
             "contact_email": profile.notification_email or (user.email if user else None),
-            "session_minutes": user.default_session_minutes if user else 50,
+            "session_minutes": (user.default_session_minutes or 50) if user else 50,
             "min_notice_hours": (
                 profile.public_booking_min_notice_hours
                 if profile.public_booking_min_notice_hours is not None
@@ -966,7 +1009,7 @@ def create_app():
             return {
                 "id": self.id,
                 "email": self.email,
-                "default_session_minutes": self.default_session_minutes,
+                "default_session_minutes": self.default_session_minutes or 50,
                 "role": self.role or "psychologist",
                 "is_active": bool(self.is_active),
                 "email_verified": bool(self.email_verified),
@@ -1258,6 +1301,7 @@ def create_app():
         ensure_column("patient", "created_at", "DATETIME")
         ensure_column("patient", "session_fee_amount", "FLOAT")
         ensure_column("patient", "billing_notes", "TEXT")
+        repair_legacy_defaults()
 
     def configured_admin_emails():
         raw = get_env("ADMIN_EMAILS", "")
@@ -2932,7 +2976,7 @@ def create_app():
         if not user:
             return jsonify({"msg": "Usuario no existe"}), 404
 
-        slot_minutes = user.default_session_minutes
+        slot_minutes = user.default_session_minutes or 50
         gap_minutes = 10
         step_minutes = slot_minutes + gap_minutes
 
@@ -3155,7 +3199,7 @@ def create_app():
             return jsonify({"msg": "start_at inválido. Usá formato ISO"}), 400
 
         user = User.query.get(user_id)
-        minutes = duration_minutes if isinstance(duration_minutes, int) and duration_minutes > 0 else user.default_session_minutes
+        minutes = duration_minutes if isinstance(duration_minutes, int) and duration_minutes > 0 else (user.default_session_minutes or 50)
         default_fee = patient.session_fee_amount if patient else 0
         fee_amount = parse_money_amount(body.get("fee_amount"), default_fee or 0)
         paid_at = get_local_now() if payment_status == "paid" else None
