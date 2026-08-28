@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo 6.png";
-import mailImage from "../assets/mail.png";
+import sessionImage from "../assets/PORTADA.png";
 import "./EmailConfirmed.css";
 
 export default function EmailConfirmed() {
@@ -26,7 +26,7 @@ export default function EmailConfirmed() {
     <main className="email-confirmed-page">
       <section className="email-confirmed-card" aria-labelledby="email-confirmed-title">
         <div className="email-confirmed-card__visual" aria-hidden="true">
-          <img src={mailImage} alt="" />
+          <img src={sessionImage} alt="" />
         </div>
 
         <div className="email-confirmed-card__copy">

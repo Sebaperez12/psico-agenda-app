@@ -22,19 +22,28 @@
 
 .email-confirmed-card__visual {
   min-height: 520px;
-  display: grid;
-  place-items: center;
-  padding: 34px;
+  position: relative;
+  overflow: hidden;
   background:
     linear-gradient(180deg, rgba(9, 37, 91, 0.08), rgba(10, 143, 120, 0.12)),
     #eef8f5;
 }
 
+.email-confirmed-card__visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(6, 23, 68, 0.18), rgba(10, 143, 120, 0.04));
+  pointer-events: none;
+}
+
 .email-confirmed-card__visual img {
-  width: min(100%, 340px);
-  max-height: 410px;
-  object-fit: contain;
-  filter: drop-shadow(0 20px 34px rgba(9, 35, 85, 0.16));
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .email-confirmed-card__copy {
@@ -126,11 +135,11 @@
 
   .email-confirmed-card__visual {
     min-height: 220px;
-    padding: 16px 24px 30px;
   }
 
   .email-confirmed-card__visual img {
-    max-height: 190px;
+    min-height: 220px;
+    object-position: center 42%;
   }
 
   .email-confirmed-card__copy {
