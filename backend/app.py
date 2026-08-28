@@ -1429,7 +1429,6 @@ def create_app():
         def worker():
             with app.app_context():
                 try:
-                    send_registration_welcome_email(user_email, full_name)
                     fresh_user = User.query.get(user_id)
                     if fresh_user and not fresh_user.email_verified:
                         send_email_verification(fresh_user, full_name)
