@@ -373,6 +373,8 @@ def create_app():
 
     def generate_unique_booking_slug(profile_name=None):
         base = slugify(profile_name)
+        if not PsychologistProfile.query.filter_by(booking_slug=base).first():
+            return base
         for index in range(20):
             suffix = secrets.token_urlsafe(4).lower().replace("_", "-")
             candidate = f"{base}-{suffix}" if index else f"{base}-{suffix}"

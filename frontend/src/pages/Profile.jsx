@@ -295,21 +295,22 @@ export default function Profile() {
               checked={publicBookingEnabled}
               onChange={(e) => setPublicBookingEnabled(e.target.checked)}
             />
-            Permitir que pacientes reserven desde un link publico
+            Activar mi pagina publica de reservas
           </label>
 
           <div className="profile-page__booking-grid">
             <label>
-              Link publico
+              Nombre del enlace
               <input
                 className="profile-page__input"
                 value={bookingSlug}
                 onChange={(e) => setBookingSlug(e.target.value)}
-                placeholder="mi-agenda"
+                placeholder="dra-apellido"
               />
+              <small>Es unico para tu perfil. Usa letras, numeros y guiones.</small>
             </label>
             <label>
-              Anticipacion minima
+              Reserva con anticipacion
               <select
                 className="profile-page__input"
                 value={publicBookingMinNoticeHours}
@@ -322,12 +323,16 @@ export default function Profile() {
                 <option value={48}>48 horas</option>
                 <option value={72}>72 horas</option>
               </select>
+              <small>Evita reservas demasiado cerca del horario del turno.</small>
             </label>
           </div>
 
           {bookingSlug && (
             <div className="profile-page__booking-link">
-              <span>{`${window.location.origin}/reservar/${bookingSlug}`}</span>
+              <div>
+                <strong>Tu link personal</strong>
+                <span>{`${window.location.origin}/reservar/${bookingSlug}`}</span>
+              </div>
               <button type="button" className="profile-page__btn" onClick={copyBookingLink}>
                 Copiar
               </button>

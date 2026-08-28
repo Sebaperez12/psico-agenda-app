@@ -197,6 +197,15 @@
   font-weight: 700;
 }
 
+.profile-page__booking-grid small {
+  display: block;
+  margin-top: -0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .profile-page__booking-grid .profile-page__input {
   margin-top: 0.35rem;
 }
@@ -206,10 +215,21 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
   align-items: center;
-  margin-top: 0.25rem;
+  margin-top: 0.45rem;
   padding: 0.75rem;
   border-radius: 8px;
   background: var(--color-primary-soft);
+}
+
+.profile-page__booking-link strong,
+.profile-page__booking-link span {
+  display: block;
+}
+
+.profile-page__booking-link strong {
+  margin-bottom: 0.25rem;
+  color: var(--color-text-strong);
+  font-size: 0.86rem;
 }
 
 .profile-page__booking-link span {
