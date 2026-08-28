@@ -1,11 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import logo from "../assets/logo 6.png";
+import api from "../services/api";
 import "./layout.css";
 
 export default function Layout() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    api.get("/me")
+      .then((data) => {
+        if (active && data?.user?.role === "admin") {
+          navigate("/admin", { replace: true });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   const logout = () => {
     localStorage.removeItem("token");

@@ -2153,7 +2153,7 @@ def create_app():
             if user:
                 profile = PsychologistProfile.query.filter_by(owner_user_id=user.id).first()
                 query["access_token"] = create_access_token(identity=str(user.id))
-                query["next"] = "/appointments" if profile else "/profile"
+                query["next"] = "/admin" if user.role == "admin" else ("/appointments" if profile else "/profile")
             return redirect(f"{frontend_base_url}/email-confirmed#{urlencode(query)}", code=302)
 
         if not normalized_token:

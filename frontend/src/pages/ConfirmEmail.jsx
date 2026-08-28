@@ -81,6 +81,9 @@ export default function ConfirmEmail() {
   }
 
   if (status === "verified") {
+    if (user?.role === "admin") {
+      return <Navigate to="/admin" replace />;
+    }
     return <Navigate to={user?.has_profile ? "/dashboard" : "/profile"} replace />;
   }
 
