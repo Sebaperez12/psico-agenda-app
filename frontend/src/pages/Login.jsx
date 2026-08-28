@@ -33,12 +33,12 @@ export default function Login() {
         office_address: officeAddress,
       });
       localStorage.setItem("token", data.access_token);
-      if (!data?.user?.email_verified) {
-        nav("/confirm-email");
-        return;
-      }
       if (data?.user?.role === "admin") {
         nav("/admin");
+        return;
+      }
+      if (!data?.user?.email_verified) {
+        nav("/confirm-email");
         return;
       }
       nav("/appointments");
@@ -55,12 +55,12 @@ export default function Login() {
     try {
       const data = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", data.access_token);
-      if (!data?.user?.email_verified) {
-        nav("/confirm-email");
-        return;
-      }
       if (data?.user?.role === "admin") {
         nav("/admin");
+        return;
+      }
+      if (!data?.user?.email_verified) {
+        nav("/confirm-email");
         return;
       }
       nav(data?.user?.has_profile ? "/appointments" : "/profile");

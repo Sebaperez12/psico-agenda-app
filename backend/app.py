@@ -1407,6 +1407,11 @@ def create_app():
             if user.role != "admin":
                 user.role = "admin"
                 changed = True
+            if not user.email_verified:
+                user.email_verified = True
+                user.email_verification_token = None
+                user.email_verification_sent_at = None
+                changed = True
             if changed:
                 db.session.commit()
 
@@ -2061,8 +2066,8 @@ def create_app():
             email=email,
             password_hash=generate_password_hash(password),
             role="admin" if is_configured_admin else "psychologist",
-            email_verified=False,
-            email_verification_token=secrets.token_urlsafe(32),
+            email_verified=is_configured_admin,
+            email_verification_token=None if is_configured_admin else secrets.token_urlsafe(32),
         )
         db.session.add(user)
         db.session.flush()
