@@ -12,6 +12,10 @@ export default function AdminRoute() {
       try {
         const data = await api.get("/me");
         if (!active) return;
+        if (!data?.user?.email_verified) {
+          setStatus("unverified");
+          return;
+        }
         setStatus(data?.user?.role === "admin" ? "ready" : "forbidden");
       } catch (error) {
         if (!active) return;
@@ -35,6 +39,10 @@ export default function AdminRoute() {
 
   if (status === "forbidden") {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (status === "unverified") {
+    return <Navigate to="/confirm-email" replace />;
   }
 
   return <Outlet />;
