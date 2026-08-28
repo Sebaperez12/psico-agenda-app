@@ -1340,6 +1340,63 @@ def create_app():
         if not sent:
             print(f"[REGISTRATION EMAIL ERROR] welcome to {user_email}: {error_message}")
 
+    def build_email_verification_html(display_name, verify_url):
+        logo_url = (
+            get_email_asset_url("logo 6 baja max.png")
+            or get_email_asset_url("logo 6 baja.png")
+            or get_email_asset_url("logo 6.png")
+        )
+        logo_markup = (
+            f'<img src="{escape(logo_url)}" alt="TherapyDesk" width="52" height="52" '
+            'style="display:block;width:52px;height:52px;border-radius:50%;object-fit:cover;border:0;" />'
+            if logo_url
+            else '<div style="width:52px;height:52px;border-radius:50%;background:#dff7ef;color:#061744;text-align:center;line-height:52px;font-size:18px;font-weight:900;">TD</div>'
+        )
+        preheader = "Confirma tu email para activar tu cuenta en TherapyDesk."
+        return f"""
+        <div style="margin:0;padding:0;background:#eef4f2;font-family:Arial,Helvetica,sans-serif;color:#061744;">
+          <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">{escape(preheader)}</div>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#eef4f2;">
+            <tr>
+              <td align="center" style="padding:28px 14px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;border-collapse:collapse;background:#ffffff;border:1px solid #dce9e5;border-radius:8px;overflow:hidden;">
+                  <tr>
+                    <td style="background:#10183c;padding:24px 28px;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                        <tr>
+                          <td style="width:62px;vertical-align:middle;">{logo_markup}</td>
+                          <td style="vertical-align:middle;">
+                            <p style="margin:0;color:#ffffff;font-size:24px;line-height:1;font-weight:900;">Therapy<span style="color:#19b88a;">Desk</span></p>
+                            <p style="margin:6px 0 0;color:#c9d8ff;font-size:13px;line-height:1.3;font-weight:700;">Terapia y agenda clinica</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:34px 30px 32px;">
+                      <p style="margin:0 0 10px;color:#0a8f78;font-size:12px;line-height:1.4;font-weight:900;text-transform:uppercase;">Verificacion de cuenta</p>
+                      <h1 style="margin:0;color:#061744;font-size:32px;line-height:1.12;font-weight:900;">Confirma tu email</h1>
+                      <p style="margin:22px 0 0;color:#43527f;font-size:16px;line-height:1.65;">Hola <strong style="color:#061744;">{escape(display_name)}</strong>, necesitamos confirmar que este email te pertenece para activar tu cuenta y proteger tu acceso a TherapyDesk.</p>
+                      <table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:28px 0 24px;">
+                        <tr>
+                          <td style="border-radius:8px;background:#0a8f78;">
+                            <a href="{escape(verify_url)}" style="display:inline-block;padding:15px 24px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:900;border-radius:8px;">Confirmar email</a>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="margin:0 0 8px;color:#6a76a0;font-size:13px;line-height:1.55;">Si el boton no funciona, copia y pega este link en tu navegador:</p>
+                      <p style="margin:0;padding:12px 14px;background:#f7faf9;border:1px solid #dce9e5;border-radius:8px;color:#0a8f78;font-size:12px;line-height:1.5;word-break:break-all;">{escape(verify_url)}</p>
+                      <p style="margin:24px 0 0;padding-top:18px;border-top:1px solid #e2ebe8;color:#6a76a0;font-size:13px;line-height:1.55;">Si no creaste esta cuenta, podes ignorar este mensaje.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+        """
+
     def send_email_verification(user, full_name=None):
         if not user.email_verification_token:
             user.email_verification_token = secrets.token_urlsafe(32)
@@ -1374,6 +1431,7 @@ def create_app():
           <p style="color:#5f6f9f">Si no creaste esta cuenta, podés ignorar este mensaje.</p>
         </div>
         """
+        html_body = build_email_verification_html(display_name, verify_url)
         sent, error_message = send_email(
             user.email,
             subject,
