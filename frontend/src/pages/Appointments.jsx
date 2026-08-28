@@ -541,61 +541,63 @@ export default function Appointments() {
         </div>
       )}
 
-      <section
-        className="appointments-calendar"
-        style={{
-          "--hour-height": `${HOUR_HEIGHT}px`,
-          "--calendar-hour-count": calendarHours.length,
-        }}
-      >
-        <div className="appointments-calendar__corner" />
+      <div className="appointments-calendar-shell">
+        <section
+          className="appointments-calendar"
+          style={{
+            "--hour-height": `${HOUR_HEIGHT}px`,
+            "--calendar-hour-count": calendarHours.length,
+          }}
+        >
+          <div className="appointments-calendar__corner" />
 
-        {weekDays.map((day) => {
-          const key = getLocalDateKey(day);
-          return (
-            <div key={key} className="appointments-calendar__day-head">
-              <strong>{day.toLocaleDateString("es-ES", { weekday: "short" }).replace(".", "")}</strong>
-              <span>{day.getDate()}/{day.getMonth() + 1}</span>
-            </div>
-          );
-        })}
+          {weekDays.map((day) => {
+            const key = getLocalDateKey(day);
+            return (
+              <div key={key} className="appointments-calendar__day-head">
+                <strong>{day.toLocaleDateString("es-ES", { weekday: "short" }).replace(".", "")}</strong>
+                <span>{day.getDate()}/{day.getMonth() + 1}</span>
+              </div>
+            );
+          })}
 
-        <div className="appointments-calendar__times">
-          {calendarHours.map((hour) => (
-            <div key={hour} className="appointments-calendar__time">
-              {String(hour).padStart(2, "0")}:00
-            </div>
-          ))}
-        </div>
+          <div className="appointments-calendar__times">
+            {calendarHours.map((hour) => (
+              <div key={hour} className="appointments-calendar__time">
+                {String(hour).padStart(2, "0")}:00
+              </div>
+            ))}
+          </div>
 
-        {weekDays.map((day) => {
-          const key = getLocalDateKey(day);
-          return (
-            <div key={key} className="appointments-calendar__day">
-              {calendarHours.map((hour) => (
-                <button
-                  key={hour}
-                  type="button"
-                  className="appointments-calendar__hour"
-                  onClick={() => openCreate(day, hour)}
-                  aria-label={`Crear turno ${key} ${hour}:00`}
-                />
-              ))}
+          {weekDays.map((day) => {
+            const key = getLocalDateKey(day);
+            return (
+              <div key={key} className="appointments-calendar__day">
+                {calendarHours.map((hour) => (
+                  <button
+                    key={hour}
+                    type="button"
+                    className="appointments-calendar__hour"
+                    onClick={() => openCreate(day, hour)}
+                    aria-label={`Crear turno ${key} ${hour}:00`}
+                  />
+                ))}
 
-              {(appointmentsByDay[key] || []).map((slot) => (
-                <AppointmentBlock
-                  key={slot.appointment_id}
-                  slot={slot}
-                  calendarStartHour={calendarStartHour}
-                  calendarEndHour={calendarEndHour}
-                  patientName={getPatientName(slot.patient_id)}
-                  onClick={() => openEdit(slot)}
-                />
-              ))}
-            </div>
-          );
-        })}
-      </section>
+                {(appointmentsByDay[key] || []).map((slot) => (
+                  <AppointmentBlock
+                    key={slot.appointment_id}
+                    slot={slot}
+                    calendarStartHour={calendarStartHour}
+                    calendarEndHour={calendarEndHour}
+                    patientName={getPatientName(slot.patient_id)}
+                    onClick={() => openEdit(slot)}
+                  />
+                ))}
+              </div>
+            );
+          })}
+        </section>
+      </div>
 
       <section className="appointments-mobile-list">
         {mobileHourRows.map((hour) => {

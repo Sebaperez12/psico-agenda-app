@@ -157,13 +157,11 @@
   display: none;
 }
 
-.appointments-calendar {
-  display: grid;
-  grid-template-columns: 64px repeat(7, minmax(118px, 1fr));
-  grid-template-rows: 60px auto;
+.appointments-calendar-shell {
   width: 100%;
-  min-width: 0;
-  overflow: hidden;
+  max-height: calc(100vh - 126px);
+  min-height: 420px;
+  overflow: auto;
   border: 1px solid var(--color-border);
   border-top: 3px solid var(--color-accent-line);
   border-radius: 8px;
@@ -171,10 +169,27 @@
   box-shadow: 0 16px 34px var(--color-shadow);
 }
 
+.appointments-calendar {
+  display: grid;
+  grid-template-columns: 64px repeat(7, minmax(118px, 1fr));
+  grid-template-rows: 60px auto;
+  width: 100%;
+  min-width: 890px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
 .appointments-calendar__corner,
 .appointments-calendar__day-head {
+  position: sticky;
+  top: 0;
+  z-index: 12;
   border-bottom: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.88);
+}
+
+.appointments-calendar__corner {
+  left: 0;
+  z-index: 14;
 }
 
 .appointments-calendar__day-head {
@@ -201,6 +216,9 @@
 .appointments-calendar__times {
   grid-column: 1;
   position: relative;
+  left: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .appointments-calendar__time {
@@ -787,6 +805,10 @@
   }
 
   .appointments-calendar {
+    display: none;
+  }
+
+  .appointments-calendar-shell {
     display: none;
   }
 
