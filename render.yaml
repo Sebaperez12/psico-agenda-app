@@ -43,12 +43,6 @@ services:
         sync: false
       - key: BREVO_API_KEY
         sync: false
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
-        sync: false
 
 databases:
   - name: psico-agenda-db
