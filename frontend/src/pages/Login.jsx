@@ -24,6 +24,7 @@ export default function Login() {
   const [officeAddress, setOfficeAddress] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const nav = useNavigate();
 
   const isRegister = mode === "register";
@@ -170,13 +171,25 @@ export default function Login() {
               autoCapitalize="none"
               spellCheck="false"
             />
-            <input
-              className="login-card__field"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Contraseña"
-              type="password"
-            />
+            <div className="login-card__password-field">
+              <input
+                className="login-card__field"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Contraseña"
+                type={showPassword ? "text" : "password"}
+                autoComplete={isRegister ? "new-password" : "current-password"}
+              />
+              <button
+                type="button"
+                className={`login-card__password-toggle${showPassword ? " login-card__password-toggle--active" : ""}`}
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                title={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+              >
+                <span aria-hidden="true" />
+              </button>
+            </div>
             {!isRegister && (
               <button
                 type="button"

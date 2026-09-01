@@ -187,6 +187,66 @@
   color: var(--color-text);
 }
 
+.login-card__password-field {
+  position: relative;
+}
+
+.login-card__password-field .login-card__field {
+  padding-right: 46px;
+}
+
+.login-card__password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.login-card__password-toggle span {
+  position: relative;
+  width: 18px;
+  height: 12px;
+  border: 2px solid var(--color-text-muted);
+  border-radius: 50%;
+}
+
+.login-card__password-toggle span::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transform: translate(-50%, -50%);
+}
+
+.login-card__password-toggle:hover,
+.login-card__password-toggle--active {
+  background: rgba(31, 42, 95, 0.08);
+}
+
+.login-card__password-toggle:hover span,
+.login-card__password-toggle--active span {
+  border-color: var(--color-text-strong);
+}
+
+.login-card__password-toggle:hover span::after,
+.login-card__password-toggle--active span::after {
+  background: var(--color-text-strong);
+}
+
 .login-card__textarea {
   min-height: 76px;
   padding: 11px 13px;
