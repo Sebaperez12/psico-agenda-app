@@ -6,8 +6,6 @@ import "./Profile.css";
 export default function Profile() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [notificationEmail, setNotificationEmail] = useState("");
   const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
   const [autoReminderMethod, setAutoReminderMethod] = useState("email");
   const [autoReminderHoursBefore, setAutoReminderHoursBefore] = useState(24);
@@ -25,7 +23,6 @@ export default function Profile() {
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [isCreate, setIsCreate] = useState(false);
-  const [resendingVerification, setResendingVerification] = useState(false);
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
@@ -52,8 +49,6 @@ export default function Profile() {
     try {
       const data = await api.get("/profile");
       setEmail(data.email || "");
-      setEmailVerified(!!data.email_verified);
-      setNotificationEmail(data.notification_email || "");
       setAutoRemindersEnabled(!!data.auto_reminders_enabled);
       setAutoReminderMethod(data.auto_reminder_method || "email");
       setAutoReminderHoursBefore(data.auto_reminder_hours_before || 24);
@@ -70,8 +65,6 @@ export default function Profile() {
       if (e.status === 404) {
         const me = await api.get("/me");
         setEmail(me?.user?.email || "");
-        setEmailVerified(!!me?.user?.email_verified);
-        setNotificationEmail("");
         setAutoRemindersEnabled(false);
         setAutoReminderMethod("email");
         setAutoReminderHoursBefore(24);
@@ -93,20 +86,6 @@ export default function Profile() {
     }
   }
 
-  async function resendVerificationEmail() {
-    setMsg("");
-    setResendingVerification(true);
-    try {
-      const data = await api.post("/auth/resend-verification", {});
-      setMsg(data.msg || "Email de verificacion reenviado");
-    } catch (e) {
-      console.error(e);
-      setMsg(e.message);
-    } finally {
-      setResendingVerification(false);
-    }
-  }
-
   async function saveProfile() {
     setMsg("");
     setSaving(true);
@@ -122,13 +101,11 @@ export default function Profile() {
         description: description.trim() || null,
         office_address: cleanedOfficeAddresses[0] || "",
         office_addresses: cleanedOfficeAddresses,
-        notification_email: notificationEmail.trim().toLowerCase() || null,
         auto_reminders_enabled: autoRemindersEnabled,
         auto_reminder_method: autoReminderMethod,
         auto_reminder_hours_before: Number(autoReminderHoursBefore) || 24,
         public_booking_enabled: publicBookingEnabled,
         public_booking_min_notice_hours: Number(publicBookingMinNoticeHours) || 0,
-        booking_slug: bookingSlug.trim(),
         photo_data_url: photoDataUrl || null,
       };
 
@@ -197,7 +174,7 @@ export default function Profile() {
       <div className="profile-page__header">
         <h1 className="profile-page__title">Mi Perfil</h1>
         <p className="profile-page__description">
-          Completa y edita tu información profesional. Si cargas un email de notificaciones, ese se usará como respuesta en los mails; si lo dejas vacío, se usará tu email de registro.
+          Completa y edita tu informacion profesional para mostrarla en tu agenda y links de reserva.
         </p>
       </div>
 
@@ -231,25 +208,6 @@ export default function Profile() {
         </div>
 
         <input className="profile-page__input" value={email} readOnly placeholder="Email" />
-        <div className={`profile-page__verify-banner${emailVerified ? " profile-page__verify-banner--ok" : ""}`}>
-          <span>{emailVerified ? "Email verificado" : "Email pendiente de verificacion"}</span>
-          {!emailVerified && (
-            <button
-              type="button"
-              className="profile-page__btn"
-              onClick={resendVerificationEmail}
-              disabled={resendingVerification}
-            >
-              {resendingVerification ? "Enviando..." : "Reenviar confirmacion"}
-            </button>
-          )}
-        </div>
-        <input
-          className="profile-page__input"
-          value={notificationEmail}
-          onChange={(e) => setNotificationEmail(e.target.value)}
-          placeholder="Email para notificaciones (opcional)"
-        />
         <div className="profile-page__section">
           <p className="profile-page__section-label">Recordatorios automáticos</p>
           <label className="profile-page__toggle">
@@ -299,16 +257,6 @@ export default function Profile() {
           </label>
 
           <div className="profile-page__booking-grid">
-            <label>
-              Personalizar link
-              <input
-                className="profile-page__input"
-                value={bookingSlug}
-                onChange={(e) => setBookingSlug(e.target.value)}
-                placeholder="dra-apellido"
-              />
-              <small>Cada psicologo tiene un link unico.</small>
-            </label>
             <label>
               Reserva con anticipacion
               <select

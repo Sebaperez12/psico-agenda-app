@@ -390,14 +390,20 @@ def create_app():
         normalized = re.sub(r"-+", "-", normalized).strip("-")
         return normalized or "profesional"
 
-    def generate_unique_booking_slug(profile_name=None):
+    def generate_unique_booking_slug(profile_name=None, exclude_profile_id=None):
         base = slugify(profile_name)
-        if not PsychologistProfile.query.filter_by(booking_slug=base).first():
+        base_query = PsychologistProfile.query.filter_by(booking_slug=base)
+        if exclude_profile_id is not None:
+            base_query = base_query.filter(PsychologistProfile.id != exclude_profile_id)
+        if not base_query.first():
             return base
         for index in range(20):
             suffix = secrets.token_urlsafe(4).lower().replace("_", "-")
             candidate = f"{base}-{suffix}" if index else f"{base}-{suffix}"
-            exists = PsychologistProfile.query.filter_by(booking_slug=candidate).first()
+            query = PsychologistProfile.query.filter_by(booking_slug=candidate)
+            if exclude_profile_id is not None:
+                query = query.filter(PsychologistProfile.id != exclude_profile_id)
+            exists = query.first()
             if not exists:
                 return candidate
         return secrets.token_urlsafe(12).lower().replace("_", "-")
@@ -3950,6 +3956,7 @@ def create_app():
             if not value:
                 return jsonify({"msg": "El nombre completo es obligatorio"}), 400
             profile.full_name = value
+            profile.booking_slug = generate_unique_booking_slug(value, exclude_profile_id=profile.id)
 
         if "professional_title" in body:
             value = clean_text(body.get("professional_title"))
