@@ -213,9 +213,16 @@
   transform: translateY(-50%);
 }
 
+.login-card__password-toggle:active,
+.login-card__password-toggle:focus,
+.login-card__password-toggle:focus-visible,
 .login-card__password-toggle:hover,
 .login-card__password-toggle--active {
+  border-color: transparent;
   background: transparent;
+  box-shadow: none;
+  outline: none;
+  transform: translateY(-50%);
 }
 
 .login-card__password-toggle img {
