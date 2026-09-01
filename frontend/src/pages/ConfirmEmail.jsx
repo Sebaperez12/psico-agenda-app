@@ -5,6 +5,11 @@ import sessionImage from "../assets/PORTADA.png";
 import api from "../services/api";
 import "./ConfirmEmail.css";
 
+async function readCurrentUser() {
+  const data = await api.get("/me");
+  return data?.user || null;
+}
+
 export default function ConfirmEmail() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("loading");
@@ -17,11 +22,11 @@ export default function ConfirmEmail() {
   useEffect(() => {
     let active = true;
 
-    api.get("/me")
-      .then((data) => {
+    readCurrentUser()
+      .then((nextUser) => {
         if (!active) return;
-        setUser(data?.user || null);
-        setStatus(data?.user?.email_verified ? "verified" : "pending");
+        setUser(nextUser);
+        setStatus(nextUser?.email_verified ? "verified" : "pending");
       })
       .catch((error) => {
         if (!active) return;
@@ -40,6 +45,9 @@ export default function ConfirmEmail() {
     try {
       const data = await api.post("/auth/resend-verification", {});
       setMsg(data.msg || "Te enviamos nuevamente el email de confirmacion.");
+      const nextUser = await readCurrentUser();
+      setUser(nextUser);
+      setStatus(nextUser?.email_verified ? "verified" : "pending");
     } catch (error) {
       setMsg(error.message);
     } finally {
@@ -84,7 +92,7 @@ export default function ConfirmEmail() {
     if (user?.role === "admin") {
       return <Navigate to="/admin" replace />;
     }
-    return <Navigate to={user?.has_profile ? "/dashboard" : "/profile"} replace />;
+    return <Navigate to={user?.has_profile ? "/appointments" : "/profile"} replace />;
   }
 
   return (

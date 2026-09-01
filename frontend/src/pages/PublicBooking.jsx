@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../services/api";
 import "./PublicBooking.css";
@@ -132,7 +132,7 @@ export default function PublicBooking() {
   const canGoPreviousMonth = visibleMonth > minMonth;
   const canGoNextMonth = visibleMonth < maxMonth;
 
-  async function loadAvailability() {
+  const loadAvailability = useCallback(async function loadAvailability() {
     setMsg("");
     setLoading(true);
     try {
@@ -161,7 +161,7 @@ export default function PublicBooking() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [slug]);
 
   async function submitBooking(event) {
     event.preventDefault();
@@ -197,7 +197,7 @@ export default function PublicBooking() {
 
   useEffect(() => {
     loadAvailability();
-  }, [slug]);
+  }, [loadAvailability]);
 
   useEffect(() => {
     if (!submittedRequest) return;
