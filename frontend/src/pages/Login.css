@@ -210,6 +210,7 @@
   border-radius: 8px;
   background: transparent;
   box-shadow: none;
+  transform: translateY(-50%);
 }
 
 .login-card__password-toggle span {
@@ -232,6 +233,20 @@
   transform: translate(-50%, -50%);
 }
 
+.login-card__password-toggle::after {
+  content: "";
+  position: absolute;
+  width: 23px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-text-muted);
+  transform: rotate(-45deg);
+}
+
+.login-card__password-toggle--active::after {
+  display: none;
+}
+
 .login-card__password-toggle:hover,
 .login-card__password-toggle--active {
   background: rgba(31, 42, 95, 0.08);
@@ -244,6 +259,10 @@
 
 .login-card__password-toggle:hover span::after,
 .login-card__password-toggle--active span::after {
+  background: var(--color-text-strong);
+}
+
+.login-card__password-toggle:hover::after {
   background: var(--color-text-strong);
 }
 
