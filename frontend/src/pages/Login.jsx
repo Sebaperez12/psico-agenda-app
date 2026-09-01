@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../assets/logo 6.png";
 import portada from "../assets/PORTADA.png";
 import api from "../services/api";
 import "./Login.css";
+
+function normalizeEmail(value) {
+  return value.trim().toLowerCase();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 export default function Login() {
   const [searchParams] = useSearchParams();
@@ -20,12 +28,23 @@ export default function Login() {
 
   const isRegister = mode === "register";
 
+  useEffect(() => {
+    localStorage.removeItem("token");
+  }, []);
+
   const doRegister = async () => {
     setMsg("");
+    const normalizedEmail = normalizeEmail(email);
+    if (!isValidEmail(normalizedEmail)) {
+      setMsg("Ingresa un email valido");
+      return;
+    }
+
     setLoading(true);
+    localStorage.removeItem("token");
     try {
       const data = await api.post("/auth/register", {
-        email,
+        email: normalizedEmail,
         password,
         full_name: fullName,
         professional_title: professionalTitle,
@@ -51,9 +70,16 @@ export default function Login() {
 
   const doLogin = async () => {
     setMsg("");
+    const normalizedEmail = normalizeEmail(email);
+    if (!isValidEmail(normalizedEmail)) {
+      setMsg("Ingresa un email valido");
+      return;
+    }
+
     setLoading(true);
+    localStorage.removeItem("token");
     try {
-      const data = await api.post("/auth/login", { email, password });
+      const data = await api.post("/auth/login", { email: normalizedEmail, password });
       localStorage.setItem("token", data.access_token);
       if (data?.user?.role === "admin") {
         nav("/admin");
@@ -73,14 +99,15 @@ export default function Login() {
 
   const requestPasswordRecovery = async () => {
     setMsg("");
-    if (!email.trim()) {
-      setMsg("Ingresa tu email para solicitar recuperacion");
+    const normalizedEmail = normalizeEmail(email);
+    if (!isValidEmail(normalizedEmail)) {
+      setMsg("Ingresa un email valido para solicitar recuperacion");
       return;
     }
 
     setLoading(true);
     try {
-      const data = await api.post("/auth/forgot-password", { email });
+      const data = await api.post("/auth/forgot-password", { email: normalizedEmail });
       setMsg(data.msg);
     } catch (e) {
       setMsg(e.message);
@@ -134,9 +161,14 @@ export default function Login() {
 
             <input
               className="login-card__field"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              spellCheck="false"
             />
             <input
               className="login-card__field"

@@ -345,6 +345,25 @@ def create_app():
     def normalize_email(value):
         return (value or "").strip().lower()
 
+    def is_valid_email(value):
+        if not value or len(value) > 254:
+            return False
+        if any(char.isspace() for char in value):
+            return False
+        return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", value))
+
+    def validate_required_email(value):
+        if not value:
+            return "El email es obligatorio"
+        if not is_valid_email(value):
+            return "Ingresa un email valido"
+        return None
+
+    def validate_optional_email(value):
+        if value and not is_valid_email(value):
+            return "Ingresa un email valido"
+        return None
+
     def clean_text(value):
         return (value or "").strip()
 
@@ -439,6 +458,10 @@ def create_app():
 
         if not profile_data["visible_agenda_start_time"] or not profile_data["visible_agenda_end_time"]:
             return None, "El rango visible de agenda debe usar formato HH:MM"
+
+        email_error = validate_optional_email(profile_data["notification_email"])
+        if email_error:
+            return None, "Ingresa un email de notificaciones valido"
 
         if profile_data["visible_agenda_start_time"] >= profile_data["visible_agenda_end_time"]:
             return None, "La hora final de agenda debe ser posterior a la hora inicial"
@@ -1752,7 +1775,7 @@ def create_app():
             return jsonify({"msg": "Ingresa tu nombre completo"}), 400
         if not email and not phone:
             return jsonify({"msg": "Ingresa email o telefono para confirmar el turno"}), 400
-        if email and "@" not in email:
+        if validate_optional_email(email):
             return jsonify({"msg": "Email invalido"}), 400
         if not start_at_str:
             return jsonify({"msg": "Selecciona un horario"}), 400
@@ -2170,7 +2193,10 @@ def create_app():
         password = body.get("password") or ""
         profile_data, profile_error = validate_profile_payload(body, require_required_fields=True)
 
-        if not email or not password:
+        email_error = validate_required_email(email)
+        if email_error:
+            return jsonify({"msg": email_error}), 400
+        if not password:
             return jsonify({"msg": "email y password son obligatorios"}), 400
         password_error = validate_password_strength(password)
         if password_error:
@@ -2268,7 +2294,10 @@ def create_app():
         email = normalize_email(body.get("email"))
         password = body.get("password") or ""
 
-        if not email or not password:
+        email_error = validate_required_email(email)
+        if email_error:
+            return jsonify({"msg": email_error}), 400
+        if not password:
             return jsonify({"msg": "email y password son obligatorios"}), 400
 
         user = User.query.filter_by(email=email).first()
@@ -2296,8 +2325,9 @@ def create_app():
         email = normalize_email(body.get("email"))
         generic_msg = "Si el email esta registrado, el administrador vera una solicitud de recuperacion."
 
-        if not email:
-            return jsonify({"msg": "Ingresa tu email para solicitar recuperacion"}), 400
+        email_error = validate_required_email(email)
+        if email_error:
+            return jsonify({"msg": "Ingresa un email valido para solicitar recuperacion"}), 400
 
         user = User.query.filter_by(email=email).first()
 
@@ -2465,7 +2495,10 @@ def create_app():
         password = body.get("password") or ""
         profile_data, profile_error = validate_profile_payload(body, require_required_fields=True)
 
-        if not email or not password:
+        email_error = validate_required_email(email)
+        if email_error:
+            return jsonify({"msg": email_error}), 400
+        if not password:
             return jsonify({"msg": "email y password son obligatorios"}), 400
         password_error = validate_password_strength(password)
         if password_error:
@@ -2557,13 +2590,17 @@ def create_app():
 
         if "email" in body:
             email = normalize_email(body.get("email"))
-            if not email:
-                return jsonify({"msg": "El email es obligatorio"}), 400
+            email_error = validate_required_email(email)
+            if email_error:
+                return jsonify({"msg": email_error}), 400
             existing = User.query.filter(User.email == email, User.id != user.id).first()
             if existing:
                 return jsonify({"msg": "Ese email ya esta registrado"}), 409
             if email != user.email:
                 user.email = email
+                user.email_verified = False
+                user.email_verification_token = secrets.token_urlsafe(32)
+                user.email_verification_sent_at = None
                 changed_fields.append("email")
 
         if "default_session_minutes" in body:
@@ -2601,6 +2638,8 @@ def create_app():
 
         if "notification_email" in body:
             value = normalize_email(body.get("notification_email")) or None
+            if validate_optional_email(value):
+                return jsonify({"msg": "Ingresa un email de notificaciones valido"}), 400
             if value != profile.notification_email:
                 profile.notification_email = value
                 changed_fields.append("email de notificaciones")
@@ -2832,7 +2871,7 @@ def create_app():
 
         full_name = (body.get("full_name") or "").strip()
         phone = (body.get("phone") or "").strip() or None
-        email = (body.get("email") or "").strip().lower() or None
+        email = normalize_email(body.get("email")) or None
         dni = clean_text(body.get("dni")) or None
         date_of_birth, date_of_birth_error = parse_iso_date(body.get("date_of_birth"), "date_of_birth")
         address = clean_text(body.get("address")) or None
@@ -2846,6 +2885,8 @@ def create_app():
 
         if not full_name:
             return jsonify({"msg": "full_name es obligatorio"}), 400
+        if validate_optional_email(email):
+            return jsonify({"msg": "Ingresa un email valido"}), 400
         if date_of_birth_error:
             return jsonify({"msg": date_of_birth_error}), 400
 
@@ -2890,7 +2931,10 @@ def create_app():
             patient.phone = clean_text(body.get("phone")) or None
 
         if "email" in body:
-            patient.email = normalize_email(body.get("email")) or None
+            email = normalize_email(body.get("email")) or None
+            if validate_optional_email(email):
+                return jsonify({"msg": "Ingresa un email valido"}), 400
+            patient.email = email
 
         if "dni" in body:
             patient.dni = clean_text(body.get("dni")) or None
@@ -3903,7 +3947,10 @@ def create_app():
             profile.office_addresses_json = json.dumps(office_addresses)
 
         if "notification_email" in body:
-            profile.notification_email = normalize_email(body.get("notification_email")) or None
+            value = normalize_email(body.get("notification_email")) or None
+            if validate_optional_email(value):
+                return jsonify({"msg": "Ingresa un email de notificaciones valido"}), 400
+            profile.notification_email = value
 
         if "auto_reminders_enabled" in body:
             profile.auto_reminders_enabled = bool(body.get("auto_reminders_enabled"))

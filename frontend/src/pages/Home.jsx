@@ -56,7 +56,7 @@ export default function Home() {
         } else if (!data?.user?.email_verified) {
           setLoggedInRedirect("/confirm-email");
         } else {
-          setLoggedInRedirect("/dashboard");
+          setLoggedInRedirect(data?.user?.has_profile ? "/appointments" : "/profile");
         }
       })
       .catch(() => {
