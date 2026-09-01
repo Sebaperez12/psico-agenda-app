@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../assets/logo 6.png";
-import eyeClosedIcon from "../assets/ojo cerrado.png";
-import eyeOpenIcon from "../assets/ojo abierto.png";
+import eyeOpenIcon from "../assets/ojo_abierto.png";
+import eyeClosedIcon from "../assets/ojo_cerrado.png";
 import portada from "../assets/PORTADA.png";
 import api from "../services/api";
 import "./Login.css";

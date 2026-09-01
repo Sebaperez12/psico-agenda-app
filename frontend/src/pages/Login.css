@@ -215,7 +215,7 @@
 
 .login-card__password-toggle:hover,
 .login-card__password-toggle--active {
-  background: rgba(31, 42, 95, 0.08);
+  background: transparent;
 }
 
 .login-card__password-toggle img {
