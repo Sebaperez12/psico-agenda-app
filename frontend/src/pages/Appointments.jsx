@@ -341,7 +341,7 @@ export default function Appointments() {
       if (form.appointmentId) {
         await updateAppointmentRequest(form.appointmentId, payload);
         const notifyPatient = getPatientById(form.patientId);
-        const notifyMethod = form.notifyMethod === "whatsapp" ? "email" : (form.notifyMethod || "email");
+        const notifyMethod = form.notifyMethod || "email";
         const hasNotifyContact = notifyMethod === "email"
           ? Boolean(notifyPatient?.email)
           : false;
@@ -371,7 +371,7 @@ export default function Appointments() {
         const result = await createAppointmentRequest(payload);
         const appointmentId = result?.appointment?.id;
         const notifyPatient = getPatientById(form.patientId);
-        const notifyMethod = form.notifyMethod === "whatsapp" ? "email" : (form.notifyMethod || "email");
+        const notifyMethod = form.notifyMethod || "email";
         const hasNotifyContact = notifyMethod === "email"
           ? Boolean(notifyPatient?.email)
           : false;

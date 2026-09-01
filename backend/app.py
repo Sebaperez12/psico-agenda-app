@@ -20,8 +20,6 @@ from flask_mail import Mail, Message
 from markupsafe import escape
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
-from twilio.rest import Client
-from twilio.base.exceptions import TwilioRestException
 from sqlalchemy import inspect, text, or_, func
 
 load_dotenv(override=True)
@@ -784,57 +782,6 @@ def create_app():
             db.session.commit()
 
         return created_count
-
-    def normalize_whatsapp_phone(value):
-        """Normalize common local formatting into Twilio's E.164-like format."""
-        raw = clean_text(value)
-        if not raw:
-            return ""
-
-        if raw.startswith("+"):
-            normalized = "+" + "".join(ch for ch in raw[1:] if ch.isdigit())
-        elif raw.startswith("00"):
-            normalized = "+" + "".join(ch for ch in raw[2:] if ch.isdigit())
-        else:
-            digits = "".join(ch for ch in raw if ch.isdigit())
-            normalized = f"+598{digits[1:]}" if digits.startswith("0") else digits
-
-        if normalized.startswith("+5980"):
-            normalized = "+598" + normalized[5:]
-
-        return normalized
-
-    def send_whatsapp(phone, message):
-        """Enviar WhatsApp usando Twilio"""
-        try:
-            account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-            auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-            from_number = os.getenv("TWILIO_WHATSAPP_FROM")
-            to_number = normalize_whatsapp_phone(phone)
-            
-            if not all([account_sid, auth_token, from_number]):
-                print("[WHATSAPP SKIP] Credenciales de Twilio no configuradas")
-                return False, "Credenciales de Twilio no configuradas"
-
-            if not to_number.startswith("+"):
-                return False, "El teléfono debe estar en formato internacional, por ejemplo +59895098123"
-            
-            client = Client(account_sid, auth_token)
-            msg = client.messages.create(
-                from_=f"whatsapp:{from_number}",
-                body=message,
-                to=f"whatsapp:{to_number}"
-            )
-            print(f"[WHATSAPP SENT] to {to_number}: {msg.sid}")
-            return True, None
-        except TwilioRestException as e:
-            error_message = f"Twilio {e.code}: {e.msg}"
-            print(f"[WHATSAPP ERROR] {error_message}")
-            return False, error_message
-        except Exception as e:
-            error_message = str(e)
-            print(f"[WHATSAPP ERROR] {error_message}")
-            return False, error_message
 
     def is_hhmm(s: str) -> bool:
         if not isinstance(s, str) or len(s) != 5 or s[2] != ":":
@@ -3718,71 +3665,34 @@ def create_app():
         </div>
         """
 
-        contact_info = ""
-        if method == "email":
-            if not patient.email:
-                return jsonify({"msg": "El paciente no tiene email registrado"}), 400
-            contact_info = patient.email
-            recipient_email = patient.email
-            patient_name = patient.full_name
-            sender_name = "TherapyDesk"
+        if method != "email":
+            return jsonify({"msg": "Metodo invalido. Por ahora solo se permite email"}), 400
 
-            sent, error_message = send_email(
-                recipient_email,
-                notification_data["email_subject"],
-                message,
-                html_body=html_message,
-                inline_attachments=inline_attachments,
-                sender_email=notification_email,
-                sender_name=sender_name,
-                reply_to=notification_email,
-            )
-            if sent:
-                print(f"[APPOINTMENT EMAIL] enviado a {recipient_email} para turno {appointment_id}")
-                return jsonify({
-                    "msg": f"Notificacion enviada para {patient_name} via {method} ({contact_info})",
-                    "detail": message,
-                }), 200
+        if not patient.email:
+            return jsonify({"msg": "El paciente no tiene email registrado"}), 400
 
-            print(f"[APPOINTMENT EMAIL ERROR] turno {appointment_id} a {recipient_email}: {error_message}")
+        sent, error_message = send_email(
+            patient.email,
+            notification_data["email_subject"],
+            message,
+            html_body=html_message,
+            inline_attachments=inline_attachments,
+            sender_email=notification_email,
+            sender_name="TherapyDesk",
+            reply_to=notification_email,
+        )
+        if sent:
+            print(f"[APPOINTMENT EMAIL] enviado a {patient.email} para turno {appointment_id}")
             return jsonify({
-                "msg": error_message or "No se pudo enviar la notificacion",
+                "msg": f"Notificacion enviada para {patient.full_name} via email ({patient.email})",
                 "detail": message,
-            }), 502
-        elif method == "whatsapp":
-            if not patient.phone:
-                return jsonify({"msg": "El paciente no tiene teléfono registrado"}), 400
-            if not all([
-                os.getenv("TWILIO_ACCOUNT_SID"),
-                os.getenv("TWILIO_AUTH_TOKEN"),
-                os.getenv("TWILIO_WHATSAPP_FROM"),
-            ]):
-                return jsonify({
-                    "msg": "Faltan credenciales de Twilio en backend/.env",
-                    "detail": "Completá TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_WHATSAPP_FROM, luego reiniciá el backend.",
-                }), 400
-            contact_info = patient.phone
-            sent, error_message = send_whatsapp(patient.phone, message)
-        else:
-            return jsonify({"msg": "Método inválido (usar email o whatsapp)"}), 400
+            }), 200
 
-        if not sent:
-            status_code = 500
-            if error_message and (
-                "Configuración de email incompleta" in error_message
-                or "revisá mail_username y mail_password" in error_message.lower()
-            ):
-                status_code = 400
-
-            return jsonify({
-                "msg": error_message or f"Error al enviar notificación via {method}. Verificá la configuración",
-                "detail": message,
-            }), status_code
-
+        print(f"[APPOINTMENT EMAIL ERROR] turno {appointment_id} a {patient.email}: {error_message}")
         return jsonify({
-            "msg": f"Notificación enviada a {patient.full_name} via {method} ({contact_info})",
+            "msg": error_message or "No se pudo enviar la notificacion",
             "detail": message,
-        }), 200
+        }), 502
 
     @app.post("/notifications/run-automatic-reminders")
     def run_automatic_reminders():
@@ -3830,7 +3740,7 @@ def create_app():
                     skipped_count += 1
                     continue
 
-                method = (profile.auto_reminder_method or "email").lower()
+                method = "email"
                 notification_data = build_appointment_notification_payload(
                     user,
                     profile,
@@ -3850,10 +3760,6 @@ def create_app():
                             sender_name=notification_data["psychologist_name"],
                             reply_to=notification_data["notification_email"],
                         )
-                elif method == "whatsapp":
-                    if patient.phone:
-                        success, _ = send_whatsapp(patient.phone, notification_data["message"])
-
                 if success:
                     appointment.last_auto_reminder_sent_at = now
                     sent_count += 1
@@ -3908,7 +3814,7 @@ def create_app():
             return jsonify({"msg": profile_error}), 400
 
         reminder_method = (body.get("auto_reminder_method") or "email").lower()
-        if reminder_method not in {"email", "whatsapp"}:
+        if reminder_method != "email":
             return jsonify({"msg": "auto_reminder_method invalido"}), 400
 
         reminder_hours = parse_int_value(body.get("auto_reminder_hours_before"), 24)
@@ -3995,7 +3901,7 @@ def create_app():
 
         if "auto_reminder_method" in body:
             method = (body.get("auto_reminder_method") or "email").lower()
-            if method not in {"email", "whatsapp"}:
+            if method != "email":
                 return jsonify({"msg": "auto_reminder_method inválido"}), 400
             profile.auto_reminder_method = method
 

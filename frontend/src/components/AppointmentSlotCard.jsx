@@ -476,21 +476,6 @@ export default function AppointmentSlotCard({
               <img src={mailIcon} alt="" aria-hidden="true" style={styles.notifyIcon} />
               Email
             </label>
-            <label style={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={notifyMethod.includes("whatsapp")}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setNotifyMethod(["whatsapp"]);
-                  } else {
-                    setNotifyMethod([]);
-                  }
-                }}
-                style={{ marginRight: "8px" }}
-              />
-              WhatsApp
-            </label>
           </div>
 
           <button

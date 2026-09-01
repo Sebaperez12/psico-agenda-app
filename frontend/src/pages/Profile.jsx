@@ -50,7 +50,7 @@ export default function Profile() {
       const data = await api.get("/profile");
       setEmail(data.email || "");
       setAutoRemindersEnabled(!!data.auto_reminders_enabled);
-      setAutoReminderMethod(data.auto_reminder_method || "email");
+      setAutoReminderMethod("email");
       setAutoReminderHoursBefore(data.auto_reminder_hours_before || 24);
       setPublicBookingEnabled(!!data.public_booking_enabled);
       setPublicBookingMinNoticeHours(data.public_booking_min_notice_hours ?? 24);
@@ -231,7 +231,6 @@ export default function Profile() {
                   onChange={(e) => setAutoReminderMethod(e.target.value)}
                 >
                   <option value="email">Por email</option>
-                  <option value="whatsapp">Por WhatsApp</option>
                 </select>
                 <select
                   className="profile-page__input"
