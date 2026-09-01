@@ -87,6 +87,21 @@ export default function AdminPsychologistDetail() {
     }
   }
 
+  async function verifyEmail() {
+    const confirmed = window.confirm(`Marcar como verificado el email ${psychologist.email}?`);
+    if (!confirmed) return;
+
+    setMsg("");
+    try {
+      const data = await api.patch(`/admin/psychologists/${psychologistId}/verify-email`, {});
+      setPsychologist(data.psychologist);
+      await loadPsychologist({ clearMessage: false });
+      setMsg(data.msg || "Email verificado");
+    } catch (error) {
+      setMsg(error.message);
+    }
+  }
+
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -192,9 +207,23 @@ export default function AdminPsychologistDetail() {
           >
             {psychologist.is_active ? "Activo" : "Inactivo"}
           </span>
+          <span
+            className={
+              psychologist.email_verified
+                ? "admin-detail__status admin-detail__status--active"
+                : "admin-detail__status admin-detail__status--pending"
+            }
+          >
+            {psychologist.email_verified ? "Email verificado" : "Email pendiente"}
+          </span>
           <button type="button" onClick={() => updateStatus(!psychologist.is_active)}>
             {psychologist.is_active ? "Desactivar" : "Activar"}
           </button>
+          {!psychologist.email_verified && (
+            <button type="button" onClick={verifyEmail}>
+              Verificar email
+            </button>
+          )}
           <button type="button" onClick={startEditing}>
             Editar
           </button>
@@ -275,6 +304,10 @@ export default function AdminPsychologistDetail() {
             <div>
               <dt>Rol</dt>
               <dd>{psychologist.role}</dd>
+            </div>
+            <div>
+              <dt>Verificacion email</dt>
+              <dd>{psychologist.email_verified ? "Verificado" : "Pendiente"}</dd>
             </div>
             <div>
               <dt>Fecha de alta</dt>

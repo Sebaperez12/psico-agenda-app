@@ -2708,6 +2708,37 @@ def create_app():
             "psychologist": serialize_admin_psychologist(user),
         }), 200
 
+    @app.patch("/admin/psychologists/<int:psychologist_id>/verify-email")
+    @jwt_required()
+    def admin_verify_psychologist_email(psychologist_id):
+        admin_user, error = require_admin_user()
+        if error:
+            return error
+
+        user = User.query.get(psychologist_id)
+        if not user or user.role != "psychologist":
+            return jsonify({"msg": "Psicologo no encontrado"}), 404
+
+        if not is_valid_email(user.email):
+            return jsonify({"msg": "La cuenta no tiene un email valido"}), 400
+
+        if not user.email_verified:
+            user.email_verified = True
+            user.email_verification_token = None
+            user.email_verification_sent_at = None
+            add_admin_audit_log(
+                admin_user,
+                user,
+                "psychologist_email_verified",
+                f"Email verificado manualmente por admin: {user.email}",
+            )
+            db.session.commit()
+
+        return jsonify({
+            "msg": "Email verificado",
+            "psychologist": serialize_admin_psychologist(user),
+        }), 200
+
     @app.delete("/admin/psychologists/<int:psychologist_id>")
     @jwt_required()
     def admin_delete_psychologist(psychologist_id):

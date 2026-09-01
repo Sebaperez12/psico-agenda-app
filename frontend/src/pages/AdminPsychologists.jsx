@@ -73,6 +73,22 @@ export default function AdminPsychologists() {
     }
   }
 
+  async function verifyEmail(psychologist) {
+    const confirmed = window.confirm(`Marcar como verificado el email ${psychologist.email}?`);
+    if (!confirmed) return;
+
+    setMsg("");
+    try {
+      const data = await api.patch(`/admin/psychologists/${psychologist.id}/verify-email`, {});
+      setPsychologists((current) =>
+        current.map((item) => (item.id === psychologist.id ? data.psychologist : item))
+      );
+      setMsg(data.msg || "Email verificado");
+    } catch (error) {
+      setMsg(error.message);
+    }
+  }
+
   async function demoteAdmin(adminUser) {
     const confirmed = window.confirm(`Quitar rol admin a ${adminUser.email}?`);
     if (!confirmed) return;
@@ -381,6 +397,7 @@ export default function AdminPsychologists() {
                 <tr>
                   <th>Profesional</th>
                   <th>Estado</th>
+                  <th>Email</th>
                   <th>Pacientes</th>
                   <th>Turnos</th>
                   <th>Alta</th>
@@ -398,14 +415,19 @@ export default function AdminPsychologists() {
                       )}
                     </td>
                     <td>
-                      <span
-                        className={
-                          psychologist.is_active
-                            ? "admin-psychologists__status admin-psychologists__status--active"
-                            : "admin-psychologists__status"
-                        }
+                      <span className={psychologist.is_active
+                        ? "admin-psychologists__status admin-psychologists__status--active"
+                        : "admin-psychologists__status"}
                       >
                         {psychologist.is_active ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={psychologist.email_verified
+                        ? "admin-psychologists__status admin-psychologists__status--active"
+                        : "admin-psychologists__status admin-psychologists__status--pending"}
+                      >
+                        {psychologist.email_verified ? "Verificado" : "Pendiente"}
                       </span>
                     </td>
                     <td>{psychologist.patient_count}</td>
@@ -432,6 +454,16 @@ export default function AdminPsychologists() {
                         >
                           {psychologist.is_active ? "Desactivar" : "Activar"}
                         </button>
+                        {!psychologist.email_verified && (
+                          <button
+                            type="button"
+                            className="admin-psychologists__status-btn admin-psychologists__status-btn--verify"
+                            onClick={() => verifyEmail(psychologist)}
+                            disabled={deletingId === psychologist.id}
+                          >
+                            Verificar email
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="admin-psychologists__status-btn admin-psychologists__status-btn--danger"

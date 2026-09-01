@@ -359,6 +359,12 @@
   color: var(--color-primary-deep);
 }
 
+.admin-psychologists__status--pending {
+  border-color: rgba(249, 115, 22, 0.28);
+  background: rgba(255, 247, 237, 0.92);
+  color: #c2410c;
+}
+
 .admin-psychologists__status-btn {
   border-color: var(--color-border);
   background: var(--color-surface);
@@ -374,6 +380,12 @@
 
 .admin-psychologists__status-btn--secondary {
   color: var(--color-text-muted);
+}
+
+.admin-psychologists__status-btn--verify {
+  border-color: rgba(16, 185, 129, 0.22);
+  background: rgba(236, 253, 245, 0.94);
+  color: var(--color-primary-deep);
 }
 
 .admin-psychologists__status-btn--danger {
