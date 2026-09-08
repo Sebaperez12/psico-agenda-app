@@ -163,11 +163,12 @@ export default function AppointmentPanel({
             <h2>{form.appointmentId ? "Editar turno" : "Nuevo turno"}</h2>
             <p>{form.date || "Selecciona fecha y hora"}</p>
           </div>
-          <button type="button" className="appointment-panel__close" onClick={onClose}>
+          <button type="button" className="appointment-panel__close" onClick={onClose} aria-label="Cerrar panel">
             x
           </button>
         </div>
 
+        <div className="appointment-panel__content">
         <label className="appointment-panel__field">
           Paciente
           <select
@@ -265,18 +266,6 @@ export default function AppointmentPanel({
         </div>
 
         <label className="appointment-panel__field">
-          Duracion
-          <input
-            type="number"
-            min="10"
-            step="10"
-            placeholder={`${defaultSessionMinutes} min`}
-            value={form.duration}
-            onChange={(e) => setForm((prev) => ({ ...prev, duration: e.target.value }))}
-          />
-        </label>
-
-        <label className="appointment-panel__field">
           Lugar
           <select value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}>
             {locations.map((location) => (
@@ -286,6 +275,25 @@ export default function AppointmentPanel({
             ))}
           </select>
         </label>
+
+        {form.appointmentId && (
+          <div className="appointment-panel__status-card">
+            <label className="appointment-panel__field">
+              Estado del turno
+              <select value={form.status || "scheduled"} disabled={isSavingStatus || isSavingPayment} onChange={(e) => handleStatusChange(e.target.value)}>
+                <option value="pending">Pendiente de confirmación</option>
+                <option value="scheduled">Programado</option>
+                <option value="attended">Atendido</option>
+                <option value="no_show">Ausencia</option>
+                <option value="cancelled">Cancelado</option>
+                {form.status === "free" && <option value="free">Disponible</option>}
+              </select>
+            </label>
+            <p className="appointment-panel__hint" role="status">
+              {statusMessage || "Se guarda automáticamente al cambiarlo, sin notificar."}
+            </p>
+          </div>
+        )}
 
         <div className="appointment-panel__billing">
           <div className="appointment-panel__section-title">Pagos</div>
@@ -326,34 +334,6 @@ export default function AppointmentPanel({
           <textarea value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} rows="3" />
         </label>
 
-        <label className="appointment-panel__check">
-          <input
-            type="checkbox"
-            checked={form.repeatWeekly}
-            onChange={(e) => setForm((prev) => ({ ...prev, repeatWeekly: e.target.checked }))}
-          />
-          Repetir semanalmente
-        </label>
-
-        {form.appointmentId && (
-          <div className="appointment-panel__status-card">
-            <label className="appointment-panel__field">
-              Estado del turno
-              <select value={form.status || "scheduled"} disabled={isSavingStatus || isSavingPayment} onChange={(e) => handleStatusChange(e.target.value)}>
-                <option value="pending">Pendiente de confirmación</option>
-                <option value="scheduled">Programado</option>
-                <option value="attended">Atendido</option>
-                <option value="no_show">Ausencia</option>
-                <option value="cancelled">Cancelado</option>
-                {form.status === "free" && <option value="free">Disponible</option>}
-              </select>
-            </label>
-            <p className="appointment-panel__hint" role="status">
-              {statusMessage || "Se guarda automáticamente al cambiarlo, sin notificar."}
-            </p>
-          </div>
-        )}
-
         <div className="appointment-panel__notify">
           <div className="appointment-panel__section-title">
             {form.appointmentId ? "Notificar turno" : "Notificar al guardar"}
@@ -383,6 +363,47 @@ export default function AppointmentPanel({
           )}
         </div>
 
+          <details className="appointment-panel__more">
+            <summary>
+              Más opciones
+              <span className="appointment-panel__more-summary">
+                {form.duration || defaultSessionMinutes} min{form.repeatWeekly ? " · Se repite semanalmente" : ""}
+              </span>
+            </summary>
+            <div className="appointment-panel__more-content">
+        <label className="appointment-panel__field">
+          Duración (minutos)
+          <input
+            type="number"
+            min="10"
+            step="10"
+            placeholder={`${defaultSessionMinutes} min`}
+            value={form.duration}
+            onChange={(e) => setForm((prev) => ({ ...prev, duration: e.target.value }))}
+          />
+        </label>
+
+        <label className="appointment-panel__check">
+          <input
+            type="checkbox"
+            checked={form.repeatWeekly}
+            onChange={(e) => setForm((prev) => ({ ...prev, repeatWeekly: e.target.checked }))}
+          />
+          Repetir semanalmente
+        </label>
+
+              {form.appointmentId && (<>
+              <button type="button" className="appointment-panel__text-action" disabled={isNotifying || !canNotifyPatient || !canUseNotifyMethod} onClick={handleNotify}>
+                {isNotifying ? "Enviando..." : "Reenviar aviso por email"}
+              </button>
+              <p className="appointment-panel__hint">Envía el aviso del turno sin guardar los cambios del formulario.</p>
+              {notifyMessage && <p className="appointment-panel__notify-message" role="status">{notifyMessage}</p>}
+              <button type="button" className="appointment-panel__text-action appointment-panel__text-action--danger" disabled={isSavingPayment || isSavingStatus || isNotifying} onClick={onDelete}>Eliminar turno</button>
+              </>)}
+            </div>
+          </details>
+        </div>
+        <footer className="appointment-panel__footer">
         <div className="appointment-panel__actions">
           <button type="button" className="appointment-panel__save" onClick={onSave} disabled={isSavingPayment || isSavingStatus || isNotifying}>
             {shouldNotifyOnSave ? "Guardar y notificar" : "Guardar"}
@@ -392,19 +413,7 @@ export default function AppointmentPanel({
           </button>
         </div>
 
-        {form.appointmentId && (
-          <details className="appointment-panel__more">
-            <summary>Más opciones</summary>
-            <div className="appointment-panel__more-content">
-              <button type="button" className="appointment-panel__text-action" disabled={isNotifying || !canNotifyPatient || !canUseNotifyMethod} onClick={handleNotify}>
-                {isNotifying ? "Enviando..." : "Reenviar aviso por email"}
-              </button>
-              <p className="appointment-panel__hint">Envía el aviso del turno sin guardar los cambios del formulario.</p>
-              {notifyMessage && <p className="appointment-panel__notify-message" role="status">{notifyMessage}</p>}
-              <button type="button" className="appointment-panel__text-action appointment-panel__text-action--danger" disabled={isSavingPayment || isSavingStatus || isNotifying} onClick={onDelete}>Eliminar turno</button>
-            </div>
-          </details>
-        )}
+        </footer>
       </aside>
     </div>
   );
