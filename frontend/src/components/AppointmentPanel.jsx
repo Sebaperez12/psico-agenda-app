@@ -72,7 +72,22 @@ export default function AppointmentPanel({
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [isSavingPayment, setIsSavingPayment] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState("");
+  const [isSavingStatus, setIsSavingStatus] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const paymentSaveRef = useRef(false);
+
+  async function handleStatusChange(status) {
+    setIsSavingStatus(true);
+    setStatusMessage("Guardando estado...");
+    try {
+      await onStatus(status);
+      setStatusMessage("Estado guardado sin enviar notificaciones.");
+    } catch {
+      setStatusMessage("No se pudo guardar. Volvé a seleccionar el estado para reintentar.");
+    } finally {
+      setIsSavingStatus(false);
+    }
+  }
 
   async function handlePaymentStatusChange(paymentStatus) {
     if (!form.appointmentId) {
@@ -290,7 +305,7 @@ export default function AppointmentPanel({
               Estado de pago
               <select
                 value={form.paymentStatus || "pending"}
-                disabled={isSavingPayment}
+                disabled={isSavingPayment || isSavingStatus}
                 onChange={(e) => handlePaymentStatusChange(e.target.value)}
               >
                 <option value="pending">Pendiente</option>
@@ -320,6 +335,25 @@ export default function AppointmentPanel({
           Repetir semanalmente
         </label>
 
+        {form.appointmentId && (
+          <div className="appointment-panel__status-card">
+            <label className="appointment-panel__field">
+              Estado del turno
+              <select value={form.status || "scheduled"} disabled={isSavingStatus || isSavingPayment} onChange={(e) => handleStatusChange(e.target.value)}>
+                <option value="pending">Pendiente de confirmación</option>
+                <option value="scheduled">Programado</option>
+                <option value="attended">Atendido</option>
+                <option value="no_show">Ausencia</option>
+                <option value="cancelled">Cancelado</option>
+                {form.status === "free" && <option value="free">Disponible</option>}
+              </select>
+            </label>
+            <p className="appointment-panel__hint" role="status">
+              {statusMessage || "Se guarda automáticamente al cambiarlo, sin notificar."}
+            </p>
+          </div>
+        )}
+
         <div className="appointment-panel__notify">
           <div className="appointment-panel__section-title">
             {form.appointmentId ? "Notificar turno" : "Notificar al guardar"}
@@ -333,19 +367,9 @@ export default function AppointmentPanel({
             />
             {form.appointmentId ? "Notificar al guardar cambios" : "Enviar notificacion"}
           </label>
-          <div className="appointment-panel__notify-options">
-            <label className="appointment-panel__choice">
-              <input
-                type="radio"
-                name="appointment-notify-method"
-                value="email"
-                checked={notifyMethod === "email"}
-                disabled={!canNotifyByEmail}
-                onChange={() => setForm((prev) => ({ ...prev, notifyMethod: "email" }))}
-              />
+          <div className="appointment-panel__email-label">
               <img className="appointment-panel__choice-icon" src={mailIcon} alt="" aria-hidden="true" />
-              Email
-            </label>
+              Por email
           </div>
           {!selectedPatient && (
             <p className="appointment-panel__notify-message">
@@ -357,40 +381,29 @@ export default function AppointmentPanel({
               Este paciente no tiene email cargado.
             </p>
           )}
-          {form.appointmentId && (
-            <button
-              type="button"
-              className="appointment-panel__notify-button"
-              disabled={isNotifying || !canNotifyPatient || !canUseNotifyMethod}
-              onClick={handleNotify}
-            >
-              {isNotifying ? "Enviando..." : "Notificar ahora"}
-            </button>
-          )}
-          {notifyMessage && <p className="appointment-panel__notify-message">{notifyMessage}</p>}
         </div>
 
         <div className="appointment-panel__actions">
-          <button type="button" className="appointment-panel__save" onClick={onSave} disabled={isSavingPayment}>
+          <button type="button" className="appointment-panel__save" onClick={onSave} disabled={isSavingPayment || isSavingStatus || isNotifying}>
             {shouldNotifyOnSave ? "Guardar y notificar" : "Guardar"}
           </button>
           <button type="button" className="appointment-panel__ghost" onClick={onClose}>
-            Cancelar
+            Cerrar
           </button>
         </div>
 
         {form.appointmentId && (
-          <>
-            <div className="appointment-panel__secondary">
-              {form.status === "pending" && (
-                <button type="button" onClick={() => onStatus("scheduled")}>Confirmar turno</button>
-              )}
-              <button type="button" onClick={() => onStatus("attended")}>Atendido</button>
-              <button type="button" onClick={() => onStatus("no_show")}>Ausencia</button>
-              <button type="button" onClick={() => onStatus("cancelled")}>Cancelar turno</button>
-              <button type="button" className="appointment-panel__danger" onClick={onDelete}>Eliminar</button>
+          <details className="appointment-panel__more">
+            <summary>Más opciones</summary>
+            <div className="appointment-panel__more-content">
+              <button type="button" className="appointment-panel__text-action" disabled={isNotifying || !canNotifyPatient || !canUseNotifyMethod} onClick={handleNotify}>
+                {isNotifying ? "Enviando..." : "Reenviar aviso por email"}
+              </button>
+              <p className="appointment-panel__hint">Envía el aviso del turno sin guardar los cambios del formulario.</p>
+              {notifyMessage && <p className="appointment-panel__notify-message" role="status">{notifyMessage}</p>}
+              <button type="button" className="appointment-panel__text-action appointment-panel__text-action--danger" disabled={isSavingPayment || isSavingStatus || isNotifying} onClick={onDelete}>Eliminar turno</button>
             </div>
-          </>
+          </details>
         )}
       </aside>
     </div>

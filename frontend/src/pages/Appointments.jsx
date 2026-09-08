@@ -336,7 +336,7 @@ export default function Appointments() {
       const payload = {
         start_at: `${form.date}T${form.time}:00`,
         patient_id: form.patientId ? Number(form.patientId) : null,
-        status: form.patientId ? "scheduled" : "free",
+        status: form.patientId ? (form.status && form.status !== "free" ? form.status : "scheduled") : "free",
         location: form.location || profileOfficeAddress,
         notes: form.notes,
         fee_amount: form.feeAmount || 0,
@@ -429,16 +429,14 @@ export default function Appointments() {
 
   async function changeStatus(status) {
     if (!form.appointmentId) return;
-
-    try {
-      await updateAppointmentStatusRequest(form.appointmentId, status);
-      setMsg("Estado actualizado");
-      closePanel();
-      await loadWeeklyPreview();
-    } catch (e) {
-      console.error(e);
-      setMsg(e.message);
-    }
+    const appointmentId = form.appointmentId;
+    await updateAppointmentStatusRequest(appointmentId, status);
+    setForm((current) => current.appointmentId === appointmentId ? { ...current, status } : current);
+    setWeeklyPreview((current) => Object.fromEntries(
+      Object.entries(current).map(([day, slots]) => [day, slots.map((slot) =>
+        String(slot.appointment_id || slot.id) === String(appointmentId) ? { ...slot, status } : slot
+      )])
+    ));
   }
 
   async function removeAppointment() {
