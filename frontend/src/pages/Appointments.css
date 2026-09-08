@@ -471,6 +471,7 @@
   margin: 0;
   color: var(--color-text-strong);
   font-size: 24px;
+  font-weight: 600;
 }
 
 .appointment-panel__header p {
@@ -489,7 +490,7 @@
   background: #fff;
   color: var(--color-text-strong);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 400;
   line-height: 1;
   cursor: pointer;
 }
@@ -507,7 +508,7 @@
   margin-bottom: 12px;
   color: var(--color-text-strong);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .appointment-panel__field input,
@@ -520,6 +521,7 @@
   background: rgba(255, 255, 255, 0.92);
   color: var(--color-text);
   font: inherit;
+  font-weight: 400;
 }
 
 .appointment-panel__field input,
@@ -557,7 +559,7 @@
   background: rgba(255, 255, 255, 0.92);
   color: var(--color-text);
   font: inherit;
-  font-weight: 800;
+  font-weight: 400;
   text-align: left;
   cursor: pointer;
 }
@@ -620,7 +622,7 @@
   background: transparent;
   color: var(--color-text-strong);
   font: inherit;
-  font-weight: 700;
+  font-weight: 400;
   cursor: pointer;
 }
 
@@ -637,7 +639,7 @@
   margin: 4px 0 18px;
   color: var(--color-text-strong);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .appointment-panel__check--compact {
@@ -680,7 +682,7 @@
   border: 1px solid transparent;
   font: inherit;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 500;
   line-height: 1.1;
   text-align: center;
   cursor: pointer;
@@ -690,6 +692,7 @@
   color: #fff;
   border: none;
   background: linear-gradient(135deg, var(--color-primary-deep), var(--color-primary));
+  font-weight: 600;
 }
 
 .appointment-panel__ghost,
@@ -741,7 +744,7 @@
   padding: 8px 0;
   color: var(--color-text-muted);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -765,7 +768,7 @@
   color: var(--color-primary-deep);
   font: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
 }
@@ -789,7 +792,7 @@
   margin-bottom: 12px;
   color: var(--color-text-strong);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .appointment-panel__choice {
@@ -845,7 +848,7 @@
   margin: 10px 0 0;
   color: var(--color-text-strong);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.35;
 }
 
