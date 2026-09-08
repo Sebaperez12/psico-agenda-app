@@ -278,6 +278,10 @@ export default function Profile() {
             <div className="profile-page__booking-link">
               <div>
                 <strong>Tu link personal</strong>
+                <p>
+                  Compartí este enlace directamente con tus pacientes por WhatsApp o email para
+                  que puedan ver tus horarios disponibles y reservar un turno online.
+                </p>
                 <span>{`${window.location.origin}/reservar/${bookingSlug}`}</span>
               </div>
               <button type="button" className="profile-page__btn" onClick={copyBookingLink}>

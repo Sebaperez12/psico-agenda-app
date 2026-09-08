@@ -336,10 +336,38 @@
   line-height: 1.05;
 }
 
-.appointment-block__repeat {
+.appointment-block__indicators {
   position: absolute;
   top: 6px;
   right: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.appointment-block__payment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.appointment-block__payment--paid {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.appointment-block__payment--waived {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.appointment-block__repeat {
   font-size: 16px;
   font-weight: 700;
   line-height: 1;

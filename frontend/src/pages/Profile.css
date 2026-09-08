@@ -196,6 +196,7 @@
 }
 
 .profile-page__booking-link strong,
+.profile-page__booking-link p,
 .profile-page__booking-link span {
   display: block;
 }
@@ -204,6 +205,14 @@
   margin-bottom: 0.25rem;
   color: var(--color-text-strong);
   font-size: 0.86rem;
+}
+
+.profile-page__booking-link p {
+  margin: 0 0 0.45rem 0;
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .profile-page__booking-link span {
