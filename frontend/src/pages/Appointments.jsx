@@ -295,6 +295,21 @@ export default function Appointments() {
     setForm(EMPTY_FORM);
   }
 
+  async function savePaymentStatus(paymentStatus) {
+    const appointmentId = form.appointmentId;
+    await updateAppointmentRequest(appointmentId, { payment_status: paymentStatus });
+    setForm((current) => current.appointmentId === appointmentId
+      ? { ...current, paymentStatus }
+      : current);
+    setWeeklyPreview((current) => Object.fromEntries(
+      Object.entries(current).map(([day, slots]) => [day, slots.map((slot) =>
+        String(slot.appointment_id || slot.id) === String(appointmentId)
+          ? { ...slot, payment_status: paymentStatus }
+          : slot
+      )])
+    ));
+  }
+
   function getWeekOffsetForDate(dateKey) {
     const targetDate = new Date(`${dateKey}T00:00:00`);
     const currentWeekStart = getWeekDays(new Date(), 0)[0];
@@ -646,6 +661,7 @@ export default function Appointments() {
           onDelete={removeAppointment}
           onStatus={changeStatus}
           onNotify={notifyAppointment}
+          onPaymentStatusChange={savePaymentStatus}
         />
       )}
     </div>

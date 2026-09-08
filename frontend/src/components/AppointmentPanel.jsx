@@ -52,6 +52,7 @@ export default function AppointmentPanel({
   onDelete,
   onStatus,
   onNotify,
+  onPaymentStatusChange,
 }) {
   const locations = profileOfficeAddresses.length > 0 ? profileOfficeAddresses : [profileOfficeAddress];
   const dateInputRef = useRef(null);
@@ -69,6 +70,29 @@ export default function AppointmentPanel({
   const [isNotifying, setIsNotifying] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState("");
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [isSavingPayment, setIsSavingPayment] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const paymentSaveRef = useRef(false);
+
+  async function handlePaymentStatusChange(paymentStatus) {
+    if (!form.appointmentId) {
+      setForm((prev) => ({ ...prev, paymentStatus }));
+      return;
+    }
+    if (paymentSaveRef.current) return;
+    paymentSaveRef.current = true;
+    setIsSavingPayment(true);
+    setPaymentMessage("Guardando estado de pago...");
+    try {
+      await onPaymentStatusChange(paymentStatus);
+      setPaymentMessage("Estado de pago guardado. No se envió ninguna notificación.");
+    } catch {
+      setPaymentMessage("No se pudo guardar el estado de pago. Volvé a seleccionarlo para reintentar.");
+    } finally {
+      paymentSaveRef.current = false;
+      setIsSavingPayment(false);
+    }
+  }
 
   function updateTime(nextParts) {
     const nextHour = nextParts.hour12 ?? timeParts.hour12;
@@ -266,7 +290,8 @@ export default function AppointmentPanel({
               Estado de pago
               <select
                 value={form.paymentStatus || "pending"}
-                onChange={(e) => setForm((prev) => ({ ...prev, paymentStatus: e.target.value }))}
+                disabled={isSavingPayment}
+                onChange={(e) => handlePaymentStatusChange(e.target.value)}
               >
                 <option value="pending">Pendiente</option>
                 <option value="paid">Pagado</option>
@@ -274,6 +299,11 @@ export default function AppointmentPanel({
               </select>
             </label>
           </div>
+          <p className="appointment-panel__notify-message" role="status" aria-live="polite">
+            {paymentMessage || (form.appointmentId
+              ? "El estado de pago se guarda automáticamente al cambiarlo, sin notificar al paciente."
+              : "El estado de pago se guardará al crear el turno.")}
+          </p>
         </div>
 
         <label className="appointment-panel__field">
@@ -341,7 +371,7 @@ export default function AppointmentPanel({
         </div>
 
         <div className="appointment-panel__actions">
-          <button type="button" className="appointment-panel__save" onClick={onSave}>
+          <button type="button" className="appointment-panel__save" onClick={onSave} disabled={isSavingPayment}>
             {shouldNotifyOnSave ? "Guardar y notificar" : "Guardar"}
           </button>
           <button type="button" className="appointment-panel__ghost" onClick={onClose}>
