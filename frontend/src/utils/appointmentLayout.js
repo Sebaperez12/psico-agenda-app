@@ -1,6 +1,7 @@
 export const DEFAULT_START_HOUR = 6;
 export const DEFAULT_END_HOUR = 22;
 export const HOUR_HEIGHT = 72;
+const BLOCK_INSET = 4;
 
 export function getAppointmentBlockPosition(
   slot,
@@ -13,8 +14,8 @@ export function getAppointmentBlockPosition(
   const endMinutes = end.getHours() * 60 + end.getMinutes();
   const minMinutes = calendarStartHour * 60;
   const maxMinutes = (calendarEndHour + 1) * 60;
-  const top = Math.max(0, ((startMinutes - minMinutes) / 60) * HOUR_HEIGHT);
-  const height = Math.max(64, ((Math.min(endMinutes, maxMinutes) - startMinutes) / 60) * HOUR_HEIGHT - 8);
+  const top = Math.max(0, ((startMinutes - minMinutes) / 60) * HOUR_HEIGHT) + BLOCK_INSET;
+  const height = Math.max(64, ((Math.min(endMinutes, maxMinutes) - startMinutes) / 60) * HOUR_HEIGHT - BLOCK_INSET * 2);
 
   return {
     top: `${top}px`,

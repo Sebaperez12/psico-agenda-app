@@ -1,6 +1,6 @@
 import { formatTime } from "../utils/dateUtils";
 import { getAppointmentBlockPosition } from "../utils/appointmentLayout";
-import { getAppointmentStatusClass } from "../utils/appointmentStatus";
+import { APPOINTMENT_STATUS_LABELS, getAppointmentStatusClass } from "../utils/appointmentStatus";
 
 export default function AppointmentBlock({
   slot,
@@ -22,6 +22,7 @@ export default function AppointmentBlock({
       className={`${getAppointmentStatusClass("appointment-block", slot.status)}${mobile ? " appointment-block--mobile" : ""}`}
       style={mobile ? undefined : style}
       onClick={onClick}
+      title={`${APPOINTMENT_STATUS_LABELS[slot.status] || "Agendado"} · ${paymentLabel}`}
     >
       <span className="appointment-block__time">{formatTime(slot.start_at)}</span>
       <strong className="appointment-block__name">{patientName}</strong>
