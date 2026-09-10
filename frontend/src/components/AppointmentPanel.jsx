@@ -169,46 +169,47 @@ export default function AppointmentPanel({
         </div>
 
         <div className="appointment-panel__content">
-        <label className="appointment-panel__field">
-          Paciente
-          <select
-            value={form.patientId}
-            onChange={(e) => {
-              const patientId = e.target.value;
-              const patient = patients.find((item) => String(item.id) === String(patientId));
-              const nextMethod = patient?.email ? "email" : "";
-
-              setForm((prev) => ({
-                ...prev,
-                patientId,
-                feeAmount: prev.feeAmount || patient?.session_fee_amount || "",
-                notifyMethod: nextMethod || prev.notifyMethod || "email",
-                notifyOnSave: prev.appointmentId ? prev.notifyOnSave : Boolean(patient?.email),
-              }));
-            }}
-          >
-            <option value="">Sin paciente</option>
-            {patients.map((patient) => (
-              <option key={patient.id} value={patient.id}>
-                {patient.full_name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="appointment-panel__grid">
-          <label className="appointment-panel__field" onClick={() => openPicker(dateInputRef)}>
-            Fecha
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
-            />
-          </label>
+        <div className="appointment-panel__details-card">
           <label className="appointment-panel__field">
-            Hora
-            <div className="appointment-panel__time-picker" ref={timePickerRef}>
+            Paciente
+            <select
+              value={form.patientId}
+              onChange={(e) => {
+                const patientId = e.target.value;
+                const patient = patients.find((item) => String(item.id) === String(patientId));
+                const nextMethod = patient?.email ? "email" : "";
+
+                setForm((prev) => ({
+                  ...prev,
+                  patientId,
+                  feeAmount: prev.feeAmount || patient?.session_fee_amount || "",
+                  notifyMethod: nextMethod || prev.notifyMethod || "email",
+                  notifyOnSave: prev.appointmentId ? prev.notifyOnSave : Boolean(patient?.email),
+                }));
+              }}
+            >
+              <option value="">Sin paciente</option>
+              {patients.map((patient) => (
+                <option key={patient.id} value={patient.id}>
+                  {patient.full_name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="appointment-panel__grid">
+            <label className="appointment-panel__field" onClick={() => openPicker(dateInputRef)}>
+              Fecha
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+              />
+            </label>
+            <label className="appointment-panel__field">
+              Hora
+              <div className="appointment-panel__time-picker" ref={timePickerRef}>
               <button
                 type="button"
                 className="appointment-panel__time-trigger"
@@ -261,20 +262,21 @@ export default function AppointmentPanel({
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            </label>
+          </div>
+
+          <label className="appointment-panel__field">
+            Lugar
+            <select value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}>
+              {locations.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
-
-        <label className="appointment-panel__field">
-          Lugar
-          <select value={form.location} onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}>
-            {locations.map((location) => (
-              <option key={location} value={location}>
-                {location}
-              </option>
-            ))}
-          </select>
-        </label>
 
         {form.appointmentId && (
           <div className="appointment-panel__status-card">

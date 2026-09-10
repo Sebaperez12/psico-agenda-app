@@ -543,6 +543,18 @@
   resize: vertical;
 }
 
+.appointment-panel__details-card {
+  margin: 2px 0 12px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.appointment-panel__details-card > .appointment-panel__field:last-child {
+  margin-bottom: 0;
+}
+
 .appointment-panel__billing {
   margin: 2px 0 12px;
   padding: 12px;
