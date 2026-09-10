@@ -110,11 +110,10 @@
 
 .patients-page__card {
   padding: 14px;
+  border: 1px solid #dfe3e8;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-accent-line);
-  box-shadow: 0 12px 30px var(--color-shadow);
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .patients-page__card-header {
