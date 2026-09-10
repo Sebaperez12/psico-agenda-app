@@ -75,6 +75,27 @@ const icons = {
   ),
 };
 
+const WEEKLY_PHRASES = [
+  "Escuchar también es una forma de cuidar.",
+  "Cada proceso encuentra su propio ritmo.",
+  "Lo pequeño y constante también transforma.",
+  "Acompañar es hacer lugar para lo que aparece.",
+  "Una pausa puede abrir una nueva perspectiva.",
+  "La presencia también forma parte del proceso.",
+  "Cada encuentro puede ser un punto de partida.",
+  "Avanzar no siempre significa ir más rápido.",
+  "Nombrar lo que pasa ayuda a comprenderlo.",
+  "Cuidar el proceso es también cuidar los tiempos.",
+  "La confianza se construye encuentro a encuentro.",
+  "A veces, mirar distinto ya es un movimiento.",
+];
+
+function getWeeklyPhrase(date = new Date()) {
+  const dayInMilliseconds = 24 * 60 * 60 * 1000;
+  const weekIndex = Math.floor((date.getTime() + 3 * dayInMilliseconds) / (7 * dayInMilliseconds));
+  return WEEKLY_PHRASES[weekIndex % WEEKLY_PHRASES.length];
+}
+
 function getLocalDateKey(date) {
   const value = new Date(date);
   const year = value.getFullYear();
@@ -323,6 +344,10 @@ export default function Dashboard() {
           <h1 className="dashboard__hero-title">Inicio</h1>
           <p className="dashboard__hero-subtitle">
             Lo importante del consultorio para resolver hoy.
+          </p>
+          <p className="dashboard__weekly-phrase">
+            <span>Esta semana</span>
+            {getWeeklyPhrase()}
           </p>
         </div>
       </section>

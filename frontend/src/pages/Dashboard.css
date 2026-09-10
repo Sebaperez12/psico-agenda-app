@@ -77,6 +77,29 @@
   text-shadow: 0 2px 5px rgba(16, 29, 63, 0.42);
 }
 
+.dashboard__weekly-phrase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 9px 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(16, 29, 63, 0.45);
+}
+
+.dashboard__weekly-phrase span {
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.42);
+  color: #f6d28a;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .dashboard__hero-mark {
   display: none;
 }
