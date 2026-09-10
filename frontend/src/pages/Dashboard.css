@@ -6,7 +6,7 @@
   --dashboard-green-soft: rgba(18, 167, 124, 0.12);
   --dashboard-blue-soft: rgba(122, 199, 255, 0.16);
   --dashboard-line: rgba(95, 108, 152, 0.16);
-  --dashboard-card-border: rgba(219, 229, 238, 0.96);
+  --dashboard-card-border: var(--color-border);
   color: var(--color-text);
 }
 
@@ -98,7 +98,7 @@
   border: 1px solid var(--dashboard-card-border);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 14px 32px rgba(16, 24, 60, 0.08);
+  box-shadow: 0 14px 32px var(--color-shadow);
 }
 
 .dashboard__metric-card {

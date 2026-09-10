@@ -54,9 +54,8 @@
 .patient-history__summary div {
   padding: 14px;
   border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-accent-line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
+  background: #ffffff;
 }
 
 .patient-history__summary strong {
@@ -78,9 +77,8 @@
   padding: 0;
   list-style: none;
   border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-accent-line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.82);
+  background: #ffffff;
 }
 
 .patient-history__item {

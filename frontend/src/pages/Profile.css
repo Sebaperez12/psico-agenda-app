@@ -37,11 +37,10 @@
 }
 
 .profile-page__form {
-  background: rgba(255, 255, 255, 0.84);
+  background: #ffffff;
   border-radius: 8px;
   padding: 1.35rem;
   border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-accent-line);
   box-shadow: 0 12px 30px var(--color-shadow);
 }
 

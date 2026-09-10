@@ -13,10 +13,10 @@
   gap: 16px;
   margin-bottom: 18px;
   padding: 18px;
-  border: 1px solid rgba(207, 232, 220, 0.9);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12px 30px rgba(40, 169, 121, 0.12);
+  background: #ffffff;
+  box-shadow: 0 12px 30px var(--color-shadow);
 }
 
 .availability-page__card--range {

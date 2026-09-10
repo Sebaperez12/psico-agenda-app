@@ -163,9 +163,8 @@
   min-height: 420px;
   overflow: auto;
   border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-accent-line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
+  background: #ffffff;
   box-shadow: 0 16px 34px var(--color-shadow);
 }
 
