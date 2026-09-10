@@ -21,8 +21,8 @@ body {
   min-height: 100vh;
   width: 100%;
   background:
-    radial-gradient(circle at top left, rgba(249, 115, 22, 0.09), transparent 24%),
-    radial-gradient(circle at top right, rgba(40, 169, 121, 0.10), transparent 30%),
+    radial-gradient(circle at top left, rgba(249, 115, 22, 0.025), transparent 24%),
+    radial-gradient(circle at top right, rgba(40, 169, 121, 0.025), transparent 30%),
     linear-gradient(180deg, var(--color-bg), var(--color-bg-secondary));
 }
 
@@ -42,7 +42,7 @@ body,
   gap: 10px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--color-border);
-  background: rgba(247, 242, 255, 0.96);
+  background: rgba(250, 251, 252, 0.96);
   backdrop-filter: blur(14px);
   position: fixed;
   top: 0;
