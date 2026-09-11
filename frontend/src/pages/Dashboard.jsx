@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import dashboardImage from "../assets/dashboard.png";
+import dashboardImage from "../assets/dashboard-web.jpg";
 import api from "../services/api";
 import "./Dashboard.css";
 
