@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import dashboardImage from "../assets/dashboard.png";
-import logo from "../assets/logo 6.png";
+import logo from "../assets/logo 6 baja max.png";
 import api from "../services/api";
 import "./Home.css";
 

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import logo from "../assets/logo 6.png";
+import logo from "../assets/logo 6 baja max.png";
 import "./AdminLayout.css";
 
 export default function AdminLayout() {

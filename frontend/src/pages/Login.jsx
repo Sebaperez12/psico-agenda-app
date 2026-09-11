@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import logo from "../assets/logo 6.png";
+import logo from "../assets/logo 6 baja max.png";
 import eyeOpenIcon from "../assets/ojo_abierto.png";
 import eyeClosedIcon from "../assets/ojo_cerrado.png";
 import portada from "../assets/PORTADA.png";
