@@ -3462,7 +3462,8 @@ def create_app():
             if payment_status not in {"pending", "paid", "waived"}:
                 return jsonify({"msg": "Estado de pago invalido"}), 400
             appointment.payment_status = payment_status
-            appointment.paid_at = get_local_now() if payment_status == "paid" and not appointment.paid_at else None
+            if payment_status == "paid" and not appointment.paid_at:
+                appointment.paid_at = get_local_now()
             if payment_status != "paid":
                 appointment.paid_at = None
 

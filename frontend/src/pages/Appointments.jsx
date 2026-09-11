@@ -441,6 +441,7 @@ export default function Appointments() {
 
   async function removeAppointment() {
     if (!form.appointmentId) return;
+    if (!window.confirm("¿Eliminar este turno? Esta acción no se puede deshacer.")) return;
 
     try {
       await deleteAppointmentRequest(form.appointmentId);

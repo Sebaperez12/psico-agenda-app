@@ -121,11 +121,13 @@ body,
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.layout__sidebar .layout__title {
+.layout__sidebar .layout__title,
+.layout__drawer-panel .layout__title {
   color: #ffffff;
 }
 
-.layout__sidebar .layout__subtitle {
+.layout__sidebar .layout__subtitle,
+.layout__drawer-panel .layout__subtitle {
   color: rgba(255, 255, 255, 0.78);
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import mailIcon from "../assets/mail.png";
 
 const TIME_HOURS = Array.from({ length: 12 }, (_, index) => index + 1);
-const TIME_MINUTES = Array.from({ length: 6 }, (_, index) => index * 10);
+const TIME_MINUTES = Array.from({ length: 60 }, (_, index) => index);
 const TIME_MERIDIEMS = ["AM", "PM"];
 
 function getTimeParts(value) {
@@ -12,7 +12,7 @@ function getTimeParts(value) {
 
   return {
     hour12: hour24 % 12 || 12,
-    minute: Number.isNaN(minute) ? 0 : Math.min(Math.round(minute / 10) * 10, 50),
+    minute: Number.isNaN(minute) ? 0 : Math.max(0, Math.min(minute, 59)),
     meridiem: hour24 >= 12 ? "PM" : "AM",
   };
 }

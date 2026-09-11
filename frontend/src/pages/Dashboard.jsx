@@ -163,12 +163,15 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [confirmingId, setConfirmingId] = useState(null);
   const [dashboardMsg, setDashboardMsg] = useState("");
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
   }, []);
 
   async function loadDashboardData() {
+    setLoading(true);
+    setLoadError(false);
     try {
       const [patientsResult, weeklyResult, availabilityResult, appointmentsResult, profileResult] = await Promise.allSettled([
         api.get("/patients"),
@@ -177,6 +180,11 @@ export default function Dashboard() {
         api.get("/appointments"),
         api.get("/profile"),
       ]);
+
+      if ([patientsResult, weeklyResult, availabilityResult, appointmentsResult, profileResult]
+        .some((result) => result.status === "rejected")) {
+        throw new Error("No se pudieron cargar todos los datos del inicio.");
+      }
 
       const patients = patientsResult.status === "fulfilled" ? patientsResult.value.patients || [] : [];
       const weeklyData = weeklyResult.status === "fulfilled" ? weeklyResult.value.weekly_preview || {} : {};
@@ -195,7 +203,14 @@ export default function Dashboard() {
       const today = getLocalDateKey(now);
       let todayAppointments = 0;
       let weekAppointments = 0;
-      let nextAppointment = null;
+      const nextAppointment = appointments
+        .filter((appointment) => appointment.patient_id && ["scheduled", "pending"].includes(appointment.status)
+          && new Date(appointment.start_at) > now)
+        .sort((a, b) => new Date(a.start_at) - new Date(b.start_at))
+        .map((appointment) => ({
+          ...appointment,
+          patient_name: patientsById[appointment.patient_id]?.full_name || "Paciente",
+        }))[0] || null;
       let nextAvailableSlot = null;
       const statusCounts = {
         attended: 0,
@@ -219,11 +234,6 @@ export default function Dashboard() {
             todayAppointments++;
           }
 
-          if (slot.start_at && new Date(slot.start_at) > now) {
-            if (!nextAppointment || new Date(slot.start_at) < new Date(nextAppointment.start_at)) {
-              nextAppointment = slot;
-            }
-          }
         });
         weekDays.push({ date: dayKey, count: dayCount });
       });
@@ -272,6 +282,7 @@ export default function Dashboard() {
       });
     } catch (e) {
       console.error("Error loading dashboard data:", e);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -331,6 +342,16 @@ export default function Dashboard() {
     return (
       <div className="dashboard">
         <div className="dashboard__loading">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="dashboard">
+        <h1 className="dashboard__section-title">Inicio</h1>
+        <p role="alert">No se pudieron cargar los datos. Revisa tu conexión e intenta nuevamente.</p>
+        <button type="button" className="dashboard__secondary-btn" onClick={loadDashboardData}>Reintentar</button>
       </div>
     );
   }
