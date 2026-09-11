@@ -889,8 +889,16 @@
 
 @media (max-width: 899px) {
   .appointments-page {
-    padding-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding-bottom: 0;
   }
+
+  .appointments-page__top,
+  .appointments-page__mobile-days,
+  .appointments-page__message { flex-shrink: 0; }
 
   .appointments-page__top {
     align-items: flex-start;
@@ -922,7 +930,7 @@
 
   .appointments-page__mobile-days {
     display: grid;
-    grid-template-columns: repeat(7, minmax(42px, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
     margin-bottom: 12px;
   }
@@ -975,12 +983,17 @@
   .appointments-mobile-list {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
     border-top: 1px solid var(--color-border);
   }
 
   .appointments-mobile-list__row {
+    flex-shrink: 0;
     display: grid;
-    grid-template-columns: 52px 1fr;
+    grid-template-columns: 52px minmax(0, 1fr);
     min-height: 58px;
     border-bottom: 1px solid rgba(20, 30, 70, 0.08);
   }
