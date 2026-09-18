@@ -28,6 +28,11 @@ export default function Login() {
 
   const isRegister = mode === "register";
 
+  const getPostLoginTarget = () => {
+    const guideState = localStorage.getItem("therapydesk_first_time_guide");
+    return guideState === "pending" ? "/profile" : "/appointments";
+  };
+
   useEffect(() => {
     localStorage.removeItem("token");
   }, []);
@@ -49,7 +54,10 @@ export default function Login() {
         full_name: fullName,
       });
       localStorage.setItem("token", data.access_token);
-      localStorage.setItem("therapydesk_first_time_guide", "pending");
+      const guideState = localStorage.getItem("therapydesk_first_time_guide");
+      if (!guideState || guideState === "pending") {
+        localStorage.setItem("therapydesk_first_time_guide", "pending");
+      }
       if (data?.user?.role === "admin") {
         nav("/admin");
         return;
@@ -58,7 +66,7 @@ export default function Login() {
         nav("/confirm-email");
         return;
       }
-      nav(data?.user?.has_profile ? "/appointments" : "/profile");
+      nav(getPostLoginTarget());
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -79,6 +87,10 @@ export default function Login() {
     try {
       const data = await api.post("/auth/login", { email: normalizedEmail, password });
       localStorage.setItem("token", data.access_token);
+      const guideState = localStorage.getItem("therapydesk_first_time_guide");
+      if (!guideState || guideState === "pending") {
+        localStorage.setItem("therapydesk_first_time_guide", "pending");
+      }
       if (data?.user?.role === "admin") {
         nav("/admin");
         return;
@@ -87,7 +99,7 @@ export default function Login() {
         nav("/confirm-email");
         return;
       }
-      nav(data?.user?.has_profile ? "/appointments" : "/profile");
+      nav(getPostLoginTarget());
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -123,9 +135,9 @@ export default function Login() {
         <img src={portada} alt="" className="login-page__image" />
         <div className="login-page__visual-shade" />
         <div className="login-page__visual-copy">
-          <span className="login-page__eyebrow">Agenda clinica</span>
-          <h2>Una forma mas clara de ordenar tu practica.</h2>
-          <p>Turnos, pacientes y recordatorios en un espacio pensado para el trabajo terapeutico.</p>
+          <span className="login-page__eyebrow">Agenda clínica</span>
+          <h2>Más claridad en tu práctica.</h2>
+          <p>Turnos, pacientes y recordatorios en un mismo lugar.</p>
         </div>
       </section>
 
