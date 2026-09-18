@@ -2173,7 +2173,12 @@ def create_app():
         db.session.flush()
 
         profile = None
-        if profile_data["full_name"] or profile_data["professional_title"] or profile_data["office_address"] or profile_data["description"]:
+        if (
+            profile_data["professional_title"]
+            or profile_data["description"]
+            or profile_data["office_address"]
+            or profile_data["office_addresses"]
+        ):
             profile = PsychologistProfile(
                 owner_user_id=user.id,
                 full_name=profile_data["full_name"] or user.email,

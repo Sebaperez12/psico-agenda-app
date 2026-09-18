@@ -29,10 +29,7 @@ export default function Login() {
   const isRegister = mode === "register";
 
   const getPostLoginTarget = (user) => {
-    const guideState = localStorage.getItem("therapydesk_first_time_guide");
-    const isFirstTimeProfileFlow = !user?.has_profile || guideState === "pending";
-
-    if (isFirstTimeProfileFlow) {
+    if (!user?.has_profile) {
       localStorage.setItem("therapydesk_first_time_guide", "pending");
       return "/profile";
     }
