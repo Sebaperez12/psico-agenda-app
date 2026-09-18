@@ -21,9 +21,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [professionalTitle, setProfessionalTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [officeAddress, setOfficeAddress] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -50,11 +47,9 @@ export default function Login() {
         email: normalizedEmail,
         password,
         full_name: fullName,
-        professional_title: professionalTitle,
-        description,
-        office_address: officeAddress,
       });
       localStorage.setItem("token", data.access_token);
+      localStorage.setItem("therapydesk_first_time_guide", "pending");
       if (data?.user?.role === "admin") {
         nav("/admin");
         return;
@@ -63,7 +58,7 @@ export default function Login() {
         nav("/confirm-email");
         return;
       }
-      nav("/appointments");
+      nav(data?.user?.has_profile ? "/appointments" : "/profile");
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -146,20 +141,12 @@ export default function Login() {
 
           <div className="login-card__form">
             {isRegister && (
-              <>
-                <input
-                  className="login-card__field"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Nombre y apellido"
-                />
-                <input
-                  className="login-card__field"
-                  value={professionalTitle}
-                  onChange={(e) => setProfessionalTitle(e.target.value)}
-                  placeholder="Titulo profesional"
-                />
-              </>
+              <input
+                className="login-card__field"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Nombre y apellido"
+              />
             )}
 
             <input
@@ -201,24 +188,6 @@ export default function Login() {
               >
                 ¿Olvidaste tu contraseña?
               </button>
-            )}
-
-            {isRegister && (
-              <>
-                <textarea
-                  className="login-card__field login-card__textarea"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descripcion profesional"
-                  rows="4"
-                />
-                <input
-                  className="login-card__field"
-                  value={officeAddress}
-                  onChange={(e) => setOfficeAddress(e.target.value)}
-                  placeholder="Direccion del consultorio"
-                />
-              </>
             )}
 
             <div className="login-card__actions">

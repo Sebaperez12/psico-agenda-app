@@ -276,6 +276,61 @@ body,
   min-height: 100vh;
 }
 
+.layout__welcome-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(900px, calc(100% - 24px));
+  margin: 18px auto 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(115, 86, 212, 0.2);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(115, 86, 212, 0.08), rgba(58, 166, 138, 0.08));
+  box-shadow: 0 10px 24px rgba(39, 52, 67, 0.08);
+}
+
+.layout__welcome-copy {
+  flex: 1;
+}
+
+.layout__welcome-copy h2 {
+  margin: 0.35rem 0 0.45rem;
+  font-size: 1.05rem;
+  color: var(--color-text-strong);
+}
+
+.layout__welcome-copy p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.layout__welcome-badge {
+  display: inline-block;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(115, 86, 212, 0.12);
+  color: #5643a6;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.layout__welcome-close {
+  border: none;
+  border-radius: 10px;
+  padding: 0.72rem 1rem;
+  background: var(--color-primary-deep);
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
 .layout__content {
   width: 100%;
   min-height: 100vh;
@@ -367,5 +422,21 @@ body,
 
   .layout__content {
     padding: 16px;
+  }
+
+  .layout__welcome-guide {
+    margin-top: 16px;
+    width: min(980px, calc(100% - 32px));
+  }
+}
+
+@media (max-width: 640px) {
+  .layout__welcome-guide {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .layout__welcome-close {
+    width: 100%;
   }
 }

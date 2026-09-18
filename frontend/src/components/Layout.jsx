@@ -4,6 +4,8 @@ import logo from "../assets/logo 6 baja max.png";
 import api from "../services/api";
 import "./layout.css";
 
+const FIRST_TIME_GUIDE_KEY = "therapydesk_first_time_guide";
+
 const PAGE_HELP = {
   dashboard: ["Inicio", "Consulta tu próxima sesión, los turnos de hoy, las solicitudes por confirmar y los cobros pendientes. También puedes copiar tu enlace de reservas."],
   appointments: ["Turnos", "Elige un día y desplaza la lista de horas para consultar tus sesiones. Toca un horario disponible para crear un turno o una sesión para editarla. Los avisos al paciente se envían por email."],
@@ -20,6 +22,20 @@ export default function Layout() {
   const helpKey = pathname.endsWith("/history") ? "history" : pathname.split("/")[1];
   const [helpTitle, helpText] = PAGE_HELP[helpKey] || PAGE_HELP.dashboard;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState(() => {
+    try {
+      return localStorage.getItem(FIRST_TIME_GUIDE_KEY) === "pending";
+    } catch {
+      return false;
+    }
+  });
+
+  const dismissWelcomeGuide = () => {
+    try {
+      localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
+    } catch {}
+    setShowWelcomeGuide(false);
+  };
 
   useEffect(() => {
     let active = true;
@@ -125,6 +141,20 @@ export default function Layout() {
       </aside>
 
       <main className="layout__main">
+        {showWelcomeGuide && (
+          <div className="layout__welcome-guide" role="status" aria-live="polite">
+            <div className="layout__welcome-copy">
+              <span className="layout__welcome-badge">Primer paso</span>
+              <h2>¡Bienvenido a TherapyDesk!</h2>
+              <p>
+                Esta app te ayuda a organizar tu agenda, pacientes y turnos. Antes de empezar, completá tu perfil profesional con tus datos, servicios y disponibilidad.
+              </p>
+            </div>
+            <button type="button" className="layout__welcome-close" onClick={dismissWelcomeGuide}>
+              Entendido
+            </button>
+          </div>
+        )}
         <div className="layout__content">
           <Outlet />
         </div>

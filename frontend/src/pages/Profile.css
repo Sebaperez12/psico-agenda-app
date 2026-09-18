@@ -221,6 +221,22 @@
   font-weight: 700;
 }
 
+.profile-page__details {
+  margin-top: 1rem;
+}
+
+.profile-page__field {
+  display: block;
+  color: var(--color-text-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.profile-page__field .profile-page__input,
+.profile-page__field .profile-page__textarea {
+  margin-top: 0.35rem;
+}
+
 .profile-page__actions {
   display: flex;
   gap: 1rem;

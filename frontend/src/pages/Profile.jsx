@@ -290,25 +290,37 @@ export default function Profile() {
             </div>
           )}
         </div>
-        <input
-          className="profile-page__input"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          placeholder="Nombre y apellido"
-        />
-        <input
-          className="profile-page__input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título profesional (ej: Psicólogo Clínico)"
-        />
-        <textarea
-          className="profile-page__textarea"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descripción breve (ej: Especializado en terapia cognitivo-conductual)"
-          rows="4"
-        />
+        <div className="profile-page__details">
+          <p className="profile-page__section-label">Datos de tu perfil público</p>
+          <label className="profile-page__field">
+            Nombre y apellido
+            <input
+              className="profile-page__input"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Nombre y apellido"
+            />
+          </label>
+          <label className="profile-page__field">
+            Título profesional
+            <input
+              className="profile-page__input"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ej: Psicólogo Clínico"
+            />
+          </label>
+          <label className="profile-page__field">
+            Descripción breve
+            <textarea
+              className="profile-page__textarea"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Ej: Especializado en terapia cognitivo-conductual"
+              rows="4"
+            />
+          </label>
+        </div>
         <div className="profile-page__addresses">
           <p className="profile-page__section-label">Direcciones de atención</p>
           {officeAddresses.map((address, index) => (

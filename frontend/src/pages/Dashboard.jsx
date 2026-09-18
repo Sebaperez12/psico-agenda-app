@@ -374,7 +374,7 @@ export default function Dashboard() {
       </section>
 
       <section className="dashboard__metrics">
-        <div className="dashboard__metric-card">
+        <button type="button" className="dashboard__metric-card" onClick={() => navigate("/appointments")}>
           <div className="dashboard__metric-top">
             <div className="dashboard__icon">{icons.patients}</div>
             <div className="dashboard__metric-value">{stats.pendingRequestsTotal}</div>
@@ -382,9 +382,9 @@ export default function Dashboard() {
           <div className="dashboard__metric-line" />
           <div className="dashboard__metric-label">Solicitudes pendientes</div>
           <div className="dashboard__metric-desc">Turnos que esperan confirmación</div>
-        </div>
+        </button>
 
-        <div className="dashboard__metric-card">
+        <button type="button" className="dashboard__metric-card" onClick={() => navigate("/appointments")}>
           <div className="dashboard__metric-top">
             <div className="dashboard__icon">{icons.calendar}</div>
             <div className="dashboard__metric-value">{stats.todayAppointments}</div>
@@ -392,9 +392,9 @@ export default function Dashboard() {
           <div className="dashboard__metric-line" />
           <div className="dashboard__metric-label">Turnos hoy</div>
           <div className="dashboard__metric-desc">Sesiones programadas para hoy</div>
-        </div>
+        </button>
 
-        <div className="dashboard__metric-card">
+        <button type="button" className="dashboard__metric-card" onClick={() => navigate("/patients")}>
           <div className="dashboard__metric-top">
             <div className="dashboard__icon">{icons.week}</div>
             <div className="dashboard__metric-value dashboard__metric-value--money">{formatMoney(stats.billingDue)}</div>
@@ -402,7 +402,7 @@ export default function Dashboard() {
           <div className="dashboard__metric-line" />
           <div className="dashboard__metric-label">Pendiente de cobro</div>
           <div className="dashboard__metric-desc">{stats.patientsWithDebt} pacientes con saldo pendiente</div>
-        </div>
+        </button>
       </section>
 
       <section className="dashboard__grid">

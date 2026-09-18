@@ -1,4 +1,4 @@
-const CACHE_NAME = 'therapydesk-v3'
+const CACHE_NAME = 'therapydesk-v5'
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {
@@ -27,7 +27,19 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
   const url = new URL(event.request.url)
+  const shouldBypassCache =
+    event.request.cache === 'no-store' ||
+    event.request.headers.has('authorization') ||
+    url.origin !== self.location.origin
+
+  if (shouldBypassCache) {
+    event.respondWith(fetch(event.request))
+    return
+  }
+
   const isApiRequest = [
+    '/me',
+    '/auth',
     '/appointments',
     '/availability',
     '/patients',

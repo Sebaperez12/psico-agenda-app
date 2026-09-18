@@ -1466,9 +1466,9 @@ def create_app():
     def send_registration_emails_async(user, profile):
         user_id = user.id
         user_email = user.email
-        full_name = profile.full_name
-        professional_title = profile.professional_title
-        office_address = profile.office_address
+        full_name = profile.full_name if profile else user_email
+        professional_title = profile.professional_title if profile else None
+        office_address = profile.office_address if profile else None
 
         def worker():
             with app.app_context():
@@ -2144,7 +2144,7 @@ def create_app():
         body = request.get_json(silent=True) or {}
         email = normalize_email(body.get("email"))
         password = body.get("password") or ""
-        profile_data, profile_error = validate_profile_payload(body, require_required_fields=True)
+        profile_data, profile_error = validate_profile_payload(body, require_required_fields=False)
 
         email_error = validate_required_email(email)
         if email_error:
@@ -2172,31 +2172,35 @@ def create_app():
         db.session.add(user)
         db.session.flush()
 
-        profile = PsychologistProfile(
-            owner_user_id=user.id,
-            full_name=profile_data["full_name"],
-            professional_title=profile_data["professional_title"],
-            description=profile_data["description"],
-            office_address=profile_data["office_address"],
-            office_addresses_json=json.dumps(profile_data["office_addresses"]),
-            visible_agenda_start_time=profile_data["visible_agenda_start_time"],
-            visible_agenda_end_time=profile_data["visible_agenda_end_time"],
-            booking_slug=generate_unique_booking_slug(profile_data["full_name"]),
-            photo_data_url=profile_data["photo_data_url"],
-        )
-        db.session.add(profile)
-        db.session.commit()
-
-        send_registration_emails_async(user, profile)
+        profile = None
+        if profile_data["full_name"] or profile_data["professional_title"] or profile_data["office_address"] or profile_data["description"]:
+            profile = PsychologistProfile(
+                owner_user_id=user.id,
+                full_name=profile_data["full_name"] or user.email,
+                professional_title=profile_data["professional_title"],
+                description=profile_data["description"],
+                office_address=profile_data["office_address"],
+                office_addresses_json=json.dumps(profile_data["office_addresses"]),
+                visible_agenda_start_time=profile_data["visible_agenda_start_time"],
+                visible_agenda_end_time=profile_data["visible_agenda_end_time"],
+                booking_slug=generate_unique_booking_slug(profile_data["full_name"] or user.email),
+                photo_data_url=profile_data["photo_data_url"],
+            )
+            db.session.add(profile)
+            db.session.commit()
+            send_registration_emails_async(user, profile)
+        else:
+            db.session.commit()
+            send_registration_emails_async(user, None)
 
         token = create_access_token(identity=str(user.id))
         return jsonify({
             "access_token": token,
             "user": {
                 **user.serialize(),
-                "has_profile": True,
+                "has_profile": bool(profile),
             },
-            "profile": profile.serialize(user.email),
+            "profile": profile.serialize(user.email) if profile else None,
         }), 201
 
     @app.get("/auth/verify-email/<token>")
