@@ -1,4 +1,4 @@
-const CACHE_NAME = 'therapydesk-v5'
+const CACHE_NAME = 'therapydesk-v6'
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {

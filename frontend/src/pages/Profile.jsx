@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./Profile.css";
 
+const FIRST_TIME_GUIDE_KEY = "therapydesk_first_time_guide";
+
 export default function Profile() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -23,6 +25,12 @@ export default function Profile() {
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [isCreate, setIsCreate] = useState(false);
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
+
+  const dismissWelcomeGuide = () => {
+    localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
+    setShowWelcomeGuide(false);
+  };
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
@@ -165,12 +173,36 @@ export default function Profile() {
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    try {
+      setShowWelcomeGuide(localStorage.getItem(FIRST_TIME_GUIDE_KEY) === "pending");
+    } catch {
+      setShowWelcomeGuide(false);
+    }
+  }, [loading, isCreate]);
+
   if (loading) {
     return <div className="profile-page">Cargando...</div>;
   }
 
   return (
     <div className="profile-page">
+      {showWelcomeGuide && (
+        <div className="profile-page__welcome-guide" role="status" aria-live="polite">
+          <div className="profile-page__welcome-copy">
+            <span className="profile-page__welcome-badge">Primer paso</span>
+            <h2>Completá tu perfil</h2>
+            <p>
+              Esta app sirve para organizar tu agenda, pacientes y turnos. Antes de empezar,
+              completá tu perfil profesional con tus datos, servicios y disponibilidad.
+            </p>
+          </div>
+          <button type="button" className="profile-page__welcome-close" onClick={dismissWelcomeGuide}>
+            Entendido
+          </button>
+        </div>
+      )}
+
       <div className="profile-page__header">
         <h1 className="profile-page__title">Mi Perfil</h1>
         <p className="profile-page__description">

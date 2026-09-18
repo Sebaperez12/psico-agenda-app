@@ -4,6 +4,65 @@
   padding: 1rem;
 }
 
+.profile-page__welcome-guide {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(840px, calc(100% - 10px));
+  margin: 0 auto 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(115, 86, 212, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(115, 86, 212, 0.08), rgba(58, 166, 138, 0.08));
+  box-shadow: 0 16px 32px rgba(39, 52, 67, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.profile-page__welcome-copy {
+  flex: 1;
+}
+
+.profile-page__welcome-copy h2 {
+  margin: 0.35rem 0 0.4rem;
+  color: var(--color-text-strong);
+  font-size: 1.08rem;
+}
+
+.profile-page__welcome-copy p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.profile-page__welcome-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(115, 86, 212, 0.12);
+  color: #5643a6;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profile-page__welcome-close {
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  background: var(--color-primary-deep);
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
 .profile-page__header {
   margin-bottom: 1.35rem;
   text-align: center;
@@ -317,6 +376,17 @@
 @media (max-width: 768px) {
   .profile-page {
     padding: 1rem;
+  }
+
+  .profile-page__welcome-guide {
+    flex-direction: column;
+    align-items: flex-start;
+    width: min(100%, calc(100vw - 24px));
+    top: 8px;
+  }
+
+  .profile-page__welcome-close {
+    width: 100%;
   }
 
   .profile-page__form {
