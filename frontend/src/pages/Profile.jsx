@@ -56,6 +56,7 @@ export default function Profile() {
     setLoading(true);
     try {
       const data = await api.get("/profile");
+      localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
       setEmail(data.email || "");
       setAutoRemindersEnabled(!!data.auto_reminders_enabled);
       setAutoReminderMethod("email");
@@ -71,6 +72,7 @@ export default function Profile() {
       setIsCreate(false);
     } catch (e) {
       if (e.status === 404) {
+        localStorage.setItem(FIRST_TIME_GUIDE_KEY, "pending");
         const me = await api.get("/me");
         setEmail(me?.user?.email || "");
         setAutoRemindersEnabled(false);
@@ -119,10 +121,12 @@ export default function Profile() {
 
       if (isCreate) {
         await api.post("/profile", payload);
+        localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
         setMsg("Perfil creado exitosamente");
         setIsCreate(false);
       } else {
         await api.patch("/profile", payload);
+        localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
         setMsg("Perfil actualizado exitosamente");
       }
 
@@ -175,7 +179,8 @@ export default function Profile() {
 
   useEffect(() => {
     try {
-      setShowWelcomeGuide(localStorage.getItem(FIRST_TIME_GUIDE_KEY) === "pending");
+      const shouldShowGuide = localStorage.getItem(FIRST_TIME_GUIDE_KEY) === "pending" || isCreate;
+      setShowWelcomeGuide(shouldShowGuide);
     } catch {
       setShowWelcomeGuide(false);
     }
