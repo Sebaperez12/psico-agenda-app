@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import defaultUserAvatar from "../assets/img usuario.png";
 import api from "../services/api";
 import "./Profile.css";
 
@@ -224,9 +225,11 @@ export default function Profile() {
             {photoDataUrl ? (
               <img src={photoDataUrl} alt="Foto profesional" className="profile-page__photo" />
             ) : (
-              <div className="profile-page__photo-placeholder">
-                {fullName ? fullName.slice(0, 1).toUpperCase() : "P"}
-              </div>
+              <img
+                src={defaultUserAvatar}
+                alt="Foto de perfil por defecto"
+                className="profile-page__photo"
+              />
             )}
           </div>
 
