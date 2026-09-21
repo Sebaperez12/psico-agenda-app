@@ -53,11 +53,15 @@ export default function Login() {
     setLoading(true);
     localStorage.removeItem("token");
     try {
+      const trimmedFullName = fullName.trim();
       const data = await api.post("/auth/register", {
         email: normalizedEmail,
         password,
-        full_name: fullName,
+        full_name: trimmedFullName,
       });
+      if (trimmedFullName) {
+        localStorage.setItem("therapydesk_register_full_name", trimmedFullName);
+      }
       localStorage.setItem("token", data.access_token);
       if (data?.user?.role === "admin") {
         nav("/admin");
