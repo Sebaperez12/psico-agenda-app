@@ -45,11 +45,11 @@ services:
         sync: false
 
   - type: web
-    runtime: node
+    runtime: static
     name: therapydesk
     plan: free
-    buildCommand: cd frontend && npm install && npm run build
-    startCommand: npx serve -s frontend/dist -l $PORT
+    buildCommand: npm install --prefix frontend && npm run build --prefix frontend
+    staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_URL
         value: https://therapydesk-api.onrender.com
