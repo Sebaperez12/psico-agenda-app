@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import defaultUserAvatar from "../assets/img usuario.png";
+import defaultUserAvatar from "../assets/img-usuario-baja.png";
 import api from "../services/api";
 import "./Profile.css";
 
@@ -75,6 +75,7 @@ export default function Profile() {
       if (e.status === 404) {
         localStorage.setItem(FIRST_TIME_GUIDE_KEY, "pending");
         const me = await api.get("/me");
+        const storedFullName = localStorage.getItem("therapydesk_register_full_name") || "";
         setEmail(me?.user?.email || "");
         setAutoRemindersEnabled(false);
         setAutoReminderMethod("email");
@@ -82,7 +83,7 @@ export default function Profile() {
         setPublicBookingEnabled(false);
         setPublicBookingMinNoticeHours(24);
         setBookingSlug("");
-        setFullName("");
+        setFullName(storedFullName);
         setTitle("");
         setDescription("");
         setOfficeAddresses(["", "", "", "", ""]);
@@ -122,11 +123,13 @@ export default function Profile() {
 
       if (isCreate) {
         await api.post("/profile", payload);
+        localStorage.removeItem("therapydesk_register_full_name");
         localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
         setMsg("Perfil creado exitosamente");
         setIsCreate(false);
       } else {
         await api.patch("/profile", payload);
+        localStorage.removeItem("therapydesk_register_full_name");
         localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
         setMsg("Perfil actualizado exitosamente");
       }
