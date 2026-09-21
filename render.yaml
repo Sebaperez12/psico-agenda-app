@@ -1,7 +1,7 @@
 services:
   - type: web
     runtime: python
-    name: psico-agenda-api
+    name: therapydesk-api
     plan: free
     buildCommand: pip install -r backend/requirements.txt
     startCommand: gunicorn --chdir backend app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
@@ -43,6 +43,18 @@ services:
         sync: false
       - key: BREVO_API_KEY
         sync: false
+
+  - type: web
+    runtime: node
+    name: therapydesk
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: npx serve -s frontend/dist -l $PORT
+    envVars:
+      - key: VITE_API_URL
+        value: https://therapydesk-api.onrender.com
+      - key: NODE_ENV
+        value: production
 
 databases:
   - name: psico-agenda-db
