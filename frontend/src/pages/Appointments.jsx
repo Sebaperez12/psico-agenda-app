@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import FirstTimeGuideModal from "../components/FirstTimeGuideModal";
 import "./Appointments.css";
 import {
   getLocalDateKey,
@@ -102,6 +103,7 @@ export default function Appointments() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [msg, setMsg] = useState("");
+  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
   const messageType = useMemo(() => {
     if (!msg) return "";
     const normalized = msg.toLowerCase();
@@ -476,6 +478,11 @@ export default function Appointments() {
   useEffect(() => {
     loadPatients();
     loadProfile();
+    const guideFlag = localStorage.getItem("therapydesk_first_time_guide");
+    if (guideFlag === "pending") {
+      localStorage.setItem("therapydesk_first_time_guide", "seen");
+      setShowFirstTimeGuide(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -491,6 +498,14 @@ export default function Appointments() {
 
   return (
     <div className="appointments-page">
+      {showFirstTimeGuide && (
+        <FirstTimeGuideModal
+          title="Empezá con tus turnos"
+          description="Acá podés ver tu agenda semanal, crear nuevos turnos y organizar la atención de tus pacientes. Podés ir explorando sin completar nada más: esto es solo una guía para orientarte en tu primera visita."
+          onClose={() => setShowFirstTimeGuide(false)}
+        />
+      )}
+
       <header className="appointments-page__top">
         <div>
           <h1 className="appointments-page__title">Turnos</h1>

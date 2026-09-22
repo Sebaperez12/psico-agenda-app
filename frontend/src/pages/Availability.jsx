@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import FirstTimeGuideModal from "../components/FirstTimeGuideModal";
 import api from "../services/api";
 import "./Availability.css";
 
@@ -28,6 +29,7 @@ export default function Availability() {
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [savingRuleId, setSavingRuleId] = useState(null);
   const [msg, setMsg] = useState("");
+  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
 
   const timeOptions = useMemo(() => buildTimeOptions(10), []);
   const hourOptions = useMemo(() => buildTimeOptions(60), []);
@@ -174,10 +176,23 @@ export default function Availability() {
   useEffect(() => {
     loadRules();
     loadProfileSettings();
+    const guideFlag = localStorage.getItem("therapydesk_first_time_guide");
+    if (guideFlag === "pending") {
+      localStorage.setItem("therapydesk_first_time_guide", "seen");
+      setShowFirstTimeGuide(true);
+    }
   }, []);
 
   return (
     <div className="availability-page">
+      {showFirstTimeGuide && (
+        <FirstTimeGuideModal
+          title="Configurá tu disponibilidad"
+          description="Acá podés definir tus horarios y bloques de atención. No hace falta llenar nada más para empezar a navegar: esta guía sirve solo para orientarte en tu primera visita."
+          onClose={() => setShowFirstTimeGuide(false)}
+        />
+      )}
+
       <section className="availability-page__card availability-page__card--range">
         <div className="availability-page__section-head">
           <span className="availability-page__section-icon" aria-hidden="true">Cal</span>

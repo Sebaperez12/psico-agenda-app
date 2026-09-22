@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import FirstTimeGuideModal from "../components/FirstTimeGuideModal";
 import PatientCard from "../components/PatientCard";
 import PatientQuickCreate from "../components/PatientQuickCreate";
 import api from "../services/api";
@@ -35,6 +36,7 @@ export default function Patients() {
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [profileStatus, setProfileStatus] = useState("");
+  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
   const [savingProfileId, setSavingProfileId] = useState(null);
   const [expandedPatientId, setExpandedPatientId] = useState(null);
   const [profileForm, setProfileForm] = useState(buildPatientProfileForm(null));
@@ -208,6 +210,11 @@ export default function Patients() {
 
   useEffect(() => {
     loadPatients();
+    const guideFlag = localStorage.getItem("therapydesk_first_time_guide");
+    if (guideFlag === "pending") {
+      localStorage.setItem("therapydesk_first_time_guide", "seen");
+      setShowFirstTimeGuide(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -231,6 +238,14 @@ export default function Patients() {
 
   return (
     <div className="patients-page">
+      {showFirstTimeGuide && (
+        <FirstTimeGuideModal
+          title="Mirá tus pacientes"
+          description="Aquí podés buscar, crear y actualizar tus pacientes sin bloquear el resto de la app. Empezá a explorar y después completás lo que necesites en la ficha cuando quieras."
+          onClose={() => setShowFirstTimeGuide(false)}
+        />
+      )}
+
       <h1 className="patients-page__title">Pacientes</h1>
       <p className="patients-page__description">
         Cada paciente puede tener una ficha completa y una proxima hora vinculada con la agenda.

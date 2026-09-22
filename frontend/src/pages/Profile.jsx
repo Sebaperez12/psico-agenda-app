@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import defaultUserAvatar from "../assets/img-usuario-baja.png";
+import FirstTimeGuideModal from "../components/FirstTimeGuideModal";
 import api from "../services/api";
 import "./Profile.css";
 
@@ -197,22 +198,11 @@ export default function Profile() {
   return (
     <div className="profile-page">
       {showWelcomeGuide && (
-        <div className="profile-page__welcome-overlay" role="dialog" aria-modal="true">
-          <div className="profile-page__welcome-guide" role="status" aria-live="polite">
-            <div className="profile-page__welcome-copy">
-              <span className="profile-page__welcome-badge">Primer paso</span>
-              <h2>Completá tu perfil</h2>
-              <p>
-                Esta app sirve para organizar tu agenda, pacientes y turnos. Antes de empezar,
-                completá tu perfil profesional con tus datos, servicios y disponibilidad. En el
-                menú de arriba a la izquierda podés encontrar todas las opciones.
-              </p>
-            </div>
-            <button type="button" className="profile-page__welcome-close" onClick={dismissWelcomeGuide}>
-              Entendido
-            </button>
-          </div>
-        </div>
+        <FirstTimeGuideModal
+          title="Completá tu perfil"
+          description="Esta app sirve para organizar tu agenda, pacientes y turnos. Antes de empezar, completá tu perfil profesional con tus datos, servicios y disponibilidad. En el menú de arriba a la izquierda podés encontrar todas las opciones."
+          onClose={dismissWelcomeGuide}
+        />
       )}
 
       <div className="profile-page__header">
@@ -370,19 +360,41 @@ export default function Profile() {
         </div>
         <div className="profile-page__addresses">
           <p className="profile-page__section-label">Direcciones de atención</p>
-          {officeAddresses.map((address, index) => (
-            <input
-              key={index}
+          <label className="profile-page__field profile-page__field--compact">
+            Dirección principal
+            <select
               className="profile-page__input"
-              value={address}
+              value={officeAddresses[0] || ""}
               onChange={(e) =>
-                setOfficeAddresses((prev) =>
-                  prev.map((item, itemIndex) => (itemIndex === index ? e.target.value : item))
-                )
+                setOfficeAddresses((prev) => [e.target.value, ...prev.slice(1)])
               }
-              placeholder={`Dirección ${index + 1}${index === 0 ? " (principal)" : " (opcional)"}`}
-            />
-          ))}
+            >
+              <option value="">Seleccionar dirección</option>
+              {officeAddresses.map((address, index) => (
+                <option key={`addr-${index}`} value={address}>
+                  {address || `Dirección ${index + 1}`}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="profile-page__address-list">
+            {officeAddresses.map((address, index) => (
+              <label key={`input-${index}`} className="profile-page__field profile-page__field--compact">
+                {index === 0 ? "Dirección principal" : `Dirección ${index + 1}`}
+                <input
+                  className="profile-page__input"
+                  value={address}
+                  onChange={(e) =>
+                    setOfficeAddresses((prev) =>
+                      prev.map((item, itemIndex) => (itemIndex === index ? e.target.value : item))
+                    )
+                  }
+                  placeholder={`Dirección ${index + 1}${index === 0 ? " (principal)" : " (opcional)"}`}
+                />
+              </label>
+            ))}
+          </div>
         </div>
 
         <div className="profile-page__actions">

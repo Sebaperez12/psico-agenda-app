@@ -186,6 +186,15 @@
   margin-bottom: 0.5rem;
 }
 
+.profile-page__address-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.profile-page__field--compact {
+  margin-bottom: 0;
+}
+
 .profile-page__section {
   margin-bottom: 0.85rem;
 }
