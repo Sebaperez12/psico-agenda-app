@@ -365,36 +365,29 @@ export default function Profile() {
             <select
               className="profile-page__input"
               value={officeAddresses[0] || ""}
-              onChange={(e) =>
-                setOfficeAddresses((prev) => [e.target.value, ...prev.slice(1)])
-              }
+              onChange={(e) => {
+                const selectedAddress = e.target.value;
+                setOfficeAddresses((prev) => {
+                  const next = [...prev];
+                  const uniqueValues = prev.filter((address) => address && address !== selectedAddress);
+                  next[0] = selectedAddress;
+                  for (let i = 1; i < next.length; i += 1) {
+                    next[i] = uniqueValues[i - 1] || "";
+                  }
+                  return next;
+                });
+              }}
             >
               <option value="">Seleccionar dirección</option>
-              {officeAddresses.map((address, index) => (
-                <option key={`addr-${index}`} value={address}>
-                  {address || `Dirección ${index + 1}`}
-                </option>
-              ))}
+              {officeAddresses
+                .filter((address, index, all) => address && all.indexOf(address) === index)
+                .map((address, index) => (
+                  <option key={`addr-${address || index}`} value={address}>
+                    {address}
+                  </option>
+                ))}
             </select>
           </label>
-
-          <div className="profile-page__address-list">
-            {officeAddresses.map((address, index) => (
-              <label key={`input-${index}`} className="profile-page__field profile-page__field--compact">
-                {index === 0 ? "Dirección principal" : `Dirección ${index + 1}`}
-                <input
-                  className="profile-page__input"
-                  value={address}
-                  onChange={(e) =>
-                    setOfficeAddresses((prev) =>
-                      prev.map((item, itemIndex) => (itemIndex === index ? e.target.value : item))
-                    )
-                  }
-                  placeholder={`Dirección ${index + 1}${index === 0 ? " (principal)" : " (opcional)"}`}
-                />
-              </label>
-            ))}
-          </div>
         </div>
 
         <div className="profile-page__actions">
