@@ -2,7 +2,7 @@ services:
   - type: web
     runtime: python
     name: therapydesk-api
-    plan: free
+    plan: starter
     buildCommand: pip install -r backend/requirements.txt
     startCommand: gunicorn --chdir backend app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     healthCheckPath: /
