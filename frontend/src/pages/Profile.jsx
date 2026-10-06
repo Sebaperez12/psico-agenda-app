@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import defaultUserAvatar from "../assets/img-usuario-baja.png";
-import FirstTimeGuideModal from "../components/FirstTimeGuideModal";
 import api from "../services/api";
+import { updateOfficeAddressList } from "../utils/profileFlow";
 import "./Profile.css";
-
-const FIRST_TIME_GUIDE_KEY = "therapydesk_first_time_guide";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -27,12 +25,6 @@ export default function Profile() {
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [isCreate, setIsCreate] = useState(false);
-  const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
-
-  const dismissWelcomeGuide = () => {
-    localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
-    setShowWelcomeGuide(false);
-  };
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
@@ -58,7 +50,6 @@ export default function Profile() {
     setLoading(true);
     try {
       const data = await api.get("/profile");
-      localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
       setEmail(data.email || "");
       setAutoRemindersEnabled(!!data.auto_reminders_enabled);
       setAutoReminderMethod("email");
@@ -74,7 +65,6 @@ export default function Profile() {
       setIsCreate(false);
     } catch (e) {
       if (e.status === 404) {
-        localStorage.setItem(FIRST_TIME_GUIDE_KEY, "pending");
         const me = await api.get("/me");
         const storedFullName = localStorage.getItem("therapydesk_register_full_name") || "";
         setEmail(me?.user?.email || "");
@@ -125,13 +115,11 @@ export default function Profile() {
       if (isCreate) {
         await api.post("/profile", payload);
         localStorage.removeItem("therapydesk_register_full_name");
-        localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
         setMsg("Perfil creado exitosamente");
         setIsCreate(false);
       } else {
         await api.patch("/profile", payload);
         localStorage.removeItem("therapydesk_register_full_name");
-        localStorage.setItem(FIRST_TIME_GUIDE_KEY, "seen");
         setMsg("Perfil actualizado exitosamente");
       }
 
@@ -182,29 +170,12 @@ export default function Profile() {
     loadProfile();
   }, []);
 
-  useEffect(() => {
-    try {
-      const shouldShowGuide = localStorage.getItem(FIRST_TIME_GUIDE_KEY) === "pending" || isCreate;
-      setShowWelcomeGuide(shouldShowGuide);
-    } catch {
-      setShowWelcomeGuide(false);
-    }
-  }, [loading, isCreate]);
-
   if (loading) {
     return <div className="profile-page">Cargando...</div>;
   }
 
   return (
     <div className="profile-page">
-      {showWelcomeGuide && (
-        <FirstTimeGuideModal
-          title="Completá tu perfil"
-          description="Esta app sirve para organizar tu agenda, pacientes y turnos. Antes de empezar, completá tu perfil profesional con tus datos, servicios y disponibilidad. En el menú de arriba a la izquierda podés encontrar todas las opciones."
-          onClose={dismissWelcomeGuide}
-        />
-      )}
-
       <div className="profile-page__header">
         <h1 className="profile-page__title">Mi Perfil</h1>
         <p className="profile-page__description">
@@ -362,31 +333,20 @@ export default function Profile() {
           <p className="profile-page__section-label">Direcciones de atención</p>
           <label className="profile-page__field profile-page__field--compact">
             Dirección principal
-            <select
+            <input
               className="profile-page__input"
+              list="office-addresses-options"
               value={officeAddresses[0] || ""}
-              onChange={(e) => {
-                const selectedAddress = e.target.value;
-                setOfficeAddresses((prev) => {
-                  const next = [...prev];
-                  const uniqueValues = prev.filter((address) => address && address !== selectedAddress);
-                  next[0] = selectedAddress;
-                  for (let i = 1; i < next.length; i += 1) {
-                    next[i] = uniqueValues[i - 1] || "";
-                  }
-                  return next;
-                });
-              }}
-            >
-              <option value="">Seleccionar dirección</option>
+              onChange={(e) => setOfficeAddresses(updateOfficeAddressList(officeAddresses, e.target.value))}
+              placeholder="Ej: Calle Falsa 123, Montevideo"
+            />
+            <datalist id="office-addresses-options">
               {officeAddresses
                 .filter((address, index, all) => address && all.indexOf(address) === index)
-                .map((address, index) => (
-                  <option key={`addr-${address || index}`} value={address}>
-                    {address}
-                  </option>
+                .map((address) => (
+                  <option key={`addr-${address}`} value={address} />
                 ))}
-            </select>
+            </datalist>
           </label>
         </div>
 
