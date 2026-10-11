@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import defaultUserAvatar from "../assets/img-usuario-baja.png";
 import api from "../services/api";
-import { updateOfficeAddressList } from "../utils/profileFlow";
+
 import "./Profile.css";
 
 export default function Profile() {
@@ -331,23 +331,20 @@ export default function Profile() {
         </div>
         <div className="profile-page__addresses">
           <p className="profile-page__section-label">Direcciones de atención</p>
-          <label className="profile-page__field profile-page__field--compact">
-            Dirección principal
-            <input
-              className="profile-page__input"
-              list="office-addresses-options"
-              value={officeAddresses[0] || ""}
-              onChange={(e) => setOfficeAddresses(updateOfficeAddressList(officeAddresses, e.target.value))}
-              placeholder="Ej: Calle Falsa 123, Montevideo"
-            />
-            <datalist id="office-addresses-options">
-              {officeAddresses
-                .filter((address, index, all) => address && all.indexOf(address) === index)
-                .map((address) => (
-                  <option key={`addr-${address}`} value={address} />
-                ))}
-            </datalist>
-          </label>
+          <p>Hasta cinco direcciones de atención; las adicionales son opcionales.</p>
+          <div className="profile-page__address-list">
+            {officeAddresses.map((address, index) => (
+              <label key={index} className="profile-page__field profile-page__field--compact">
+                {index === 0 ? "Dirección principal" : `Dirección ${index + 1} (opcional)`}
+                <input
+                  className="profile-page__input"
+                  value={address}
+                  onChange={(event) => setOfficeAddresses((current) => current.map((value, position) => position === index ? event.target.value : value))}
+                  placeholder="Ej: Calle Falsa 123, Montevideo"
+                />
+              </label>
+            ))}
+          </div>
         </div>
 
         <div className="profile-page__actions">

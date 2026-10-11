@@ -985,8 +985,8 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
+    overflow: visible;
+    touch-action: pan-y pinch-zoom;
     border-top: 1px solid var(--color-border);
   }
 

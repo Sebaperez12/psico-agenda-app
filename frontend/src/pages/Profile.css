@@ -440,3 +440,7 @@
     width: 100%;
   }
 }
+
+.profile-page__address-list .profile-page__field { font-weight: 500; }
+.profile-page__btn { font-weight: 500; }
+.profile-page__btn--primary { font-weight: 600; }
