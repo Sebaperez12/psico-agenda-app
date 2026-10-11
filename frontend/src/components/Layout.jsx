@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import logo from "../assets/logo 6 baja max.png";
 import api from "../services/api";
 import "./layout.css";
 
 export default function Layout() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function Layout() {
     isActive ? "layout__nav-link layout__nav-link--active" : "layout__nav-link";
 
   return (
-    <div className="layout">
+    <div className={`layout${pathname === "/appointments" ? " layout--appointments" : ""}`}>
       <header className="layout__header">
         <button
           type="button"

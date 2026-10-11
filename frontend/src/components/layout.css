@@ -123,9 +123,9 @@ body,
   .layout--appointments,
   .layout--appointments .layout__main,
   .layout--appointments .layout__content {
-    height: auto;
+    height: 100dvh;
     min-height: 0;
-    overflow: visible;
+    overflow: hidden;
   }
   .layout--appointments .layout__content { display: flex; flex-direction: column; }
 }

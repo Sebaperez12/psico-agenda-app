@@ -19,6 +19,7 @@ export default function Profile() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [photoDataUrl, setPhotoDataUrl] = useState("");
+  const [photoMessage, setPhotoMessage] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,19 +30,28 @@ export default function Profile() {
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    event.target.value = "";
 
     if (!file.type.startsWith("image/")) {
-      setMsg("La foto debe ser una imagen");
+      setPhotoMessage("La foto debe ser una imagen");
       return;
     }
     if (file.size > 1_800_000) {
-      setMsg("La foto es demasiado grande. Usa una imagen menor a 1.8 MB.");
+      setPhotoMessage("La foto es demasiado grande. Usa una imagen menor a 1.8 MB.");
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => setPhotoDataUrl(String(reader.result || ""));
-    reader.onerror = () => setMsg("No se pudo leer la foto");
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        setPhotoDataUrl(String(reader.result || ""));
+        setPhotoMessage("Vista previa lista. Guarda los cambios para publicar la foto.");
+      };
+      image.onerror = () => setPhotoMessage("No se puede mostrar esta imagen. Prueba con JPG o PNG.");
+      image.src = String(reader.result || "");
+    };
+    reader.onerror = () => setPhotoMessage("No se pudo leer la foto");
     reader.readAsDataURL(file);
   };
 
@@ -62,6 +72,7 @@ export default function Profile() {
       setDescription(data.description || "");
       setOfficeAddresses(buildOfficeAddresses(data.office_addresses, data.office_address));
       setPhotoDataUrl(data.photo_data_url || "");
+      setPhotoMessage(data.photo_data_url ? "Foto guardada. Visible en tu perfil y en tu página de reservas." : "");
       setIsCreate(false);
     } catch (e) {
       if (e.status === 404) {
@@ -124,6 +135,7 @@ export default function Profile() {
       }
 
       await loadProfile();
+      setMsg("Perfil guardado correctamente");
     } catch (e) {
       console.error(e);
       setMsg(e.message);
@@ -206,7 +218,7 @@ export default function Profile() {
               <button
                 type="button"
                 className="profile-page__btn"
-                onClick={() => setPhotoDataUrl("")}
+                onClick={() => { setPhotoDataUrl(""); setPhotoMessage("Guarda los cambios para quitar la foto."); }}
               >
                 Quitar foto
               </button>
@@ -214,6 +226,7 @@ export default function Profile() {
           </div>
         </div>
 
+        <p role="status">{photoMessage}</p>
         <input className="profile-page__input" value={email} readOnly placeholder="Email" />
         <div className="profile-page__section">
           <p className="profile-page__section-label">Recordatorios automáticos</p>
