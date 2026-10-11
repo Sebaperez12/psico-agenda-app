@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import defaultUserAvatar from "../assets/img-usuario-baja.png";
 import api from "../services/api";
+import { prepareProfilePhoto } from "../utils/profilePhoto";
 
 import "./Profile.css";
 
@@ -20,6 +21,7 @@ export default function Profile() {
   const [description, setDescription] = useState("");
   const [photoDataUrl, setPhotoDataUrl] = useState("");
   const [photoMessage, setPhotoMessage] = useState("");
+  const [processingPhoto, setProcessingPhoto] = useState(false);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,32 +29,21 @@ export default function Profile() {
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [isCreate, setIsCreate] = useState(false);
 
-  const handlePhotoChange = (event) => {
+  const handlePhotoChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     event.target.value = "";
 
-    if (!file.type.startsWith("image/")) {
-      setPhotoMessage("La foto debe ser una imagen");
-      return;
+    setProcessingPhoto(true);
+    setPhotoMessage("Preparando foto…");
+    try {
+      setPhotoDataUrl(await prepareProfilePhoto(file));
+      setPhotoMessage("Vista previa lista. Guarda los cambios para publicar la foto.");
+    } catch (error) {
+      setPhotoMessage(error.message);
+    } finally {
+      setProcessingPhoto(false);
     }
-    if (file.size > 1_800_000) {
-      setPhotoMessage("La foto es demasiado grande. Usa una imagen menor a 1.8 MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = new Image();
-      image.onload = () => {
-        setPhotoDataUrl(String(reader.result || ""));
-        setPhotoMessage("Vista previa lista. Guarda los cambios para publicar la foto.");
-      };
-      image.onerror = () => setPhotoMessage("No se puede mostrar esta imagen. Prueba con JPG o PNG.");
-      image.src = String(reader.result || "");
-    };
-    reader.onerror = () => setPhotoMessage("No se pudo leer la foto");
-    reader.readAsDataURL(file);
   };
 
   async function loadProfile() {
@@ -212,12 +203,13 @@ export default function Profile() {
           <div className="profile-page__photo-actions">
             <label className="profile-page__btn profile-page__btn--file">
               Subir foto
-              <input type="file" accept="image/*" onChange={handlePhotoChange} hidden />
+              <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={processingPhoto || saving} hidden />
             </label>
             {photoDataUrl && (
               <button
                 type="button"
                 className="profile-page__btn"
+                disabled={processingPhoto || saving}
                 onClick={() => { setPhotoDataUrl(""); setPhotoMessage("Guarda los cambios para quitar la foto."); }}
               >
                 Quitar foto
@@ -364,11 +356,11 @@ export default function Profile() {
           <button
             className="profile-page__btn profile-page__btn--primary"
             onClick={saveProfile}
-            disabled={saving}
+            disabled={saving || processingPhoto}
           >
             {saving ? "Guardando..." : isCreate ? "Crear Perfil" : "Guardar Cambios"}
           </button>
-          <button className="profile-page__btn" onClick={loadProfile} disabled={saving}>
+          <button className="profile-page__btn" onClick={loadProfile} disabled={saving || processingPhoto}>
             Cancelar
           </button>
         </div>
